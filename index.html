@@ -50,7 +50,19 @@ button { font-family: inherit; }
 .tick .ch { display: block; font-size: .78rem; color: #9f9f9f; }
 .status { margin-top: 14px; color: #bde6a8; font-size: .92rem; min-height: 1.2em; }
 .status.warn { color: #ffb36b; }
-.start-row { display: flex; justify-content: center; margin-top: 22px; }
+.start-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.start-row .mc-btn.big { min-width: 300px; }
+.howto { text-align: left; background: rgba(0,0,0,.35); border: 2px solid #000; box-shadow: inset 0 0 0 2px #5d5d5d; padding: 12px 18px 6px; margin: 6px auto 4px; max-width: 560px; }
+.howto h4 { margin: 0 0 6px; color: #ffe08a; letter-spacing: .08em; font-weight: 600; }
+.howto ol { margin: 0; padding-left: 22px; }
+.howto li { font-size: 1.02rem; line-height: 1.55; color: #f0e6d2; margin-bottom: 6px; }
+.note-about { margin-top: 12px; font-size: .98rem; line-height: 1.5; color: #3f3f3f; }
+.fact { border-left: 4px solid #ffd84a; padding: 8px 12px; margin-bottom: 18px; color: #f0e6d2; line-height: 1.55; }
+.fact b { color: #ffe08a; }
+#say { position: absolute; transform: translate(-50%, -100%); background: #f3e4bf; color: #3a2a12; border: 2px solid #000; box-shadow: inset 0 0 0 2px #fff6dc; padding: 5px 10px 6px; text-align: center; white-space: nowrap; display: none; }
+#say::after { content: ''; position: absolute; left: 50%; bottom: -9px; margin-left: -7px; border: 7px solid transparent; border-top-color: #000; border-bottom: 0; }
+#say .l { font-size: 1.05rem; font-weight: 600; }
+#say .e { font-size: .82rem; color: #6a5536; }
 .controls-line { margin-top: 18px; color: #cfcfcf; font-size: .9rem; text-align: center; line-height: 1.7; }
 kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid; border-color: #fff #373737 #373737 #fff; padding: 0 6px; font-family: inherit; font-size: .82rem; }
 .credit { margin-top: 18px; font-size: .78rem; color: #a8a8a8; text-align: center; max-width: 700px; line-height: 1.5; }
@@ -189,7 +201,8 @@ body.touch #touch.on { display: block; }
   <div id="hurt"></div>
   <div id="cross"></div>
   <div id="roomBox"><div id="roomName"></div><div id="roomGoal"></div></div>
-  <div id="scoreBox">First try: <b id="scoreN">0</b> / 15</div>
+  <div id="scoreBox">Right first time: <b id="scoreN">0</b> / 15</div>
+  <div id="say"><div class="l" id="sayL"></div><div class="e" id="sayE"></div></div>
   <div id="splashR"><div class="n" id="spN"></div><div class="t" id="spT"></div><div class="l" id="spL"></div><div class="i" id="spI"></div></div>
   <div id="toast"></div>
   <div id="actionbar"></div>
@@ -209,7 +222,7 @@ body.touch #touch.on { display: block; }
     <div class="logo">FUGA ROMANA</div>
     <div class="splash" id="splashTxt">Now with volcano!</div>
   </div>
-  <div class="logo-sub">ESCAPE FROM POMPEII · LATIN LEVEL 1</div>
+  <div class="logo-sub">A LATIN ESCAPE GAME · COMMON ENTRANCE LEVEL 1</div>
   <div class="panel">
     <h3>Grammar</h3>
     <div class="presets" id="presets"></div>
@@ -220,23 +233,33 @@ body.touch #touch.on { display: block; }
     <div class="ticks" id="qtypes"></div>
     <div class="status" id="setupStatus"></div>
   </div>
-  <div class="start-row"><button class="mc-btn big" id="startBtn">Singleplayer: Begin</button></div>
-  <div class="controls-line">
-    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse to look · <kbd>Space</kbd> jump · <kbd>Shift</kbd> run · <kbd>E</kbd> or click: open a lock · <kbd>Esc</kbd> pause<br>
-    On a tablet: left stick to walk, drag to look, USE to open a lock.
+  <div class="start-row">
+    <button class="mc-btn big" id="startBtn" data-level="0">Level 1: Escape from Pompeii</button>
+    <button class="mc-btn big" id="startBtn2" data-level="1">Level 2: The Ides of March</button>
   </div>
-  <div class="credit">15 questions · 5 places · 3 locks each.<br>Latin sentences from <em>Prep School Latin</em> by R. C. Bass, used under a Creative Commons Attribution-NonCommercial-ShareAlike licence.</div>
+  <div class="controls-line">
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse: look · <kbd>Space</kbd> jump · <kbd>Shift</kbd> run · <kbd>E</kbd> or click: use · <kbd>Esc</kbd> pause<br>
+    On a phone or tablet: move with the left stick, drag to look, and tap USE.
+  </div>
+  <div class="credit">Each level has 5 places with 3 locks in each place: 15 Latin questions in all.<br>Latin sentences from <em>Prep School Latin</em> by R. C. Bass, used under a Creative Commons Attribution-NonCommercial-ShareAlike licence.</div>
 </div>
 
-<!-- STORY -->
+<!-- STORY (filled in for each level) -->
 <div class="screen" id="sStory">
   <div class="story">
-    <h2>Pompeii</h2>
-    <div class="when">A.D. LXXIX · IX KAL. SEPT.</div>
-    <p>The ground is shaking. Smoke pours from the top of Vesuvius.</p>
-    <p>Your master has fled and left you locked in his villa. Five places stand between you and the boats at the sea gate.</p>
-    <p>Every place has <b>three locks</b>. Find each lock, read the Latin, and answer to open it. When all three are open, the way on opens.</p>
-    <button class="mc-btn big" id="beginBtn">Intra · Enter</button>
+    <h2 id="storyH"></h2>
+    <div class="when" id="storyWhen"></div>
+    <div id="storyBody"></div>
+    <div class="howto">
+      <h4>HOW TO OPEN THE WAY</h4>
+      <ol>
+        <li>Look for <b>golden sparkles</b>. Each one marks a lock.</li>
+        <li>Walk up to the lock and press <b>E</b>. On a tablet, tap <b>USE</b>.</li>
+        <li>Answer the Latin question to open the lock.</li>
+        <li>Open all <b>three locks</b> in a place, and the door to the next place opens.</li>
+      </ol>
+    </div>
+    <button class="mc-btn big" id="beginBtn"></button>
   </div>
 </div>
 
@@ -257,17 +280,18 @@ body.touch #touch.on { display: block; }
 
 <!-- VICTORY -->
 <div class="screen win" id="sWin">
-  <h2>LIBERTAS!</h2>
-  <div class="sub">You run through the sea gate and jump into a boat. Behind you, Vesuvius roars. You are free.</div>
+  <h2 id="winH"></h2>
+  <div class="sub" id="winSub"></div>
   <div class="score" id="winScore"></div>
+  <div class="end-btns" id="nextRow"><button class="mc-btn big" id="nextBtn">Level 2: Sail to Rome ▶</button></div>
   <div class="panel" id="winBody"></div>
   <div class="end-btns">
-    <button class="mc-btn big" id="againBtn">Play again</button>
-    <button class="mc-btn big" id="changeBtn">Change grammar</button>
+    <button class="mc-btn big" id="againBtn">Play this level again</button>
+    <button class="mc-btn big" id="changeBtn">Back to the title screen</button>
   </div>
 </div>
 
-<div id="loading">Building Pompeii…</div>
+<div id="loading"></div>
 <div id="noGL">This game needs WebGL. Try a recent version of Chrome, Edge, Firefox or Safari.</div>
 
 <script>
@@ -967,7 +991,7 @@ function makeQuestion(it, type) {
     }
     q.opts = shuffle(opts);
   } else if (type === 'un') {
-    q.prompt = 'Build the Latin sentence. Tap the words in order. Not every word is needed.';
+    q.prompt = 'Put the Latin words in order to match the English. You will not need every word.';
     q.tokens = w;
     let decoys = [];
     const g = (it.g || []).find(g => subset(extraTags(g[2]), ticked));
@@ -1004,9 +1028,19 @@ function verbTable(tags) {
   return 'pres';
 }
 
-// Pick 15 sentences: spread across the ticked grammar and the ticked question types
+// Pick 15 sentences: spread across the ticked grammar and the ticked question types.
+// Sentences used earlier this session are skipped while enough fresh ones remain,
+// so Level 2 does not repeat Level 1.
+let sessionUsed = new Set();
 function buildGame() {
-  const pool = availableItems();
+  let pool = availableItems();
+  const fresh = pool.filter(it => !sessionUsed.has(it));
+  if (fresh.length >= 15) pool = fresh; else sessionUsed = new Set();
+  const qs = buildFrom(pool);
+  qs.forEach(q => sessionUsed.add(q.it));
+  return qs;
+}
+function buildFrom(pool) {
   const used = new Set();
   const qs = [];
   const tagCycle = [];
@@ -1044,15 +1078,61 @@ function buildGame() {
 // come from Fuga Romana; everything below is the new game.
 // ════════════════════════════════════════════════════════════════
 
-const ROOMS = [
-  { name: 'The Villa', lat: 'villa', intro: 'Your master’s house. The front door is barred.' },
-  { name: 'The Street', lat: 'via', intro: 'Ash drifts onto the stepping stones. The far door is locked.' },
-  { name: 'The Bakery', lat: 'taberna', intro: 'Bread still bakes in the oven. The back door is locked.' },
-  { name: 'The Forum', lat: 'forum', intro: 'The temple of Jupiter. The far gate is locked.' },
-  { name: 'The Sea Gate', lat: 'porta', intro: 'The Porta Marina. Beyond it lie the sea and the boats.' },
+// ════════════════════════════════════════════════════════════════
+// LEVELS
+// Both levels share the same layout: five places in a row along x,
+// walls at z = 40 and z = 56, doors at x = 22, 40, 56, 76 and 92.
+// ════════════════════════════════════════════════════════════════
+const LEVELS = [
+  {
+    key: 'pompeii', seed: 4242, loading: 'Building Pompeii…',
+    rooms: [
+      { name: 'The Villa', lat: 'villa', intro: 'Your master’s house. Open the three locks to unbar the front door.' },
+      { name: 'The Street', lat: 'via', intro: 'Ash is falling on the street. Open three locks to unlock the far door.' },
+      { name: 'The Bakery', lat: 'taberna', intro: 'Bread is still baking in the oven. Open three locks to unlock the back door.' },
+      { name: 'The Forum', lat: 'forum', intro: 'The temple of Jupiter stands in the middle. Open three locks to open the far gate.' },
+      { name: 'The Sea Gate', lat: 'porta', intro: 'The Porta Marina leads to the sea. Open three locks to open the gate.' },
+    ],
+    final: { name: 'The Beach', lat: 'litus', intro: 'The boats are waiting. Run!', goal: 'Run to the boats!' },
+    lastOpen: '<span class="gold">The sea gate is open!</span><br>Run to the boats!',
+    lastGoal: 'The sea gate is open. Run to the boats!',
+    start: { x: 8.5, z: 48.5, yaw: Math.PI / 2 },
+    sky0: [0.55, 0.74, 0.92], sky1: [0.52, 0.40, 0.36],
+    volcano: true,
+    story: {
+      h: 'Pompeii', when: 'A.D. LXXIX · IX KAL. SEPT.', btn: 'Intra · Enter',
+      body: '<p>Vesuvius is erupting. The ground shakes and ash falls from the sky.</p>' +
+        '<p>Your master has run away and left you locked in his villa. The boats wait at the sea gate, five places away.</p>',
+    },
+    won: () => P.x >= 101,
+  },
+  {
+    key: 'rome', seed: 1544, loading: 'Building Rome…',
+    rooms: [
+      { name: 'The River Docks', lat: 'portus', intro: 'Your boat ties up on the Tiber. Open three locks to open the gate into the city.' },
+      { name: 'The Subura', lat: 'Subura', intro: 'A crowded street of tall flats. Everyone is in a hurry today. Open three locks.' },
+      { name: 'The Forum', lat: 'forum Romanum', intro: 'The heart of Rome. A soothsayer stands in the crowd. Open three locks.' },
+      { name: 'The Theatre of Pompey', lat: 'theatrum', intro: 'The crowd is cheering. The Senate meets next door today. Open three locks.' },
+      { name: 'The Gardens of Pompey', lat: 'porticus', intro: 'Plane trees and fountains. The Senate house is at the far end. Open three locks.' },
+    ],
+    final: { name: 'The Senate House', lat: 'curia', intro: 'Caesar stands by the statue of Pompey. Give him the scroll!', goal: 'Walk up to Caesar and give him the scroll.' },
+    lastOpen: '<span class="gold">The doors of the Senate house are open!</span><br>Find Caesar!',
+    lastGoal: 'The Senate house is open. Find Caesar!',
+    start: { x: 6.7, z: 49.5, yaw: Math.PI / 2 },
+    sky0: [0.6, 0.78, 0.95], sky1: [0.66, 0.56, 0.6],
+    volcano: false,
+    story: {
+      h: 'Rome', when: 'A.U.C. DCCX · IDIBUS MARTIIS', btn: 'Festina! · Hurry!',
+      body: '<p>A storm drives your boat north for days. When the fog lifts, you are on the river Tiber, in the middle of Rome.</p>' +
+        '<p>A notice on the dock gives the date: the Ides of March, 44 BC. That is 122 years before Vesuvius erupted. Do not ask how.</p>' +
+        '<p>An old Greek teacher called Artemidorus grabs your arm. He has written a warning for Julius Caesar: senators plan to kill him today. He pushes the scroll into your hands. Take it to Caesar at the Senate house, five places away!</p>',
+    },
+    won: () => Math.hypot(P.x - 104.5, P.z - 48.5) < 2.4,
+  },
 ];
+let LV = LEVELS[0];
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-const SPLASHES = ['Now with volcano!', 'Cave canem!', 'Festina lente!', 'Ash included!', 'Mind the stepping stones!', 'Salve, discipule!', 'Not to scale!', 'Carpe clavem!'];
+const SPLASHES = ['Now with volcano!', 'Cave canem!', 'Festina lente!', 'Ash included!', 'Mind the stepping stones!', 'Salve, discipule!', 'Not to scale!', 'Carpe clavem!', 'Cavete Idus Martias!', 'Et tu, discipule?', 'Listen at the walls!'];
 
 // ── Setup state (the question builder reads ticked / types) ──
 const store = {
@@ -1159,6 +1239,36 @@ paint(30, (x, y) => (x % 5 === 2 || y === 1 || y === 14) ? nz([70, 70, 74], 10) 
 paint(31, (x, y) => { if (y < 5) return rnd() < 0.5 ? [0, 0, 0, 0] : [255, 190, 50]; return nz(y > 10 ? [255, 120, 30] : [255, 205, 70], 40); });
 paint(32, () => nz([150, 147, 143], 20));
 paint(33, (x, y) => (y === 2 || y === 3 || y === 12 || y === 13) ? nz([170, 40, 34], 10) : nz([232, 226, 212], 8));
+// ── Tiles for people (tinted by vertex colour) ──
+paint(34, () => nz([246, 246, 246], 12));                                  // plain: skin, cloth, fur
+paint(35, (x, y) => {                                                      // face: wide eyes, open mouth
+  if (y >= 6 && y <= 7 && (x === 4 || x === 11)) return [255, 255, 255];
+  if (y >= 6 && y <= 7 && (x === 5 || x === 10)) return [30, 22, 20];
+  if (y === 4 && ((x >= 3 && x <= 5) || (x >= 10 && x <= 12))) return [90, 70, 60];
+  if (y >= 10 && y <= 12 && x >= 7 && x <= 8) return [70, 20, 20];
+  return nz([246, 246, 246], 10);
+});
+paint(36, (x, y) => (y === 2 || y === 3 || y === 12 || y === 13) ? nz([104, 40, 120], 10) : nz([236, 230, 216], 8));  // Caesar's toga
+// ── Secret room tiles ──
+paint(37, (x, y) => {                                                      // cracked plaster
+  const cx = 8 + Math.round(Math.sin(y * 0.9) * 2.2);
+  if (x === cx || (y > 8 && x === cx + Math.floor((y - 8) / 2) + 1) || (y < 5 && x === cx - (5 - y))) return nz([62, 20, 16], 8);
+  return rnd() < 0.1 ? nz([196, 110, 92], 10) : nz([158, 42, 36], 14);
+});
+paint(38, (x, y) => {                                                      // graffito on plaster
+  if ((y === 4 || y === 7 || y === 10 || y === 13) && x >= 2 && x <= 13 && rnd() < 0.62) return nz([86, 74, 64], 10);
+  return nz([226, 218, 196], 10);
+});
+paint(39, (x, y) => {                                                      // CAVE CANEM mosaic
+  if (x === 0 || y === 0 || x === 15 || y === 15) return nz([40, 38, 36], 8);
+  const body = ((x - 7.5) / 4.4) ** 2 + ((y - 8.5) / 2.1) ** 2 < 1;
+  const head = (x - 12) ** 2 + (y - 5.5) ** 2 < 3.4;
+  const legs = (x === 5 || x === 6 || x === 9 || x === 10) && y >= 10 && y <= 13;
+  const tail = (x === 3 && y === 7) || (x === 2 && y === 6) || (x === 2 && y === 5);
+  if ((x === 11 || x === 12) && y === 8) return [168, 40, 32];
+  if (body || head || legs || tail) return nz([34, 32, 32], 8);
+  return (x + y) % 2 ? nz([232, 226, 212], 8) : nz([220, 214, 200], 8);
+});
 actx.putImageData(atlasImg, 0, 0);
 
 // Hotbar key icon
@@ -1174,7 +1284,8 @@ const KEY_ICON = (() => {
 // BLOCKS
 // ════════════════════════════════════════════════════════════════
 const B = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, COBBLE: 4, MARBLE: 5, TRAV: 6, RED: 7, YELLOW: 8, ROOF: 9, PLANKS: 10, LOG: 11, LEAVES: 12, SAND: 13, WATER: 14, MOSAIC: 15,
-  BRICK: 16, GATE: 17, COLUMN: 18, GOLD: 19, LAVA: 20, BASALT: 21, TABLET: 22, CHEST: 23, SHRINE: 24, AMPHORA: 25, PLAQUE: 26, CRATE: 27, BARS: 28, FIRE: 29, ASH: 30, CLOTH: 31 };
+  BRICK: 16, GATE: 17, COLUMN: 18, GOLD: 19, LAVA: 20, BASALT: 21, TABLET: 22, CHEST: 23, SHRINE: 24, AMPHORA: 25, PLAQUE: 26, CRATE: 27, BARS: 28, FIRE: 29, ASH: 30, CLOTH: 31,
+  CRACK: 32, GRAFFITO: 33, CANEM: 34 };
 const BL = [];
 function defB(id, tex, o) { const t = Array.isArray(tex) ? tex : [tex, tex, tex]; BL[id] = Object.assign({ top: t[0], side: t[1], bottom: t[2], solid: true, opaque: true }, o || {}); }
 defB(B.AIR, 0, { solid: false, opaque: false });
@@ -1185,6 +1296,7 @@ defB(B.COLUMN, [5, 19, 5]); defB(B.GOLD, 20); defB(B.LAVA, 21, { emissive: true 
 defB(B.TABLET, [10, 23, 10], { lock: 'wax tablet' }); defB(B.CHEST, [25, 24, 25], { lock: 'strongbox' }); defB(B.SHRINE, [5, 26, 5], { lock: 'household shrine' });
 defB(B.AMPHORA, 27, { lock: 'amphora' }); defB(B.PLAQUE, 28, { lock: 'bronze plaque' }); defB(B.CRATE, 29); defB(B.BARS, 30, { opaque: false, alpha: true });
 defB(B.FIRE, 31, { opaque: false, alpha: true, emissive: true }); defB(B.ASH, 32); defB(B.CLOTH, 33);
+defB(B.CRACK, 37, { secret: true }); defB(B.GRAFFITO, [5, 38, 5], { note: true }); defB(B.CANEM, [39, 3, 3], { note: true });
 
 // ════════════════════════════════════════════════════════════════
 // WORLD
@@ -1193,8 +1305,8 @@ const W = 112, H = 48, D = 80, G = 4, CS = 16;
 const NCX = W / CS, NCY = H / CS, NCZ = D / CS;
 const world = new Uint8Array(W * H * D);
 const ROOM_X = [4, 22, 40, 56, 76, 92];   // wall x of each room
-const WIN_X = 101;
 let LOCKS = [], lockMap = new Map(), GATES = [[], [], [], [], []], gateMap = new Map();
+let NOTES = new Map(), SECRET = null;   // readable blocks; the secret wall (Level 1)
 const key3 = (x, y, z) => x + ',' + y + ',' + z;
 
 function getB(x, y, z) {
@@ -1221,16 +1333,57 @@ function walls(x0, x1, h, b) {
 }
 function groundTop(x, z) { for (let y = H - 1; y >= 0; y--) if (BL[getB(x, y, z)].solid) return y; return 0; }
 
+function addNote(x, y, z, b, note) { setRaw(x, y, z, b); NOTES.set(key3(x, y, z), note); }
+// A small boat, five blocks long, pointing out to sea (+x)
+function boat(x0, z0) {
+  fill(x0, G - 1, z0, x0 + 4, G - 1, z0 + 4, B.PLANKS); fill(x0, G, z0, x0 + 4, G, z0, B.PLANKS); fill(x0, G, z0 + 4, x0 + 4, G, z0 + 4, B.PLANKS);
+  fill(x0, G, z0, x0, G, z0 + 4, B.PLANKS); fill(x0 + 4, G, z0, x0 + 4, G, z0 + 4, B.PLANKS); setRaw(x0 + 5, G, z0 + 2, B.PLANKS);
+  fill(x0 + 2, G, z0 + 2, x0 + 2, G + 5, z0 + 2, B.LOG); fill(x0 + 2, G + 2, z0, x0 + 2, G + 4, z0 + 4, B.CLOTH);
+}
+// Trees: cypresses and umbrella pines, kept out of the town strip
+function trees(n, skip) {
+  for (let i = 0; i < n; i++) {
+    const x = 2 + Math.floor(rnd() * (W - 4)), z = 2 + Math.floor(rnd() * (D - 4));
+    if (skip(x, z)) continue;
+    const gy = groundTop(x, z);
+    if (getB(x, gy, z) !== B.GRASS || gy > G + 6) continue;
+    const y = gy + 1;
+    if (rnd() < 0.6) {
+      fill(x, y, z, x, y + 1, z, B.LOG);
+      fill(x, y + 2, z, x, y + 7, z, B.LEAVES);
+      for (let h = 3; h <= 5; h++) { setRaw(x + 1, y + h, z, B.LEAVES); setRaw(x - 1, y + h, z, B.LEAVES); setRaw(x, y + h, z + 1, B.LEAVES); setRaw(x, y + h, z - 1, B.LEAVES); }
+    } else {
+      fill(x, y, z, x, y + 4, z, B.LOG);
+      for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+        if (Math.abs(dx) + Math.abs(dz) < 4) setRaw(x + dx, y + 5, z + dz, B.LEAVES);
+        if (Math.abs(dx) + Math.abs(dz) < 2) setRaw(x + dx, y + 6, z + dz, B.LEAVES);
+      }
+    }
+  }
+}
+// The road south of the town (z 69–71)
+function road(x0, x1) {
+  fill(x0, G, 67, x1, H - 1, 74, B.AIR);
+  fill(x0, G - 1, 67, x1, G - 1, 74, B.GRASS);
+  fill(x0, G - 1, 69, x1, G - 1, 71, B.COBBLE);
+}
+
 function generateWorld() {
-  seed = 4242;
+  seed = LV.seed;
   world.fill(0);
-  LOCKS = []; lockMap = new Map(); GATES = [[], [], [], [], []]; gateMap = new Map();
+  LOCKS = []; lockMap = new Map(); GATES = [[], [], [], [], []]; gateMap = new Map(); NOTES = new Map(); SECRET = null;
 
   // Ground
   fill(0, 0, 0, W - 1, 1, D - 1, B.STONE);
   fill(0, 2, 0, W - 1, G - 2, D - 1, B.DIRT);
   fill(0, G - 1, 0, W - 1, G - 1, D - 1, B.GRASS);
 
+  if (LV.key === 'rome') buildRome(); else buildPompeii();
+  // Later rooms' walls can overwrite earlier doors: put every door back
+  GATES.forEach(list => list.forEach(([x, y, z]) => setRaw(x, y, z, B.GATE)));
+}
+
+function buildPompeii() {
   // Vesuvius
   const VX = 56, VZ = 2, VR = 36, VH = 32;
   for (let z = 0; z < 38; z++) for (let x = VX - VR; x <= VX + VR; x++) {
@@ -1247,26 +1400,7 @@ function generateWorld() {
     if (crater) setRaw(x, top, z, B.LAVA);
   }
 
-  // Trees: cypresses and umbrella pines
-  for (let i = 0; i < 70; i++) {
-    const x = 2 + Math.floor(rnd() * (W - 4)), z = 2 + Math.floor(rnd() * (D - 4));
-    if (z > 34 && z < 62 && x < 100) continue;
-    if (x > 98) continue;
-    const gy = groundTop(x, z);
-    if (getB(x, gy, z) !== B.GRASS || gy > G + 6) continue;
-    const y = gy + 1;
-    if (rnd() < 0.6) {
-      fill(x, y, z, x, y + 1, z, B.LOG);
-      fill(x, y + 2, z, x, y + 7, z, B.LEAVES);
-      for (let h = 3; h <= 5; h++) { setRaw(x + 1, y + h, z, B.LEAVES); setRaw(x - 1, y + h, z, B.LEAVES); setRaw(x, y + h, z + 1, B.LEAVES); setRaw(x, y + h, z - 1, B.LEAVES); }
-    } else {
-      fill(x, y, z, x, y + 4, z, B.LOG);
-      for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
-        if (Math.abs(dx) + Math.abs(dz) < 4) setRaw(x + dx, y + 5, z + dz, B.LEAVES);
-        if (Math.abs(dx) + Math.abs(dz) < 2) setRaw(x + dx, y + 6, z + dz, B.LEAVES);
-      }
-    }
-  }
+  trees(70, (x, z) => (z > 34 && z < 62 && x < 100) || x > 98);
 
   // Clear the town strip
   fill(4, G, 40, 94, H - 1, 56, B.AIR);
@@ -1284,6 +1418,23 @@ function generateWorld() {
   fill(13, G, 53, 13, G + 5, 55, B.RED);
   fill(15, G, 55, 16, G, 55, B.CLOTH); fill(6, G, 55, 7, G, 55, B.CLOTH);
   setRaw(11, G, 54, B.AMPHORA); setRaw(11, G, 55, B.CRATE);
+  // ── Secret: a cracked wall in the west bedroom hides a cellar ──
+  fill(4, G, 57, 15, H - 1, 67, B.AIR);
+  fill(5, G - 1, 57, 13, G - 1, 65, B.MOSAIC);
+  fill(4, G, 57, 4, G + 3, 66, B.BRICK); fill(14, G, 57, 14, G + 3, 66, B.BRICK); fill(4, G, 66, 14, G + 3, 66, B.BRICK);
+  fill(4, G + 4, 57, 14, G + 4, 66, B.ROOF);
+  setRaw(9, G, 56, B.CRACK); setRaw(9, G + 1, 56, B.CRACK);
+  SECRET = { door: [[9, G, 56], [9, G + 1, 56]], x0: 5, x1: 13, z0: 57, z1: 65, open: false };
+  addNote(9, G - 1, 57, B.CANEM, { title: 'Floor mosaic', lat: 'cave canem', en: 'Beware of the dog!',
+    about: 'A mosaic like this guards the front door of the House of the Tragic Poet in Pompeii. You can still see it there today.' });
+  addNote(14, G + 1, 60, B.GRAFFITO, { title: 'Words scratched on the wall', lat: 'admiror, o paries, te non cecidisse ruinis, qui tot scriptorum taedia sustineas.',
+    en: 'I am amazed, O wall, that you have not fallen down, since you hold up the boring scribbles of so many writers.',
+    about: 'This is a real graffito from Pompeii. Someone scratched it on walls in the Basilica, the theatre and the amphitheatre.' });
+  addNote(4, G + 1, 62, B.GRAFFITO, { title: 'Words scratched on the wall', lat: 'C. Pumidius Dipilus heic fuit.', en: 'Gaius Pumidius Dipilus was here.',
+    about: 'A real Pompeii graffito, written in 78 BC. heic is an old spelling of hic (here). People have scratched “I was here” on walls for over 2,000 years.' });
+  fill(12, G, 64, 13, G, 65, B.GOLD); setRaw(13, G + 1, 65, B.GOLD);   // the treasure
+  setRaw(6, G, 65, B.AMPHORA); setRaw(7, G, 65, B.AMPHORA); setRaw(6, G + 1, 65, B.AMPHORA);
+  setRaw(6, G, 59, B.CHEST); setRaw(13, G, 58, B.STONE); setRaw(13, G + 1, 58, B.FIRE);
   setRaw(6, G, 48, B.PLANKS); setRaw(6, G, 47, B.PLANKS);    // desk
   [[9, 42], [17, 42]].forEach(([x, z]) => { setRaw(x, G, z, B.BRICK); setRaw(x, G + 1, z, B.LEAVES); });
   setRaw(20, G, 42, B.STONE); setRaw(20, G + 1, 42, B.FIRE);
@@ -1348,6 +1499,7 @@ function generateWorld() {
   addLock(3, 1, 70, G + 3, 48, B.PLAQUE);
   addLock(3, 2, 74, G + 1, 56, B.TABLET);
   addGate(3, 76, G, 47, 76, G + 2, 49);
+  fill(75, G, 40, 75, G + 1, 40, B.PLANKS); fill(75, G, 56, 75, G + 1, 56, B.PLANKS);   // side doors (people run through)
 
   // ── Room V: the sea gate ──
   fill(77, G - 1, 41, 91, G - 1, 55, B.COBBLE);
@@ -1365,6 +1517,7 @@ function generateWorld() {
   addLock(4, 1, 92, G + 1, 45, B.PLAQUE);
   addLock(4, 2, 91, G + 7, 42, B.CHEST);
   addGate(4, 92, G, 47, 92, G + 3, 49);
+  fill(90, G, 40, 90, G + 1, 40, B.PLANKS); fill(90, G, 56, 90, G + 1, 56, B.PLANKS);
 
   // ── Outside: road, beach, sea, boat ──
   fill(95, G, 30, W - 1, H - 1, D - 1, B.AIR);
@@ -1373,9 +1526,141 @@ function generateWorld() {
   fill(105, G - 3, 20, W - 1, G - 3, D - 1, B.SAND);
   fill(105, G - 2, 20, W - 1, G - 1, D - 1, B.WATER);
   fill(95, G, 40, 100, G + 1, 40, B.LEAVES); fill(95, G, 56, 100, G + 1, 56, B.LEAVES);
-  fill(105, G - 1, 46, 109, G - 1, 50, B.PLANKS); fill(105, G, 46, 109, G, 46, B.PLANKS); fill(105, G, 50, 109, G, 50, B.PLANKS);
-  fill(105, G, 46, 105, G, 50, B.PLANKS); fill(109, G, 46, 109, G, 50, B.PLANKS); fill(110, G, 48, 110, G, 48, B.PLANKS);
-  fill(107, G, 48, 107, G + 5, 48, B.LOG); fill(107, G + 2, 46, 107, G + 4, 50, B.CLOTH);
+  boat(105, 46); boat(105, 61); boat(106, 31);
+  // The road the crowds take to the sea
+  road(0, 100);
+}
+
+// ── Level 2: Rome, 15 March 44 BC ──
+function buildRome() {
+  // The Capitoline Hill, with the temple of Jupiter on top
+  const VX = 56, VZ = 8, VR = 30, VH = 18;
+  const flat = G - 1 + Math.floor(VH * Math.pow(1 - 7 / VR, 1.1));
+  for (let z = 0; z < 39; z++) for (let x = VX - VR; x <= VX + VR; x++) {
+    const r = Math.hypot(x - VX, z - VZ);
+    if (r >= VR) continue;
+    const top = r < 7 ? flat : G - 1 + Math.floor(VH * Math.pow(1 - r / VR, 1.1) + (rnd() - 0.5) * 1.2);
+    for (let y = G; y <= top; y++) setRaw(x, y, z, y === top ? B.GRASS : y > top - 3 ? B.DIRT : B.STONE);
+  }
+  const T = flat;
+  fill(50, T + 1, 3, 62, T + 1, 13, B.TRAV);
+  fill(52, T + 2, 3, 60, T + 6, 9, B.MARBLE);
+  for (let x = 50; x <= 62; x += 2) fill(x, T + 2, 12, x, T + 6, 12, B.COLUMN);
+  fill(50, T + 7, 3, 62, T + 7, 13, B.ROOF); fill(51, T + 8, 3, 61, T + 8, 12, B.ROOF); fill(53, T + 9, 3, 59, T + 9, 11, B.ROOF);
+  setRaw(56, T + 10, 8, B.GOLD);
+
+  trees(90, (x, z) => (z > 34 && z < 62 && x < 100) || x > 98 || x < 6);
+  fill(4, G, 40, 94, H - 1, 56, B.AIR);
+
+  // The Tiber, with a bridge where the road crosses it
+  fill(0, G, 0, 3, H - 1, D - 1, B.AIR);
+  fill(0, G - 2, 0, 3, G - 2, D - 1, B.SAND);
+  fill(0, G - 1, 0, 3, G - 1, D - 1, B.WATER);
+  boat(-1, 24);
+
+  // ── Room I: the river docks ──
+  fill(5, G - 1, 41, 21, G - 1, 55, B.COBBLE);
+  fill(9, G - 1, 41, 11, G - 1, 55, B.PLANKS);                // wooden quay
+  fill(5, G - 2, 41, 8, G - 2, 55, B.SAND); fill(5, G - 1, 41, 8, G - 1, 55, B.WATER);   // a canal off the river
+  fill(4, G, 40, 22, G + 5, 40, B.BRICK); fill(4, G, 56, 22, G + 5, 56, B.BRICK);
+  fill(4, G, 40, 4, G + 5, 56, B.BRICK); fill(22, G, 40, 22, G + 5, 56, B.BRICK);
+  fill(4, G - 1, 42, 4, G + 2, 54, B.BARS);                   // the river grille
+  // our boat, moored in the canal
+  fill(5, G - 1, 45, 8, G - 1, 51, B.PLANKS);
+  fill(5, G, 45, 8, G, 45, B.PLANKS); fill(5, G, 51, 8, G, 51, B.PLANKS); fill(5, G, 45, 5, G, 51, B.PLANKS); fill(8, G, 45, 8, G, 51, B.PLANKS);
+  fill(6, G - 1, 52, 7, G, 52, B.PLANKS);
+  fill(5, G + 2, 47, 8, G + 3, 47, B.CLOTH); fill(6, G, 47, 6, G + 5, 47, B.LOG);
+  setRaw(9, G, 43, B.LOG); setRaw(9, G, 53, B.LOG);           // bollards
+  fill(11, G, 41, 11, G + 5, 41, B.LOG); fill(9, G + 5, 41, 11, G + 5, 41, B.PLANKS);   // crane
+  fill(15, G, 43, 15, G, 45, B.MARBLE);                       // fish stall
+  fill(14, G, 54, 16, G, 55, B.CRATE); fill(14, G + 1, 55, 15, G + 1, 55, B.CRATE);
+  fill(18, G, 54, 19, G, 55, B.AMPHORA); setRaw(20, G, 55, B.AMPHORA); setRaw(20, G, 54, B.CRATE);
+  fill(16, G, 41, 17, G, 41, B.CRATE); setRaw(17, G + 1, 41, B.CRATE);
+  addLock(0, 0, 14, G, 41, B.CHEST);
+  addLock(0, 1, 20, G + 1, 54, B.AMPHORA);
+  addLock(0, 2, 17, G + 2, 56, B.TABLET);
+  addGate(0, 22, G, 47, 22, G + 2, 49);
+
+  // ── Room II: the Subura ──
+  fill(23, G - 1, 41, 39, G - 1, 55, B.COBBLE);
+  fill(23, G - 1, 41, 39, G, 42, B.STONE); fill(23, G - 1, 54, 39, G, 55, B.STONE);       // pavements
+  fill(23, G, 40, 39, G + 11, 40, B.YELLOW); fill(23, G, 56, 39, G + 11, 56, B.YELLOW);   // blocks of flats
+  fill(23, G + 4, 40, 39, G + 4, 40, B.RED); fill(23, G + 4, 56, 39, G + 4, 56, B.RED);
+  fill(40, G, 40, 40, G + 5, 56, B.BRICK);
+  for (let x = 24; x <= 38; x += 3) { fill(x, G + 6, 40, x, G + 7, 40, B.BARS); fill(x + 1, G + 8, 56, x + 1, G + 9, 56, B.BARS); }
+  fill(23, G + 5, 41, 39, G + 5, 41, B.PLANKS); fill(23, G + 5, 55, 39, G + 5, 55, B.PLANKS);   // balconies
+  fill(33, G + 1, 40, 34, G + 2, 40, B.PLANKS); fill(27, G + 1, 56, 28, G + 2, 56, B.PLANKS);   // doors
+  fill(35, G + 1, 42, 37, G + 1, 42, B.MARBLE);              // a hot-food counter
+  fill(35, G + 3, 41, 37, G + 3, 41, B.CLOTH);
+  fill(36, G, 50, 38, G, 52, B.STONE); setRaw(37, G, 51, B.WATER); setRaw(37, G + 1, 52, B.MARBLE);   // fountain
+  setRaw(24, G + 1, 42, B.AMPHORA); setRaw(38, G + 1, 54, B.CRATE); setRaw(25, G + 1, 55, B.MARBLE);
+  addLock(1, 0, 25, G + 2, 56, B.SHRINE);                    // a street-corner shrine
+  addLock(1, 1, 31, G + 2, 40, B.PLAQUE);                    // a painted notice
+  addLock(1, 2, 36, G + 1, 42, B.AMPHORA);
+  addGate(1, 40, G, 47, 40, G + 2, 49);
+
+  // ── Room III: the Forum ──
+  fill(41, G - 1, 41, 55, G - 1, 55, B.TRAV);
+  walls(40, 56, 6, B.MARBLE);
+  [42, 45, 50].forEach(x => fill(x, G, 42, x, G + 4, 42, B.COLUMN));   // temple of Saturn
+  fill(41, G + 5, 42, 51, G + 5, 42, B.MARBLE);
+  fill(43, G, 52, 49, G + 1, 55, B.TRAV);                    // the Rostra
+  setRaw(44, G + 1, 51, B.BASALT); setRaw(48, G + 1, 51, B.BASALT);   // ships' beaks
+  setRaw(50, G, 54, B.TRAV);
+  setRaw(53, G, 42, B.MARBLE); setRaw(53, G + 1, 42, B.FIRE); setRaw(54, G, 42, B.MARBLE);   // Vesta's fire
+  fill(51, G, 40, 51, G + 1, 40, B.PLANKS); fill(51, G, 56, 51, G + 1, 56, B.PLANKS);
+  addLock(2, 0, 46, G, 52, B.PLAQUE);
+  addLock(2, 1, 54, G + 1, 42, B.SHRINE);
+  addLock(2, 2, 47, G + 2, 40, B.TABLET);
+  addGate(2, 56, G, 47, 56, G + 2, 49);
+
+  // ── Room IV: the Theatre of Pompey ──
+  fill(57, G - 1, 41, 75, G - 1, 55, B.TRAV);
+  walls(56, 76, 8, B.MARBLE);
+  for (let i = 0; i <= 4; i++) fill(57, G, 45 - i, 75, G + i, 45 - i, B.TRAV);   // seats
+  fill(57, G, 52, 75, G, 55, B.PLANKS);                      // stage
+  [59, 63, 67, 71].forEach(x => fill(x, G + 1, 55, x, G + 5, 55, B.COLUMN));
+  fill(57, G + 6, 54, 75, G + 6, 55, B.ROOF);
+  setRaw(61, G + 1, 54, B.AMPHORA); setRaw(72, G + 1, 53, B.CRATE);
+  addLock(3, 0, 66, G + 5, 41, B.SHRINE);                    // Venus' shrine at the top of the seats
+  addLock(3, 1, 66, G, 52, B.PLAQUE);
+  addLock(3, 2, 60, G + 1, 53, B.AMPHORA);
+  addGate(3, 76, G, 47, 76, G + 2, 49);
+
+  // ── Room V: the gardens of Pompey ──
+  fill(77, G - 1, 47, 91, G - 1, 49, B.COBBLE);
+  fill(76, G, 40, 92, G + 5, 40, B.TRAV); fill(76, G, 56, 92, G + 5, 56, B.TRAV);
+  for (let x = 78; x <= 90; x += 3) { fill(x, G, 42, x, G + 4, 42, B.COLUMN); fill(x, G, 54, x, G + 4, 54, B.COLUMN); }
+  fill(77, G + 5, 41, 91, G + 5, 42, B.ROOF); fill(77, G + 5, 54, 91, G + 5, 55, B.ROOF);
+  [[81, 45], [87, 45], [81, 51], [87, 51]].forEach(([x, z]) => {        // plane trees
+    fill(x, G, z, x, G + 3, z, B.LOG);
+    for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+      if (Math.abs(dx) + Math.abs(dz) < 4) setRaw(x + dx, G + 4, z + dz, B.LEAVES);
+      if (Math.abs(dx) + Math.abs(dz) < 2) setRaw(x + dx, G + 5, z + dz, B.LEAVES);
+    }
+  });
+  fill(83, G, 50, 85, G, 52, B.STONE); setRaw(84, G, 51, B.WATER);
+  addLock(4, 0, 80, G + 2, 56, B.TABLET);
+  addLock(4, 1, 85, G, 44, B.AMPHORA);
+  addLock(4, 2, 90, G, 52, B.CHEST);
+  fill(92, G, 40, 94, G + 9, 56, B.MARBLE);                  // front of the Senate house
+  fill(92, G + 10, 44, 94, G + 10, 52, B.ROOF); fill(92, G + 11, 46, 94, G + 11, 50, B.ROOF);
+  fill(92, G, 47, 94, G + 3, 49, B.AIR);
+  addGate(4, 92, G, 47, 92, G + 3, 49);
+
+  // ── The Senate house (Curia of Pompey) ──
+  fill(95, G, 30, W - 1, H - 1, D - 1, B.AIR);
+  fill(95, G - 1, 41, 110, G - 1, 55, B.MOSAIC);
+  fill(95, G, 40, 111, G + 8, 40, B.MARBLE); fill(95, G, 56, 111, G + 8, 56, B.MARBLE); fill(111, G, 40, 111, G + 8, 56, B.MARBLE);
+  fill(95, G + 9, 40, 111, G + 9, 56, B.ROOF); fill(100, G + 9, 46, 106, G + 9, 50, B.AIR);
+  fill(96, G, 41, 108, G + 1, 42, B.TRAV); fill(96, G, 43, 108, G, 43, B.TRAV);   // benches
+  fill(96, G, 54, 108, G + 1, 55, B.TRAV); fill(96, G, 53, 108, G, 53, B.TRAV);
+  fill(108, G, 47, 110, G, 49, B.MARBLE); fill(109, G + 1, 48, 109, G + 4, 48, B.MARBLE);   // statue of Pompey
+  setRaw(106, G, 48, B.GOLD);                                // Caesar's golden chair
+  setRaw(97, G, 45, B.STONE); setRaw(97, G + 1, 45, B.FIRE); setRaw(97, G, 51, B.STONE); setRaw(97, G + 1, 51, B.FIRE);
+
+  road(4, 100);
+  fill(0, G - 1, 69, 3, G - 1, 71, B.PLANKS);                // bridge
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1523,6 +1808,255 @@ function burst(x, y, z, n, cols, speed, size) {
 }
 
 // ════════════════════════════════════════════════════════════════
+// PEOPLE (and one dog)
+// Each person follows a path of [x, z] points.
+//   once:   run the path, vanish, wait, then run it again
+//   loop:   go round the path for ever
+//   idle:   stand (or sit) and turn to face the player
+//   follow: the rescued dog follows the player's footsteps
+// ════════════════════════════════════════════════════════════════
+const TUNICS = [[0.78, 0.36, 0.26], [0.52, 0.6, 0.34], [0.85, 0.74, 0.52], [0.42, 0.5, 0.72], [0.9, 0.86, 0.76], [0.62, 0.42, 0.6], [0.7, 0.55, 0.3]];
+const SKINS = [[0.96, 0.8, 0.64], [0.86, 0.66, 0.48], [0.66, 0.46, 0.32], [0.98, 0.86, 0.74], [0.5, 0.34, 0.24]];
+const HAIRS = [[0.25, 0.16, 0.1], [0.1, 0.08, 0.07], [0.55, 0.52, 0.5], [0.5, 0.26, 0.12], [0.8, 0.62, 0.3]];
+const FLEE = [['Fugite! Mons ardet!', 'Run! The mountain is on fire!'], ['Ad mare! Ad naves!', 'To the sea! To the ships!'], ['Festinate!', 'Hurry!'],
+  ['Cinis de caelo cadit!', 'Ash is falling from the sky!'], ['Terra tremit!', 'The earth is shaking!'], ['O di immortales!', 'O immortal gods!'],
+  ['Ubi est filia mea?', 'Where is my daughter?'], ['Cave!', 'Look out!']];
+const HURRY = [['Festinate! Ad theatrum!', 'Hurry! To the theatre!'], ['Gladiatores in theatro pugnant!', 'Gladiators are fighting in the theatre!'],
+  ['Caesar ad curiam venit!', 'Caesar is coming to the Senate house!'], ['Senatores conveniunt.', 'The senators are gathering.'], ['Ubi est Caesar?', 'Where is Caesar?']];
+const WOOF = [['Bau! Bau!', 'Woof! Woof!']];
+const rr = (a, b) => a + Math.random() * (b - a);
+const headingTo = (dx, dz) => Math.atan2(dx, -dz);
+let npcs = [], dogNpc = null, dogRescued = false;
+let npcBuf = null;
+if (gl) npcBuf = gl.createBuffer();
+
+function person(o) {
+  const n = Object.assign({ kind: 'human', mode: 'idle', path: null, seg: 0, speed: 4.5, wait: 0, gap: [1, 5], x: 0, y: G, z: 0, h: 0,
+    phase: Math.random() * 6, hidden: false, moving: false, tunic: pick(TUNICS), skin: pick(SKINS), hair: pick(HAIRS), legs: null,
+    tile: 34, armsUp: false, sit: false, fixedH: false, laurel: false, say: null, line: 0 }, o);
+  if (n.path) { n.x = n.path[0][0]; n.z = n.path[0][1]; n.h = headingTo(n.path[1][0] - n.x, n.path[1][1] - n.z); }
+  n.y0 = n.y;
+  if (n.say) n.line = Math.floor(Math.random() * n.say.length);
+  if (n.mode === 'once' && n.wait > 0) n.hidden = true;
+  return n;
+}
+
+function spawnNpcs() {
+  npcs = []; dogNpc = null;
+  const add = o => { const n = person(o); npcs.push(n); return n; };
+  const runners = (path, k, extra) => {
+    for (let i = 0; i < k; i++) add(Object.assign({ mode: 'once', path, speed: rr(4.4, 5.6), wait: 0.5 + i * rr(2.5, 4), gap: [2, 7], armsUp: Math.random() < 0.4, say: FLEE }, extra ? extra() : {}));
+  };
+  if (LV.key === 'pompeii') {
+    add({ mode: 'loop', path: [[9.3, 43.5], [18.3, 43.5], [18.3, 50.3], [9.3, 50.3]], speed: 3.2, armsUp: true, tunic: [0.7, 0.6, 0.45],
+      say: [['Ubi est dominus?', 'Where is the master?'], ['Dominus fugit!', 'The master has run away!'], ['Fuge! Mons ardet!', 'Run! The mountain is on fire!']] });
+    add({ mode: 'loop', path: [[46.5, 46.5], [53.5, 46.5]], speed: 2.6, armsUp: true, tunic: [0.92, 0.9, 0.84],
+      say: [['Panis meus! Panis meus!', 'My bread! My bread!'], ['Mons ardet! Panis ardet!', 'The mountain is burning! The bread is burning!']] });
+    runners([[33.5, 38.7], [33.5, 42.4], [30.4, 43.4], [29.5, 48.5], [26.4, 52.5], [26.4, 57.3]], 3);   // across the street
+    runners([[75.5, 38.7], [75.5, 57.3]], 3);                                                           // across the forum
+    runners([[90.5, 38.7], [90.5, 57.3]], 3);                                                           // past the sea gate
+    for (let i = 0; i < 16; i++) {                                                                      // the crowd on the road to the sea
+      const z = 69.3 + Math.random() * 1.4;
+      add({ mode: 'once', path: [[Math.random() * 4, z], [98, z], [103.5, 64 + Math.random() * 3], [105.9, 63.5]], speed: rr(3.6, 5.6),
+        wait: Math.random() * 24, gap: [0.5, 4], armsUp: Math.random() < 0.35, say: FLEE });
+    }
+    dogNpc = add({ kind: 'dog', fur: [0.55, 0.38, 0.22], x: 10.5, z: 62.5, h: 0, say: WOOF });     // waiting in the secret cellar
+  } else {
+    add({ mode: 'loop', path: [[13.6, 42.6], [13.6, 46.4]], speed: 1.4, tunic: [0.42, 0.5, 0.7],
+      say: [['Pisces! Pisces recentes!', 'Fish! Fresh fish!'], ['Salve, peregrine!', 'Hello, stranger!']] });
+    const walk = () => ({ speed: rr(3.2, 4.2), armsUp: false, say: HURRY });
+    runners([[33.5, 38.7], [33.5, 42.6], [30.5, 43.6], [28.5, 48.5], [27.5, 53.2], [27.5, 57.3]], 3, walk);
+    runners([[51.5, 38.7], [51.5, 57.3]], 2, walk);
+    add({ x: 47.5, z: 46.5, tunic: [0.32, 0.28, 0.4], hair: [0.6, 0.58, 0.56],                        // Spurinna the soothsayer
+      say: [['Cavete Idus Martias!', 'Beware the Ides of March!'], ['Idus Martiae venerunt, sed non praeterierunt.', 'The Ides of March have come, but they have not gone.']] });
+    [[59.5, 43.5, 3], [62.5, 42.5, 4], [64.5, 43.5, 3], [69.5, 42.5, 4], [71.5, 43.5, 3], [73.5, 42.5, 4]].forEach(([x, z, dy]) =>
+      add({ x, z, y: G + dy, h: Math.PI, fixedH: true, sit: true, armsUp: Math.random() < 0.6, say: [['Euge!', 'Hooray!'], ['Optime!', 'Excellent!'], ['Pugnate!', 'Fight!']] }));
+    add({ mode: 'loop', path: [[79.5, 47.6], [90.4, 47.6]], speed: 1.3, tunic: [1, 1, 1], tile: 33, say: [['Ad curiam eo.', 'I am going to the Senate house.']] });
+    add({ mode: 'loop', path: [[90.4, 48.6], [79.5, 48.6]], speed: 1.2, tunic: [1, 1, 1], tile: 33, say: [['Hodie Caesar venit.', 'Caesar is coming today.']] });
+    add({ x: 104.5, z: 48.5, h: -Math.PI / 2, tunic: [1, 1, 1], tile: 36, laurel: true, hair: [0.3, 0.26, 0.24], skin: [0.95, 0.8, 0.66],
+      say: [['Idus Martiae venerunt!', 'The Ides of March have come!'], ['Quid vis?', 'What do you want?']] });
+    [[99.5, 44.5], [101.5, 44.5], [103.5, 44.5], [99.5, 52.5], [101.5, 52.5], [103.5, 52.5]].forEach(([x, z]) =>
+      add({ x, z, tunic: [1, 1, 1], tile: 33, say: [['Ecce Caesar!', 'Look, Caesar!'], ['Tace!', 'Be quiet!'], ['Quis es tu?', 'Who are you?']] }));
+    for (let i = 0; i < 8; i++) {
+      const z = 69.3 + Math.random() * 1.4;
+      add({ mode: 'once', path: [[5 + Math.random() * 3, z], [100, z]], speed: rr(1.8, 3.2), wait: Math.random() * 30, gap: [1, 6], say: HURRY });
+    }
+    if (game && dogRescued) { dogNpc = add({ kind: 'dog', fur: [0.55, 0.38, 0.22], x: 7.4, z: 46.4, mode: 'follow', say: WOOF }); game.dog = true; }
+  }
+}
+
+function turnTo(n, h, dt, rate) { let d = h - n.h; d = Math.atan2(Math.sin(d), Math.cos(d)); n.h += d * Math.min(1, dt * rate); }
+// Keep feet on the ground: climb one-block steps, drop down ledges, walk straight through walls and doors
+function settleY(n, dt) {
+  const fx = Math.floor(n.x), fz = Math.floor(n.z), fy = Math.floor(n.y + 0.01);
+  const s = y => BL[getB(fx, y, fz)].solid;
+  let ty = n.y;
+  if (s(fy)) { if (!s(fy + 1)) ty = fy + 1; }
+  else { let y = fy - 1; while (y > fy - 6 && !s(y)) y--; if (s(y)) ty = y + 1; }
+  n.y += (ty - n.y) * Math.min(1, dt * 14);
+}
+function npcStep(n, dt) {
+  if (n.mode === 'follow') return followStep(n, dt);
+  if (n.mode === 'idle') {
+    n.moving = false; n.phase += dt * (n.kind === 'dog' ? 14 : 3);
+    if (!n.fixedH && game && Math.hypot(P.x - n.x, P.z - n.z) < 8) turnTo(n, headingTo(P.x - n.x, P.z - n.z), dt, 4);
+    settleY(n, dt); return;
+  }
+  if (n.wait > 0) { n.wait -= dt; n.hidden = true; return; }
+  n.hidden = false;
+  const p = n.path, tgt = p[(n.seg + 1) % p.length];
+  const dx = tgt[0] - n.x, dz = tgt[1] - n.z, d = Math.hypot(dx, dz), step = n.speed * dt;
+  if (d > 1e-4) turnTo(n, headingTo(dx, dz), dt, 12);
+  if (d <= step) {
+    n.x = tgt[0]; n.z = tgt[1]; n.seg++;
+    if (n.mode === 'once' && n.seg >= p.length - 1) {
+      n.seg = 0; n.x = p[0][0]; n.z = p[0][1]; n.y = n.y0; n.h = headingTo(p[1][0] - n.x, p[1][1] - n.z);
+      n.wait = rr(n.gap[0], n.gap[1]); n.hidden = true;
+      if (n.say) n.line = Math.floor(Math.random() * n.say.length);
+      return;
+    }
+    n.seg %= p.length;
+  } else { n.x += dx / d * step; n.z += dz / d * step; }
+  n.moving = true; n.phase += dt * n.speed * 2.2;
+  settleY(n, dt);
+}
+function followStep(n, dt) {
+  const tr = game.trail;
+  if (Math.hypot(P.x - n.x, P.z - n.z) > 20 || Math.abs(P.y - n.y) > 5) {    // left far behind: catch up
+    const c = tr.length > 3 ? tr[tr.length - 4] : P;
+    n.x = c.x; n.z = c.z; n.y = c.y; tr.length = 0;
+  }
+  if (Math.hypot(P.x - n.x, P.z - n.z) < 1.6) {
+    tr.length = 0; n.moving = false; n.phase += dt * 14;
+    turnTo(n, headingTo(P.x - n.x, P.z - n.z), dt, 6); settleY(n, dt); return;
+  }
+  while (tr.length > 1 && Math.hypot(tr[0].x - n.x, tr[0].z - n.z) < 0.5) tr.shift();
+  const tg = tr.length ? tr[0] : P;
+  const dx = tg.x - n.x, dz = tg.z - n.z, d = Math.hypot(dx, dz), step = (tr.length > 10 ? 8 : 5.6) * dt;
+  if (d > 1e-4) { turnTo(n, headingTo(dx, dz), dt, 12); const k = Math.min(1, step / d); n.x += dx * k; n.z += dz * k; }
+  n.moving = true; n.phase += dt * 14;
+  settleY(n, dt);
+}
+function rescueDog() {
+  dogNpc.mode = 'follow'; game.trail = []; game.dog = true; dogRescued = true;
+  sfx.bark(1);
+  toast('<span class="gold">Canis te amat!</span><br>The dog likes you. It will follow you to the boats.', 4000);
+}
+
+// ── Drawing: every body part is a coloured box ──
+const BOX_F = [[[4, 5, 7, 6], 0.92], [[1, 0, 2, 3], 0.86], [[5, 1, 3, 7], 0.74], [[0, 4, 6, 2], 0.74], [[6, 7, 3, 2], 1.0], [[0, 1, 5, 4], 0.55]];
+const nv = [];
+function nbox(n, cx, cy, cz, sx, sy, sz, col, tile, front, piv, rx, ry) {
+  const sh = Math.sin(n.h), ch = Math.cos(n.h), pts = [];
+  for (let i = 0; i < 8; i++) {
+    let lx = cx + (i & 1 ? sx : -sx) / 2, ly = cy + (i & 2 ? sy : -sy) / 2, lz = cz + (i & 4 ? sz : -sz) / 2;
+    if (rx) { const dy = ly - piv[0], dz = lz - piv[1], c = Math.cos(rx), s = Math.sin(rx); ly = piv[0] + c * dy - s * dz; lz = piv[1] + s * dy + c * dz; }
+    if (ry) { const dz = lz - piv[1], c = Math.cos(ry), s = Math.sin(ry), x0 = lx; lx = c * x0 - s * dz; lz = piv[1] + s * x0 + c * dz; }
+    pts.push([n.x + ch * lx + sh * lz, n.y + ly, n.z + sh * lx - ch * lz]);
+  }
+  BOX_F.forEach(([ci, shade], fi) => {
+    const t = fi === 0 && front != null ? front : tile;
+    const u0 = (t % 16) / 16 + 0.002, v0 = Math.floor(t / 16) / 16 + 0.002, u1 = u0 + 1 / 16 - 0.004, v1 = v0 + 1 / 16 - 0.004;
+    const uv = [[u0, v1], [u1, v1], [u1, v0], [u0, v0]];
+    for (const k of [0, 1, 2, 0, 2, 3]) { const p = pts[ci[k]]; nv.push(p[0], p[1], p[2], uv[k][0], uv[k][1], col[0] * shade, col[1] * shade, col[2] * shade); }
+  });
+}
+function drawHuman(n) {
+  const run = n.moving ? Math.sin(n.phase) : 0;
+  const drop = n.sit ? -0.45 : 0, b = (n.moving ? Math.abs(Math.cos(n.phase)) * 0.07 : 0) + drop;
+  const legA = n.sit ? -1.45 : run * 0.55;
+  let armL, armR;
+  if (n.armsUp) { const w = Math.sin(n.phase * 1.6) * 0.35; armL = -2.75 + w; armR = -2.75 - w; }
+  else if (n.moving) { armL = -run * 0.6; armR = run * 0.6; }
+  else armL = armR = Math.sin(n.phase) * 0.04;
+  const legCol = n.legs || n.skin;
+  nbox(n, -0.12, 0.375 + drop, 0, 0.2, 0.75, 0.22, legCol, 34, null, [0.75 + drop, 0], legA);
+  nbox(n, 0.12, 0.375 + drop, 0, 0.2, 0.75, 0.22, legCol, 34, null, [0.75 + drop, 0], n.sit ? legA : -legA);
+  nbox(n, 0, 1.0 + b, 0, 0.52, 0.72, 0.3, n.tunic, n.tile);
+  nbox(n, -0.35, 1.03 + b, 0, 0.17, 0.6, 0.17, n.skin, 34, null, [1.3 + b, 0], armL);
+  nbox(n, 0.35, 1.03 + b, 0, 0.17, 0.6, 0.17, n.skin, 34, null, [1.3 + b, 0], armR);
+  nbox(n, 0, 1.58 + b, 0, 0.44, 0.44, 0.44, n.skin, 34, 35);
+  nbox(n, 0, 1.83 + b, -0.02, 0.47, 0.08, 0.48, n.hair, 34);
+  nbox(n, 0, 1.62 + b, -0.215, 0.47, 0.38, 0.06, n.hair, 34);
+  if (n.laurel) nbox(n, 0, 1.77 + b, 0, 0.5, 0.06, 0.5, [0.3, 0.62, 0.22], 34);
+}
+function drawDog(n) {
+  const run = n.moving ? Math.sin(n.phase * 0.7) : 0, fur = n.fur, dark = mulc(fur, 0.55);
+  nbox(n, 0, 0.5, 0, 0.32, 0.3, 0.66, fur, 34);
+  nbox(n, 0, 0.7, 0.42, 0.3, 0.28, 0.28, fur, 34, 35);
+  nbox(n, 0, 0.62, 0.6, 0.14, 0.12, 0.12, dark, 34);
+  nbox(n, -0.1, 0.88, 0.38, 0.07, 0.1, 0.07, dark, 34); nbox(n, 0.1, 0.88, 0.38, 0.07, 0.1, 0.07, dark, 34);
+  nbox(n, 0, 0.63, 0.27, 0.34, 0.06, 0.06, [0.75, 0.15, 0.12], 34);
+  [[-0.1, 0.24, 1], [0.1, 0.24, -1], [-0.1, -0.24, -1], [0.1, -0.24, 1]].forEach(([x, z, s]) =>
+    nbox(n, x, 0.18, z, 0.09, 0.36, 0.09, fur, 34, null, [0.36, z], run * 0.8 * s));
+  nbox(n, 0, 0.66, -0.46, 0.07, 0.07, 0.28, fur, 34, null, [0.62, -0.33], 0.7, Math.sin(n.phase) * 0.7);
+}
+function drawNpcs(eye) {
+  nv.length = 0;
+  for (const n of npcs) {
+    if (n.hidden || Math.abs(n.x - eye[0]) + Math.abs(n.z - eye[2]) > 140) continue;
+    if (n.kind === 'dog') drawDog(n); else drawHuman(n);
+  }
+  return nv.length / 8;
+}
+
+// ── Speech bubble over the nearest person ──
+let sayN = null, sayT = 0;
+function updateSay(mvp, eye, dt) {
+  const el = $('say'), m = mvp;
+  if (mode !== 'play') { el.style.display = 'none'; sayN = null; return; }
+  // The nearest person you can actually see gets the bubble
+  const near = npcs.filter(n => !n.hidden && n.say && Math.hypot(n.x - P.x, n.y - P.y, n.z - P.z) < 7)
+    .sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
+  let best = null, sx = 0, sy = 0;
+  for (const n of near) {
+    const hx = n.x, hy = n.y + (n.kind === 'dog' ? 1.15 : n.sit ? 1.75 : 2.2), hz = n.z;
+    const cw = m[3] * hx + m[7] * hy + m[11] * hz + m[15];
+    if (cw < 0.2) continue;
+    const cx = (m[0] * hx + m[4] * hy + m[8] * hz + m[12]) / cw, cy = (m[1] * hx + m[5] * hy + m[9] * hz + m[13]) / cw;
+    if (Math.abs(cx) > 0.95 || cy > 0.95 || cy < -0.9) continue;
+    const dx = hx - eye[0], dy = hy - 0.5 - eye[1], dz = hz - eye[2], dl = Math.hypot(dx, dy, dz);
+    const hit = raycast(eye[0], eye[1], eye[2], dx / dl, dy / dl, dz / dl, dl);
+    if (hit && Math.hypot(hit.x + .5 - eye[0], hit.y + .5 - eye[1], hit.z + .5 - eye[2]) < dl - 0.9) continue;
+    best = n; sx = cx; sy = cy; break;
+  }
+  if (!best) { el.style.display = 'none'; sayN = null; return; }
+  if (best !== sayN) { sayN = best; sayT = 3.5; }
+  else if ((sayT -= dt) < 0) { sayT = 3.5; best.line = (best.line + 1) % best.say.length; }
+  const [l, e] = best.say[best.line];
+  if ($('sayL').textContent !== l) { $('sayL').textContent = l; $('sayE').textContent = e; }
+  el.style.display = 'block';
+  el.style.left = ((sx * 0.5 + 0.5) * innerWidth) + 'px';
+  el.style.top = ((0.5 - sy * 0.5) * innerHeight - 6) + 'px';
+}
+
+// ── The secret wall and the notes on the walls ──
+let barkT = 2;
+function openSecret() {
+  if (!SECRET || SECRET.open) return;
+  SECRET.open = true;
+  SECRET.door.forEach(([x, y, z], i) => setTimeout(() => {
+    setB(x, y, z, B.AIR);
+    burst(x + .5, y + .5, z + .5, 26, [[.62, .17, .14], [.5, .45, .4], [.78, .72, .66]], 3, 0.12);
+    sfx.gate();
+  }, i * 220));
+  shake = Math.max(shake, 0.2);
+  toast('<span class="gold">The wall gives way!</span><br>There is a secret room behind it.', 2200);
+}
+function openNote(N) {
+  mode = 'note';
+  if (document.pointerLockElement) document.exitPointerLock();
+  keys.KeyW = keys.KeyA = keys.KeyS = keys.KeyD = false;
+  sfx.click();
+  $('qPanel').innerHTML = `<div class="q-head"><span>Something to read</span><span class="nm">${esc(N.title)}</span></div>` +
+    `<div class="q-latin">${esc(N.lat)}</div><div class="q-en">${esc(N.en)}</div><div class="note-about">${esc(N.about)}</div>` +
+    `<div class="q-done show"><button class="mc-btn big" id="noteClose">Back to the game ▶</button></div>`;
+  show('sQ'); $('sQ').scrollTop = 0;
+  setTimeout(() => { const b = $('noteClose'); if (b) b.focus({ preventScroll: true }); }, 50);
+}
+function closeNote() { sfx.click(); enterPlay(); }
+
+// ════════════════════════════════════════════════════════════════
 // AUDIO — small synthesised effects
 // ════════════════════════════════════════════════════════════════
 let AC = null, noiseBuf = null;
@@ -1557,12 +2091,13 @@ const sfx = {
   rumble: (s) => noise(2.2, 0.35 * s, 110),
   step: () => noise(0.05, 0.035, 1200),
   win: () => [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.25, 'square', 0.05, 0, i * 0.13)),
+  bark: (v) => { v = v || 1; tone(560, 0.07, 'square', 0.045 * v, -180); noise(0.05, 0.08 * v, 1600); tone(500, 0.09, 'square', 0.045 * v, -200, 0.16); noise(0.05, 0.08 * v, 1500, 0.16); },
 };
 
 // ════════════════════════════════════════════════════════════════
 // GAME STATE
 // ════════════════════════════════════════════════════════════════
-let mode = 'title';          // title | story | play | pause | question | win
+let mode = 'title';          // title | story | play | pause | question | note | win
 let game = null, cur = null;
 const P = { x: 8.5, y: G, z: 48.5, vx: 0, vy: 0, vz: 0, yaw: Math.PI / 2, pitch: 0, onGround: false };
 const keys = {};
@@ -1577,18 +2112,26 @@ window.addEventListener('touchstart', () => { if (!isTouch) setTouch(true); }, {
 
 function roomAt(x) { for (let r = 0; r < 5; r++) if (x < ROOM_X[r + 1]) return r; return 5; }
 
-function newGame() {
+function newGame(idx) {
+  if (idx !== undefined) LV = LEVELS[idx];
+  $('loading').textContent = LV.loading;
   $('loading').classList.add('on');
   setTimeout(() => {
     generateWorld(); buildAll();
-    game = { qs: buildGame(), results: new Array(15).fill(null), keys: [0, 0, 0, 0, 0], score: 0, visited: new Set(), t0: 0 };
-    Object.assign(P, { x: 8.5, y: G, z: 48.5, vx: 0, vy: 0, vz: 0, yaw: Math.PI / 2, pitch: -0.05 });
-    parts.length = 0; quakeT = 25;
+    game = { qs: buildGame(), results: new Array(15).fill(null), keys: [0, 0, 0, 0, 0], score: 0, visited: new Set(), t0: 0,
+      trail: [], dog: false, secretFound: false };
+    const st = LV.start;
+    Object.assign(P, { x: st.x, y: G, z: st.z, vx: 0, vy: 0, vz: 0, yaw: st.yaw, pitch: -0.05 });
+    parts.length = 0; quakeT = 25; barkT = 2;
+    spawnNpcs();
     buildHotbar(); updateHud();
+    $('storyH').textContent = LV.story.h; $('storyWhen').textContent = LV.story.when;
+    $('storyBody').innerHTML = LV.story.body; $('beginBtn').textContent = LV.story.btn;
     $('loading').classList.remove('on');
     show('sStory'); mode = 'story';
   }, 30);
 }
+function placeName(here) { return here === 5 ? LV.final.name : `${ROMAN[here]} · ${LV.rooms[here].name}`; }
 
 function show(id) {
   ['sTitle', 'sStory', 'sPause', 'sQ', 'sWin'].forEach(s => $(s).classList.toggle('on', s === id));
@@ -1606,20 +2149,20 @@ function enterPlay() {
 function pauseGame() {
   if (mode !== 'play') return;
   mode = 'pause';
-  $('pauseInfo').textContent = `${ROMAN[Math.min(4, roomAt(P.x))]} · ${ROOMS[Math.min(4, roomAt(P.x))].name}. Locks opened: ${game.keys.reduce((a, b) => a + b, 0)} of 15.`;
+  $('pauseInfo').textContent = `You are in ${placeName(roomAt(P.x))}. Locks opened: ${game.keys.reduce((a, b) => a + b, 0)} of 15.`;
   show('sPause');
 }
 
 // ── HUD ──
 function buildHotbar() {
-  $('hotbar').innerHTML = ROOMS.map((r, i) => `<div class="hslot" id="hs${i}"><span class="rn">${ROMAN[i]}</span><img src="${KEY_ICON}" alt=""><span class="cnt" id="hc${i}"></span></div>`).join('');
+  $('hotbar').innerHTML = LV.rooms.map((r, i) => `<div class="hslot" id="hs${i}"><span class="rn">${ROMAN[i]}</span><img src="${KEY_ICON}" alt=""><span class="cnt" id="hc${i}"></span></div>`).join('');
 }
 function updateHud() {
   if (!game) return;
-  const r = Math.min(4, roomAt(P.x));
-  $('roomName').textContent = `${ROMAN[r]} · ${ROOMS[r].name} (${ROOMS[r].lat})`;
+  const here = roomAt(P.x), r = Math.min(4, here);
+  $('roomName').textContent = here === 5 ? `${LV.final.name} (${LV.final.lat})` : `${ROMAN[r]} · ${LV.rooms[r].name} (${LV.rooms[r].lat})`;
   const n = game.keys[r];
-  $('roomGoal').textContent = roomAt(P.x) === 5 ? 'Run to the boats!' : n < 3 ? `Locks opened here: ${n} / 3` : r === 4 ? 'The sea gate is open. Run to the boats!' : 'The way on is open →';
+  $('roomGoal').textContent = here === 5 ? LV.final.goal : n < 3 ? `Locks opened here: ${n} of 3` : r === 4 ? LV.lastGoal : 'This door is open. Go on →';
   $('scoreN').textContent = game.score;
   for (let i = 0; i < 5; i++) {
     const s = $('hs' + i);
@@ -1631,10 +2174,14 @@ function toast(html, ms) {
   const t = $('toast'); t.innerHTML = html; t.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms || 2600);
 }
-function roomSplash(r) {
-  $('spN').textContent = 'LOCUS ' + ROMAN[r]; $('spT').textContent = ROOMS[r].name; $('spL').textContent = ROOMS[r].lat; $('spI').textContent = ROOMS[r].intro;
+function showSplash(n, t, l, i) {
+  $('spN').textContent = n; $('spT').textContent = t; $('spL').textContent = l; $('spI').textContent = i;
   const s = $('splashR'); s.classList.add('show');
-  clearTimeout(splashT); splashT = setTimeout(() => s.classList.remove('show'), 3200);
+  clearTimeout(splashT); splashT = setTimeout(() => s.classList.remove('show'), 3600);
+}
+function roomSplash(r) {
+  if (r === 5) return showSplash('LOCUS ULTIMUS', LV.final.name, LV.final.lat, LV.final.intro);
+  showSplash('LOCUS ' + ROMAN[r], LV.rooms[r].name, LV.rooms[r].lat, LV.rooms[r].intro);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1687,7 +2234,7 @@ function updatePlayer(dt) {
     const ax = P.x + (sy * fz + cy * fx) * 0.45, az = P.z + (-cy * fz + sy * fx) * 0.45;
     if (collides(ax, P.y + 0.1, az) && !collides(ax, P.y + 1.05, az) && !collides(P.x, P.y + 1.05, P.z)) P.vy = 8.6;
   }
-  if (P.y < -10) Object.assign(P, { x: 8.5, y: G, z: 48.5, vy: 0 });
+  if (P.y < -10) Object.assign(P, { x: LV.start.x, y: G, z: LV.start.z, vy: 0 });
   if (P.onGround && Math.hypot(P.vx, P.vz) > 1) { stepT -= dt * Math.hypot(P.vx, P.vz); if (stepT < 0) { stepT = 1.9; sfx.step(); } }
 }
 
@@ -1719,9 +2266,11 @@ function updateTarget() {
     const k = key3(target.x, target.y, target.z);
     const L = lockMap.get(k);
     const verb = isTouch ? 'Tap USE' : 'Press E';
-    if (L) msg = L.done ? `The ${BL[L.b].lock} is open.` : `${verb} to read the ${BL[L.b].lock}`;
-    else if (gateMap.has(k)) { const r = gateMap.get(k); msg = `Locked. Open all three locks in ${ROOMS[r].name} (${game.keys[r]}/3).`; }
-    else if (BL[target.b].lock) msg = `Just an old ${BL[target.b].lock}. Keep looking.`;
+    if (L) msg = L.done ? `You have opened this ${BL[L.b].lock}.` : `${verb} to try the lock on this ${BL[L.b].lock}`;
+    else if (gateMap.has(k)) { const r = gateMap.get(k); msg = `Locked. Open the 3 locks in ${LV.rooms[r].name} first (${game.keys[r]} of 3 done).`; }
+    else if (NOTES.has(k)) msg = `${verb} to read this`;
+    else if (target.b === B.CRACK) msg = `This plaster is cracked, and something is barking behind it. ${verb} to push.`;
+    else if (BL[target.b].lock) msg = 'No lock here. Look for the golden sparkles.';
   }
   $('actionbar').textContent = msg;
 }
@@ -1730,6 +2279,8 @@ function interact() {
   const k = key3(target.x, target.y, target.z);
   const L = lockMap.get(k);
   if (L && !L.done) openQuestion(L);
+  else if (NOTES.has(k)) openNote(NOTES.get(k));
+  else if (target.b === B.CRACK) openSecret();
   else if (gateMap.has(k)) { sfx.wrong(); }
 }
 
@@ -1741,9 +2292,9 @@ function unlock(L) {
   game.keys[L.room]++;
   const n = game.keys[L.room];
   updateHud();
-  if (n < 3) toast(`<span class="gold">Lock opened!</span><br>${n} of 3 in ${ROOMS[L.room].name}`);
+  if (n < 3) toast(`<span class="gold">Lock opened!</span><br>${n} of 3 done in ${LV.rooms[L.room].name}`);
   else {
-    toast(L.room < 4 ? `<span class="gold">All three locks are open!</span><br>The way to ${ROOMS[L.room + 1].name} is open.` : `<span class="gold">The sea gate is open!</span><br>Run to the boats!`, 3500);
+    toast(L.room < 4 ? `<span class="gold">All three locks are open!</span><br>The door to ${LV.rooms[L.room + 1].name} is opening.` : LV.lastOpen, 3500);
     setTimeout(() => openGate(L.room), 700);
   }
 }
@@ -1796,7 +2347,7 @@ function openQuestion(L) {
 function renderQuestion() {
   const { q, L } = cur;
   const lockName = BL[L.b].lock;
-  let h = `<div class="q-head"><span>${ROMAN[L.room]} · ${esc(ROOMS[L.room].name)} · question ${cur.qi + 1} of 15</span><span class="nm">\u{1F512} The ${esc(lockName)}</span></div>`;
+  let h = `<div class="q-head"><span>${ROMAN[L.room]} · ${esc(LV.rooms[L.room].name)} · question ${cur.qi + 1} of 15</span><span class="nm">\u{1F512} The ${esc(lockName)}</span></div>`;
   h += `<div class="q-task">${esc(q.prompt)}</div>`;
   if (q.type === 'un') h += `<div class="q-en big">${esc(q.it.en)}</div>`;
   else {
@@ -1832,7 +2383,7 @@ function renderSlots() {
   const q = cur.q;
   $('qSlots').innerHTML = cur.placed.length
     ? cur.placed.map((t, i) => `<button class="mc-btn tok" data-placed="${i}">${esc(q.bank[t])}</button>`).join('')
-    : '<span class="ph">Tap the words in order. Not every word is needed.</span>';
+    : '<span class="ph">Tap the words below in order.</span>';
   document.querySelectorAll('[data-tok]').forEach(el => el.classList.toggle('used', cur.placed.includes(+el.dataset.tok)));
 }
 function feedback(ok, html) { const b = $('qFeed'); b.className = 'feed show ' + (ok ? 'ok' : 'no'); b.innerHTML = html; }
@@ -1844,7 +2395,7 @@ function finishQ(ok) {
   if (first) game.score++;
   game.results[cur.qi] = { q: cur.q, first, ok };
   document.querySelectorAll('#qPanel [data-opt], #qPanel [data-tok], #qPanel [data-placed], #qCheck, #qClear').forEach(b => b.disabled = true);
-  if (!ok) $('qDone').textContent = 'Force the lock ▶';
+  if (!ok) $('qDone').textContent = 'Force the lock open ▶';
   $('qDoneRow').classList.add('show');
   setTimeout(() => $('qDone').focus({ preventScroll: true }), 50);
   updateHud();
@@ -1863,7 +2414,7 @@ function chooseOpt(i) {
   if (cur.attempts >= maxAttempts(q)) {
     q.opts.forEach((x, j) => { if (x.ok) document.querySelector(`#qPanel [data-opt="${j}"]`).classList.add('ok'); });
     if (q.type === 'gap') $('gapSlot').textContent = q.answer;
-    feedback(false, '✗ The answer: ' + solvedLine(q));
+    feedback(false, '✗ The right answer: ' + solvedLine(q));
     finishQ(false);
   } else feedback(false, '✗ Not that one. ' + triesLeft());
 }
@@ -1875,7 +2426,7 @@ function checkOrder() {
   markDot(cur.attempts - 1, ok);
   if (ok) { sfx.right(); feedback(true, '✓ ' + solvedLine(q)); finishQ(true); return; }
   sfx.wrong();
-  if (cur.attempts >= maxAttempts(q)) { feedback(false, '✗ The answer: ' + solvedLine(q)); finishQ(false); }
+  if (cur.attempts >= maxAttempts(q)) { feedback(false, '✗ The right answer: ' + solvedLine(q)); finishQ(false); }
   else feedback(false, '✗ Not yet. ' + triesLeft());
 }
 function closeQuestion() {
@@ -1890,10 +2441,20 @@ function winGame() {
   if (document.pointerLockElement) document.exitPointerLock();
   sfx.win();
   const secs = Math.round((performance.now() - game.t0) / 1000);
-  $('winScore').innerHTML = `${game.score} / 15<small>correct first time · escaped in ${Math.floor(secs / 60)}m ${secs % 60}s</small>`;
+  const L1 = LV.key === 'pompeii';
+  $('winH').textContent = L1 ? 'LIBERTAS!' : 'PERVENISTI!';
+  let sub = L1 ? 'You run through the sea gate and jump into a boat. Behind you, Vesuvius roars. You are free.'
+    : 'You push past the senators and press the scroll into Caesar’s hand. He tries to read it, but people keep crowding round to talk to him. He walks into the meeting with the scroll still rolled up.';
+  if (game.dog) sub += L1 ? ' Your dog leaps into the boat after you.' : ' Your dog sniffs Caesar’s sandals.';
+  $('winSub').textContent = sub;
+  $('winScore').innerHTML = `${game.score} / 15<small>right first time · ${L1 ? 'escaped' : 'reached Caesar'} in ${Math.floor(secs / 60)}m ${secs % 60}s</small>`;
+  $('nextRow').style.display = L1 ? 'flex' : 'none';
   const missed = {};
   game.results.forEach(r => { if (r && !r.first) missed[r.q.focus] = (missed[r.q.focus] || 0) + 1; });
   let h = '';
+  if (!L1) h += '<div class="fact"><b>This really happened.</b> On the morning of 15 March 44 BC, a Greek teacher called Artemidorus handed Caesar a written warning about the plot. Plutarch says Caesar tried to read it but never managed to, and went into the Senate with it still in his hand. A few minutes later, the plotters killed him.</div>';
+  if (game.secretFound) h += `<div class="fact"><b>Secret found!</b> You discovered the hidden cellar behind the cracked wall${game.dog ? ' and rescued its dog' : ''}.</div>`;
+  else if (L1) h += '<div class="fact"><b>Did you miss something?</b> A wall in the villa hides a secret. Listen carefully next time.</div>';
   const ks = GRAMMAR.filter(g => missed[g.k]);
   if (ks.length) h += `<h3>Grammar to revise</h3><ul>` + ks.map(g => `<li>${esc(g.name)} <span class="ch">· ${esc(g.ch)} · ${missed[g.k]} ${missed[g.k] === 1 ? 'question' : 'questions'}</span></li>`).join('') + `</ul><div style="height:18px"></div>`;
   h += `<h3>All 15 answers</h3><table class="rev">`;
@@ -1932,21 +2493,25 @@ function syncSetup() {
   const keyStr = [...ticked].sort().join('');
   document.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('on', b.dataset.preset !== 'clear' && PRESETS[+b.dataset.preset].keys === keyStr));
   store.set('grammar', [...ticked]); store.set('types', [...types]);
-  const st = $('setupStatus'), btn = $('startBtn');
-  const warn = m => { st.textContent = m; st.className = 'status warn'; btn.disabled = true; };
+  const st = $('setupStatus'), btns = document.querySelectorAll('[data-level]');
+  const warn = m => { st.textContent = m; st.className = 'status warn'; btns.forEach(b => b.disabled = true); };
   if (!ticked.size) return warn('Tick at least one grammar point.');
   if (!types.size) return warn('Tick at least one question type.');
   const pool = availableItems(), n = pool.length;
-  if (n < 15) return warn(`Only ${n} Bass sentences use just this grammar. Tick more to reach 15.`);
+  if (n < 15) return warn(`The game needs 15 sentences, but only ${n} in the book use just this grammar. Tick more grammar points.`);
   const empty = GRAMMAR.filter(g => ticked.has(g.k) && !pool.some(it => it.t.includes(g.k)));
-  st.textContent = `${n} Bass sentences use only the ticked grammar.` + (empty.length ? ` None for ${empty.map(g => g.name).join('; ')} fits: those sentences also need grammar you have not ticked.` : '');
-  st.className = 'status'; btn.disabled = false;
+  st.textContent = `${n} sentences from the book use only the ticked grammar.` + (empty.length ? ` None of them practise ${empty.map(g => g.name).join('; ')}, because those sentences also need grammar you have not ticked.` : '');
+  st.className = 'status'; btns.forEach(b => b.disabled = false);
 }
 
 // ════════════════════════════════════════════════════════════════
 // INPUT
 // ════════════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
+  if (mode === 'note') {
+    if (['Enter', 'Escape', 'KeyE', 'Space'].includes(e.code)) { e.preventDefault(); closeNote(); }
+    return;
+  }
   if (mode === 'question') {
     if (!cur) return;
     if (/^Digit[1-4]$/.test(e.code) && !cur.answered && cur.q.opts) { chooseOpt(+e.code[5] - 1); e.preventDefault(); }
@@ -2015,11 +2580,14 @@ $('tPause').addEventListener('click', () => pauseGame());
 // Buttons
 document.addEventListener('click', e => {
   const t = e.target;
-  if (t.closest('#startBtn')) { initAudio(); sfx.click(); newGame(); return; }
-  if (t.closest('#beginBtn')) { initAudio(); sfx.click(); game.t0 = performance.now(); enterPlay(); setTimeout(() => { roomSplash(0); game.visited.add(0); }, 300); setTimeout(() => toast('Look for the <span class="gold">golden sparkles</span>: each one marks a lock.', 4000), 3600); return; }
+  const lvBtn = t.closest('[data-level]');
+  if (lvBtn && mode === 'title') { initAudio(); sfx.click(); newGame(+lvBtn.dataset.level); return; }
+  if (t.closest('#beginBtn')) { initAudio(); sfx.click(); game.t0 = performance.now(); enterPlay(); setTimeout(() => { roomSplash(0); game.visited.add(0); }, 300); setTimeout(() => toast('Look for <span class="gold">golden sparkles</span>. Each one marks a lock.', 4000), 3900); return; }
   if (t.closest('#resumeBtn')) { sfx.click(); enterPlay(); return; }
-  if (t.closest('#quitBtn') || t.closest('#changeBtn')) { sfx.click(); mode = 'title'; game = null; generateWorld(); buildAll(); $('splashTxt').textContent = pick(SPLASHES); show('sTitle'); return; }
+  if (t.closest('#quitBtn') || t.closest('#changeBtn')) { sfx.click(); mode = 'title'; game = null; generateWorld(); buildAll(); spawnNpcs(); $('splashTxt').textContent = pick(SPLASHES); show('sTitle'); return; }
   if (t.closest('#againBtn')) { sfx.click(); newGame(); return; }
+  if (t.closest('#nextBtn')) { sfx.click(); newGame(1); return; }
+  if (mode === 'note' && t.closest('#noteClose')) { closeNote(); return; }
   if (mode !== 'question' || !cur) return;
   if (t.closest('#qHelp')) { $('qTable').classList.toggle('show'); sfx.click(); return; }
   if (t.closest('#qDone')) { closeQuestion(); return; }
@@ -2036,7 +2604,6 @@ document.addEventListener('click', e => {
 // ════════════════════════════════════════════════════════════════
 // MAIN LOOP
 // ════════════════════════════════════════════════════════════════
-const SKY0 = [0.55, 0.74, 0.92], SKY1 = [0.52, 0.40, 0.36];
 let last = performance.now(), titleT = 0, dpr = 1;
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -2046,7 +2613,7 @@ window.addEventListener('resize', resize);
 
 function updateWorldFx(dt, room) {
   // Smoke from the crater
-  smokeT -= dt;
+  smokeT = LV.volcano ? smokeT - dt : 0;
   while (smokeT < 0) {
     smokeT += 0.05;
     const g = 0.18 + Math.random() * 0.2;
@@ -2054,10 +2621,13 @@ function updateWorldFx(dt, room) {
     if (Math.random() < 0.25) spawn(56 + (Math.random() - .5) * 3, G + 30, 2, (Math.random() - .5) * 4, 8 + Math.random() * 6, (Math.random() - .5) * 4, 3, [1, 0.45 + Math.random() * 0.3, 0.1, 1], 0.7, 9);
   }
   if (mode === 'title') return;
+  // Plaster dust drifts from the secret wall
+  if (game && SECRET && !SECRET.open && room === 0 && Math.random() < dt * 2)
+    spawn(9.1 + Math.random() * 0.8, G + 1.9, 55.96, 0, -0.4, -0.06, 1.4, [0.72, 0.66, 0.6, 1], 0.05, 1.5);
   // Ash falls harder the further you go
-  const rate = [6, 30, 55, 85, 120, 140][room];
+  const rate = LV.volcano ? [6, 30, 55, 85, 120, 140][room] : 0;
   ashT -= dt * rate;
-  while (ashT < 0) {
+  while (rate && ashT < 0) {
     ashT += 1;
     const g = 0.35 + Math.random() * 0.25;
     spawn(P.x + (Math.random() - .5) * 28, P.y + 10 + Math.random() * 6, P.z + (Math.random() - .5) * 28, 0.4, -1.4 - Math.random(), 0.1, 9, [g, g, g * 0.97, 1], 0.07, 0, true);
@@ -2073,7 +2643,7 @@ function updateWorldFx(dt, room) {
     });
   }
   // Earth tremors
-  if (mode === 'play') {
+  if (mode === 'play' && LV.volcano) {
     quakeT -= dt;
     if (quakeT < 0) { quakeT = 22 + Math.random() * 20 - room * 2; const s = 0.5 + room * 0.15; shake = 0.08 + room * 0.03; sfx.rumble(s); $('hurt').style.opacity = 1; setTimeout(() => $('hurt').style.opacity = 0, 1300); }
   }
@@ -2089,11 +2659,26 @@ function frame(now) {
   if (mode === 'play') {
     updatePlayer(dt);
     room = roomAt(P.x);
-    if (room < 5 && !game.visited.has(room)) { game.visited.add(room); roomSplash(room); }
+    if (!game.visited.has(room)) { game.visited.add(room); roomSplash(room); }
     updateTarget();
     updateHud();
-    if (P.x >= WIN_X) winGame();
+    if (dogNpc && dogNpc.mode === 'follow') {
+      const tr = game.trail, l = tr[tr.length - 1];
+      if (!l || Math.hypot(P.x - l.x, P.z - l.z) > 0.45) { tr.push({ x: P.x, y: P.y, z: P.z }); if (tr.length > 300) tr.shift(); }
+    }
+    if (SECRET) {
+      if (!SECRET.open) {     // a dog barks behind the cracked wall
+        const d = Math.hypot(P.x - 9.5, P.z - 55.5);
+        if (d < 8 && (barkT -= dt) < 0) { barkT = rr(3.5, 7); sfx.bark(Math.max(0.3, 1 - d / 8)); }
+      } else if (!game.secretFound && P.z > 58.5 && P.x < 14) {
+        game.secretFound = true; sfx.right();
+        showSplash('LOCUS SECRETUS', 'The Hidden Cellar', 'cave canem', 'Someone hid their gold down here. And their dog.');
+      }
+      if (dogNpc && dogNpc.mode === 'idle' && SECRET.open && Math.hypot(P.x - dogNpc.x, P.z - dogNpc.z) < 2.4) rescueDog();
+    }
+    if (LV.won()) winGame();
   }
+  if (mode !== 'pause' && mode !== 'win') for (const n of npcs) npcStep(n, dt);
   updateWorldFx(dt, Math.min(room, 5));
   // Rebuild a few changed chunks each frame
   let nb = 0; for (const ci of dirty) { dirty.delete(ci); buildChunk(ci); if (++nb >= 6) break; }
@@ -2112,7 +2697,7 @@ function frame(now) {
     ctr = [eye[0] + d[0], eye[1] + d[1], eye[2] + d[2]];
   }
   const sk = Math.min(1, (game ? Math.min(room, 4) : 1) / 4 + (game && room === 5 ? 0.15 : 0));
-  const sky = SKY0.map((c, i) => c + (SKY1[i] - c) * sk);
+  const sky = LV.sky0.map((c, i) => c + (LV.sky1[i] - c) * sk);
   const fog = [30 - sk * 6, 140 - sk * 50];
   const fov = 1.25, aspect = canvas.width / canvas.height;
   const mvp = mmul(persp(fov, aspect, 0.05, 400), lookAt(eye, ctr));
@@ -2137,6 +2722,8 @@ function frame(now) {
   };
   gl.disable(gl.BLEND); gl.depthMask(true); gl.uniform1f(bp.u.uAlpha, 1);
   for (const c of chunks) if (c && c.n) { bindBlock(c.vbo); gl.drawArrays(gl.TRIANGLES, 0, c.n); }
+  const nn = drawNpcs(eye);
+  if (nn) { gl.bindBuffer(gl.ARRAY_BUFFER, npcBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nv), gl.DYNAMIC_DRAW); bindBlock(npcBuf); gl.drawArrays(gl.TRIANGLES, 0, nn); }
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.uniform1f(bp.u.uAlpha, 0.72);
   for (const c of chunks) if (c && c.wn) { bindBlock(c.wbo); gl.drawArrays(gl.TRIANGLES, 0, c.wn); }
   gl.depthMask(true);
@@ -2184,13 +2771,14 @@ function frame(now) {
   }
   gl.disableVertexAttribArray(pp.a.aCol); gl.disableVertexAttribArray(pp.a.aSize);
   gl.disable(gl.BLEND);
+  updateSay(mvp, eye, dt);
 }
 
 // ── Boot ──
 buildSetup();
 if (gl) {
   resize();
-  generateWorld(); buildAll();
+  generateWorld(); buildAll(); spawnNpcs();
   requestAnimationFrame(frame);
 }
 </script>
