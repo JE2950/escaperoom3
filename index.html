@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fuga Romana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gui: #c6c6c6; --gui-ink: #3f3f3f; --gui-lt: #ffffff; --gui-dk: #555555;
+  --slot: #8b8b8b; --gold: #ffd84a; --ok: #3d8a3d; --bad: #9c3a32;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1b1b; color: #fff;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; -webkit-user-select: none; user-select: none; touch-action: none; }
+canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font-family: inherit; }
+
+/* ── Minecraft-style controls ── */
+.mc-btn { font-size: 1.05rem; color: #fff; text-shadow: 2px 2px 0 #3a3a3a; background: #727272; border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #a9a9a9, inset -2px -3px 0 #4b4b4b; padding: 10px 18px; min-height: 44px; cursor: pointer; letter-spacing: .02em; }
+.mc-btn:hover:not(:disabled), .mc-btn:focus-visible { background: #7b84b9; box-shadow: inset 2px 2px 0 #b9c0ee, inset -2px -3px 0 #4d5585; outline: none; }
+.mc-btn:disabled { color: #9a9a9a; background: #333; box-shadow: none; cursor: default; }
+.mc-btn.big { font-size: 1.3rem; padding: 12px 30px; min-width: 260px; }
+.mc-btn.small { font-size: .9rem; padding: 6px 12px; min-height: 36px; }
+.mc-btn.on { background: #4f8a3f; box-shadow: inset 2px 2px 0 #8ccc72, inset -2px -3px 0 #2f5a24; }
+
+/* ── Screens ── */
+.screen { position: fixed; inset: 0; display: none; overflow-y: auto; z-index: 20; padding: 28px 16px 40px; flex-direction: column; align-items: center; touch-action: pan-y; }
+.screen.on { display: flex; }
+#sTitle { background: linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.55) 45%, rgba(0,0,0,.7)); }
+.logo-wrap { position: relative; margin: 10px 0 6px; text-align: center; }
+.logo { font-size: clamp(44px, 10vw, 104px); font-weight: 700; line-height: 1; color: #d8d8d8; letter-spacing: .04em;
+  text-shadow: 0 4px 0 #8a8a8a, 0 8px 0 #4a4a4a, 0 12px 18px rgba(0,0,0,.6); }
+.logo-sub { font-size: clamp(14px, 2.6vw, 22px); color: #f1d9a6; margin-top: 18px; letter-spacing: .25em; text-shadow: 2px 2px 0 #3a2a10; }
+.splash { position: absolute; right: -14px; bottom: -6px; color: #ffff3c; font-size: clamp(13px, 2.4vw, 20px); text-shadow: 2px 2px 0 #3f3f00;
+  transform: rotate(-14deg); animation: splash .6s ease-in-out infinite alternate; white-space: nowrap; }
+@keyframes splash { to { transform: rotate(-14deg) scale(1.08); } }
+
+.panel { width: 100%; max-width: 860px; background: rgba(0,0,0,.62); border: 2px solid #000; box-shadow: inset 0 0 0 2px #5d5d5d; padding: 18px 20px; margin-top: 18px; }
+.panel h3 { margin: 0 0 12px; font-size: 1.05rem; color: #ffe08a; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.ticks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.tick { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 4px 0; font-size: .98rem; color: #e8e8e8; }
+.tick input { position: absolute; opacity: 0; pointer-events: none; }
+.tick .box { flex: 0 0 20px; height: 20px; margin-top: 1px; background: #8b8b8b; border: 2px solid; border-color: #373737 #fff #fff #373737; display: grid; place-items: center; }
+.tick input:checked + .box::after { content: ''; width: 10px; height: 10px; background: #5fd35f; box-shadow: 0 0 0 2px #1f4f1f; }
+.tick input:focus-visible + .box { outline: 2px solid #fff; }
+.tick .ch { display: block; font-size: .78rem; color: #9f9f9f; }
+.status { margin-top: 14px; color: #bde6a8; font-size: .92rem; min-height: 1.2em; }
+.status.warn { color: #ffb36b; }
+.start-row { display: flex; justify-content: center; margin-top: 22px; }
+.controls-line { margin-top: 18px; color: #cfcfcf; font-size: .9rem; text-align: center; line-height: 1.7; }
+kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid; border-color: #fff #373737 #373737 #fff; padding: 0 6px; font-family: inherit; font-size: .82rem; }
+.credit { margin-top: 18px; font-size: .78rem; color: #a8a8a8; text-align: center; max-width: 700px; line-height: 1.5; }
+
+#sStory, #sPause, #sWin { background: rgba(10,6,4,.72); justify-content: center; }
+#sWin { justify-content: flex-start; }
+.story { max-width: 640px; text-align: center; }
+.story h2 { font-size: clamp(28px, 6vw, 46px); margin: 0 0 6px; color: #ffcf6b; text-shadow: 3px 3px 0 #4a2a00; }
+.story .when { color: #c9b28a; letter-spacing: .3em; margin-bottom: 18px; }
+.story p { font-size: 1.12rem; line-height: 1.65; color: #f0e6d2; margin: 0 0 14px; }
+.story .mc-btn { margin-top: 12px; }
+
+/* ── HUD ── */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; display: none; }
+#hud.on { display: block; }
+#cross { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%,-50%); mix-blend-mode: difference; }
+#cross::before, #cross::after { content: ''; position: absolute; background: #fff; }
+#cross::before { left: 10px; top: 0; width: 2px; height: 22px; }
+#cross::after { top: 10px; left: 0; width: 22px; height: 2px; }
+#roomBox { position: absolute; left: 12px; top: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; max-width: calc(100vw - 120px); }
+#roomName { font-size: 1.05rem; color: #ffe08a; text-shadow: 2px 2px 0 #000; }
+#roomGoal { font-size: .85rem; color: #ddd; margin-top: 3px; }
+#scoreBox { position: absolute; right: 12px; top: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; font-size: .95rem; text-shadow: 2px 2px 0 #000; }
+#scoreBox b { color: #7dff7d; }
+#hotbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; background: rgba(0,0,0,.35); border: 2px solid #000; box-shadow: inset 0 0 0 2px #8b8b8b; }
+.hslot { position: relative; width: 52px; height: 52px; border: 2px solid; border-color: #373737 #8b8b8b #8b8b8b #373737; background: rgba(139,139,139,.45); display: grid; place-items: center; }
+.hslot img { width: 34px; height: 34px; image-rendering: pixelated; opacity: .18; }
+.hslot.has img { opacity: 1; }
+.hslot .cnt { position: absolute; right: 3px; bottom: 0; font-size: 1rem; text-shadow: 2px 2px 0 #3f3f3f; }
+.hslot .rn { position: absolute; left: 4px; top: 1px; font-size: .62rem; color: #ddd; text-shadow: 1px 1px 0 #000; }
+.hslot.sel { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #000; z-index: 1; }
+.hslot.full { background: rgba(80,160,80,.45); }
+#actionbar { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); font-size: 1.08rem; text-shadow: 2px 2px 0 #3f3f3f; white-space: nowrap; max-width: 96vw; overflow: hidden; text-overflow: ellipsis; }
+#toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font-size: 1.25rem; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; text-align: center; opacity: 0; transition: opacity .4s; width: 92vw; }
+#toast.show { opacity: 1; }
+#toast .gold { color: #ffd84a; }
+#splashR { position: absolute; left: 0; right: 0; top: 30%; text-align: center; opacity: 0; transition: opacity .6s; }
+#splashR.show { opacity: 1; }
+#splashR .n { font-size: 1.1rem; color: #ddd; letter-spacing: .4em; text-shadow: 2px 2px 0 #000; }
+#splashR .t { font-size: clamp(34px, 7vw, 64px); color: #fff; text-shadow: 4px 4px 0 #3a3a3a; }
+#splashR .l { font-size: 1.4rem; color: #ffe08a; font-style: italic; text-shadow: 2px 2px 0 #000; }
+#splashR .i { font-size: 1rem; color: #eee; margin-top: 10px; text-shadow: 2px 2px 0 #000; padding: 0 16px; }
+#hurt { position: absolute; inset: 0; background: radial-gradient(transparent 55%, rgba(120,40,0,.35)); opacity: 0; transition: opacity 1s; }
+
+/* ── Touch controls ── */
+#touch { display: none; position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+body.touch #touch.on { display: block; }
+#joy { position: absolute; left: 22px; bottom: 90px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.35); pointer-events: auto; }
+#joyKnob { position: absolute; left: 40px; top: 40px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.45); }
+.tbtn { position: absolute; pointer-events: auto; width: 74px; height: 74px; font-size: 1rem; }
+#tUse { right: 22px; bottom: 150px; }
+#tJump { right: 104px; bottom: 90px; }
+#tPause { position: absolute; right: 12px; top: 62px; pointer-events: auto; }
+
+/* ── Question GUI (inventory-style panel) ── */
+#sQ { background: rgba(0,0,0,.55); justify-content: flex-start; }
+.gui { width: 100%; max-width: 780px; margin: auto 0; background: var(--gui); color: var(--gui-ink); border: 3px solid; border-color: var(--gui-lt) var(--gui-dk) var(--gui-dk) var(--gui-lt); outline: 3px solid #000; padding: 18px 20px 20px; }
+.q-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .95rem; color: #555; border-bottom: 2px solid #999; padding-bottom: 8px; margin-bottom: 12px; }
+.q-head .nm { color: #3f3f3f; font-weight: 600; }
+.q-task { font-size: 1.05rem; margin-bottom: 10px; }
+.q-latin { background: #f3e4bf; color: #3a2a12; border: 2px solid; border-color: #7a6440 #fff6dc #fff6dc #7a6440; padding: 14px 16px; font-size: clamp(1.25rem, 4vw, 1.7rem); line-height: 1.5; text-align: center; font-weight: 600; }
+.q-latin .gap { display: inline-block; min-width: 4.5em; border-bottom: 3px solid #3a2a12; color: #2d6a2d; }
+.q-latin .tgt { background: #ffd84a; padding: 0 4px; box-shadow: 0 0 0 2px #8a6a00; }
+.q-en { text-align: center; color: #555; margin-top: 8px; font-size: 1.05rem; }
+.q-en.big { background: #f3e4bf; color: #3a2a12; padding: 12px; font-size: 1.3rem; border: 2px solid; border-color: #7a6440 #fff6dc #fff6dc #7a6440; }
+.q-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 10px; flex-wrap: wrap; }
+.dots { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: #555; }
+.dot { width: 16px; height: 16px; background: var(--slot); border: 2px solid; border-color: #373737 #fff #fff #373737; }
+.dot.ok { background: #5fd35f; } .dot.no { background: #d8574a; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice { text-align: left; display: flex; gap: 10px; align-items: center; font-size: 1.05rem; padding: 10px 12px; }
+.choice .k { display: inline-grid; place-items: center; min-width: 24px; height: 24px; background: rgba(0,0,0,.3); font-size: .85rem; }
+.choice.ok { background: var(--ok); box-shadow: inset 2px 2px 0 #7fd07f, inset -2px -3px 0 #1f501f; }
+.choice.no { background: var(--bad); box-shadow: inset 2px 2px 0 #e08a80, inset -2px -3px 0 #5a1d18; }
+.choice.ok:disabled, .choice.no:disabled { color: #fff; }
+.choice.ok:disabled { background: var(--ok); box-shadow: inset 2px 2px 0 #7fd07f, inset -2px -3px 0 #1f501f; }
+.choice.no:disabled { background: var(--bad); box-shadow: inset 2px 2px 0 #e08a80, inset -2px -3px 0 #5a1d18; }
+.choice.lat span:last-child { font-weight: 600; }
+.slots { min-height: 62px; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: var(--slot); border: 2px solid; border-color: #373737 #fff #fff #373737; align-items: center; }
+.slots .ph { color: #e6e6e6; font-size: .92rem; padding: 0 4px; }
+.bank { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tok { font-size: 1.1rem; font-weight: 600; padding: 8px 12px; min-height: 42px; }
+.tok.used { visibility: hidden; }
+.row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.feed { margin-top: 12px; padding: 10px 12px; font-size: 1.02rem; display: none; border: 2px solid; }
+.feed.show { display: block; }
+.feed.ok { background: #d3ecc9; color: #1f4f1f; border-color: #3d8a3d; }
+.feed.no { background: #f1d0c9; color: #6a1f18; border-color: #9c3a32; }
+.feed em { font-style: normal; font-weight: 600; }
+.gtable { display: none; margin-top: 10px; background: #e2e2e2; border: 2px solid; border-color: #373737 #fff #fff #373737; padding: 10px; overflow-x: auto; }
+.gtable.show { display: block; }
+.gtable strong { display: block; margin-bottom: 6px; }
+.gtable table { border-collapse: collapse; font-size: .92rem; }
+.gtable th, .gtable td { border: 1px solid #9a9a9a; padding: 3px 8px; text-align: left; white-space: nowrap; }
+.gtable th { background: #cfcfcf; }
+.gtable .note { margin-top: 6px; font-size: .85rem; color: #555; }
+.q-done { display: none; justify-content: flex-end; margin-top: 14px; }
+.q-done.show { display: flex; }
+
+/* ── Victory ── */
+.win h2 { font-size: clamp(40px, 9vw, 80px); margin: 10px 0 0; color: #ffd84a; text-shadow: 4px 4px 0 #5a3a00; text-align: center; }
+.win .sub { text-align: center; color: #f0e6d2; font-size: 1.1rem; margin: 8px 0 0; }
+.win .score { text-align: center; font-size: 3rem; margin-top: 14px; color: #7dff7d; text-shadow: 3px 3px 0 #1a3a1a; }
+.win .score small { display: block; font-size: .95rem; color: #ccc; text-shadow: none; }
+.rev { width: 100%; border-collapse: collapse; }
+.rev td { padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,.12); vertical-align: top; }
+.rev .n { color: #ffe08a; width: 28px; }
+.rev .q { color: #fff; font-weight: 600; }
+.rev .a { color: #c9c9c9; font-size: .92rem; margin-top: 2px; }
+.rev .m { width: 28px; text-align: center; font-size: 1.2rem; }
+.rev .m.ok { color: #7dff7d; } .rev .m.no { color: #ff8a7a; }
+.panel ul { margin: 0; padding-left: 20px; line-height: 1.7; }
+.panel ul .ch { color: #9f9f9f; font-size: .85rem; }
+.end-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
+
+#loading { position: fixed; inset: 0; z-index: 50; background: #2b1e14; display: none; place-items: center; font-size: 1.3rem; color: #eee; text-shadow: 2px 2px 0 #000; }
+#loading.on { display: grid; }
+#noGL { position: fixed; inset: 0; display: none; place-items: center; padding: 20px; text-align: center; background: #222; z-index: 99; }
+
+@media (max-width: 640px) {
+  .ticks { grid-template-columns: 1fr; }
+  .choices { grid-template-columns: 1fr; }
+  .hslot { width: 44px; height: 44px; }
+  .hslot img { width: 28px; height: 28px; }
+  #actionbar { bottom: 70px; font-size: .95rem; }
+  .panel { padding: 14px; }
+  .gui { padding: 14px; }
+  .mc-btn.big { min-width: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div id="hud">
+  <div id="hurt"></div>
+  <div id="cross"></div>
+  <div id="roomBox"><div id="roomName"></div><div id="roomGoal"></div></div>
+  <div id="scoreBox">First try: <b id="scoreN">0</b> / 15</div>
+  <div id="splashR"><div class="n" id="spN"></div><div class="t" id="spT"></div><div class="l" id="spL"></div><div class="i" id="spI"></div></div>
+  <div id="toast"></div>
+  <div id="actionbar"></div>
+  <div id="hotbar"></div>
+</div>
+
+<div id="touch">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <button class="mc-btn tbtn" id="tUse">USE</button>
+  <button class="mc-btn tbtn" id="tJump">JUMP</button>
+  <button class="mc-btn small" id="tPause">❚❚</button>
+</div>
+
+<!-- TITLE / SETUP -->
+<div class="screen on" id="sTitle">
+  <div class="logo-wrap">
+    <div class="logo">FUGA ROMANA</div>
+    <div class="splash" id="splashTxt">Now with volcano!</div>
+  </div>
+  <div class="logo-sub">ESCAPE FROM POMPEII · LATIN LEVEL 1</div>
+  <div class="panel">
+    <h3>Grammar</h3>
+    <div class="presets" id="presets"></div>
+    <div class="ticks" id="ticks"></div>
+  </div>
+  <div class="panel">
+    <h3>Question types</h3>
+    <div class="ticks" id="qtypes"></div>
+    <div class="status" id="setupStatus"></div>
+  </div>
+  <div class="start-row"><button class="mc-btn big" id="startBtn">Singleplayer: Begin</button></div>
+  <div class="controls-line">
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse to look · <kbd>Space</kbd> jump · <kbd>Shift</kbd> run · <kbd>E</kbd> or click: open a lock · <kbd>Esc</kbd> pause<br>
+    On a tablet: left stick to walk, drag to look, USE to open a lock.
+  </div>
+  <div class="credit">15 questions · 5 places · 3 locks each.<br>Latin sentences from <em>Prep School Latin</em> by R. C. Bass, used under a Creative Commons Attribution-NonCommercial-ShareAlike licence.</div>
+</div>
+
+<!-- STORY -->
+<div class="screen" id="sStory">
+  <div class="story">
+    <h2>Pompeii</h2>
+    <div class="when">A.D. LXXIX · IX KAL. SEPT.</div>
+    <p>The ground is shaking. Smoke pours from the top of Vesuvius.</p>
+    <p>Your master has fled and left you locked in his villa. Five places stand between you and the boats at the sea gate.</p>
+    <p>Every place has <b>three locks</b>. Find each lock, read the Latin, and answer to open it. When all three are open, the way on opens.</p>
+    <button class="mc-btn big" id="beginBtn">Intra · Enter</button>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div class="screen" id="sPause">
+  <div class="story">
+    <h2>Game paused</h2>
+    <p id="pauseInfo"></p>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
+      <button class="mc-btn big" id="resumeBtn">Back to game</button>
+      <button class="mc-btn big" id="quitBtn">Quit to title</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="sQ"><div class="gui" id="qPanel"></div></div>
+
+<!-- VICTORY -->
+<div class="screen win" id="sWin">
+  <h2>LIBERTAS!</h2>
+  <div class="sub">You run through the sea gate and jump into a boat. Behind you, Vesuvius roars. You are free.</div>
+  <div class="score" id="winScore"></div>
+  <div class="panel" id="winBody"></div>
+  <div class="end-btns">
+    <button class="mc-btn big" id="againBtn">Play again</button>
+    <button class="mc-btn big" id="changeBtn">Change grammar</button>
+  </div>
+</div>
+
+<div id="loading">Building Pompeii…</div>
+<div id="noGL">This game needs WebGL. Try a recent version of Chrome, Edge, Firefox or Safari.</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// GRAMMAR POINTS — in Bass's order, with the chapters they come from
+// ════════════════════════════════════════════════════════════════
+const GRAMMAR = [
+  { k: 'A', name: 'Present tense: amo and moneo verbs', ch: 'Ch 2–8' },
+  { k: 'B', name: 'Nouns like puella: nominative and accusative', ch: 'Ch 9–18' },
+  { k: 'C', name: 'cur?, quod, ubi?, quis?, quid?', ch: 'Ch 14–20' },
+  { k: 'D', name: 'The verb sum', ch: 'Ch 22' },
+  { k: 'E', name: 'Adjectives like bonus', ch: 'Ch 23, 46' },
+  { k: 'F', name: 'Present tense: rego, audio and capio verbs', ch: 'Ch 25' },
+  { k: 'G', name: 'Questions with -ne', ch: 'Ch 26' },
+  { k: 'H', name: 'All six cases of puella', ch: 'Ch 28–31' },
+  { k: 'I', name: 'Nouns like servus, puer, ager and vir', ch: 'Ch 35–37' },
+  { k: 'J', name: 'Prepositions', ch: 'Ch 38' },
+  { k: 'K', name: 'ego, tu, nos, vos', ch: 'Ch 41' },
+  { k: 'L', name: 'Neuter nouns like bellum', ch: 'Ch 42' },
+  { k: 'M', name: 'Imperatives', ch: 'Ch 48' },
+  { k: 'N', name: 'Numbers', ch: 'Ch 49' },
+  { k: 'O', name: 'Infinitives', ch: 'Ch 53' },
+  { k: 'P', name: 'Adjectives like miser and pulcher', ch: 'Ch 54' },
+  { k: 'Q', name: 'Imperfect tense', ch: 'Ch 57' },
+  { k: 'R', name: 'Perfect tense', ch: 'Ch 60–73' },
+];
+
+const PRESETS = [
+  { label: 'Ch 1–8', keys: 'A' },
+  { label: 'Ch 1–19', keys: 'ABC' },
+  { label: 'Ch 1–38', keys: 'ABCDEFGHIJ' },
+  { label: 'Ch 1–56', keys: 'ABCDEFGHIJKLMNOP' },
+  { label: 'Whole of Level 1', keys: 'ABCDEFGHIJKLMNOPQR' },
+];
+
+const QTYPES = [
+  { k: 'tr', name: 'Translate: choose the English' },
+  { k: 'un', name: 'Unscramble the Latin' },
+  { k: 'gap', name: 'Choose the right form' },
+  { k: 'parse', name: 'Parse a word' },
+];
+
+// ════════════════════════════════════════════════════════════════
+// HINT TABLES — copied from Prep School Latin
+// ════════════════════════════════════════════════════════════════
+const PN6 = ['1st sg', '2nd sg', '3rd sg', '1st pl', '2nd pl', '3rd pl'];
+const TABLES = {
+  amo: { title: 'Present tense: amo (1) and moneo (2)', cols: ['', 'amo', 'moneo'],
+    rows: [['I', 'amo', 'moneo'], ['you (sg)', 'amas', 'mones'], ['he, she, it', 'amat', 'monet'], ['we', 'amamus', 'monemus'], ['you (pl)', 'amatis', 'monetis'], ['they', 'amant', 'monent']] },
+  pres: { title: 'Present tense: all four conjugations', cols: ['', 'amo (1)', 'moneo (2)', 'rego (3)', 'audio (4)'],
+    rows: [['I', 'amo', 'moneo', 'rego', 'audio'], ['you (sg)', 'amas', 'mones', 'regis', 'audis'], ['he, she, it', 'amat', 'monet', 'regit', 'audit'], ['we', 'amamus', 'monemus', 'regimus', 'audimus'], ['you (pl)', 'amatis', 'monetis', 'regitis', 'auditis'], ['they', 'amant', 'monent', 'regunt', 'audiunt']],
+    note: 'capio and facio (mixed conjugation) behave like audio.' },
+  sum: { title: 'Present tense: sum (I am)', cols: ['', 'Latin', 'English'],
+    rows: [['1st sg', 'sum', 'I am'], ['2nd sg', 'es', 'you are'], ['3rd sg', 'est', 'he, she, it is'], ['1st pl', 'sumus', 'we are'], ['2nd pl', 'estis', 'you are'], ['3rd pl', 'sunt', 'they are']],
+    note: 'sum is followed by the nominative, not the accusative.' },
+  puellaNA: { title: 'Nouns like puella', cols: ['case', 'job', 'singular', 'plural'],
+    rows: [['nominative', 'subject', 'puella', 'puellae'], ['accusative', 'object', 'puellam', 'puellas']] },
+  puella: { title: 'All the cases of puella', cols: ['case', 'job', 'singular', 'plural'],
+    rows: [['nominative', 'subject', 'puella', 'puellae'], ['vocative', 'person spoken to', 'puella', 'puellae'], ['accusative', 'object', 'puellam', 'puellas'], ['genitive', 'of', 'puellae', 'puellarum'], ['dative', 'to, for', 'puellae', 'puellis'], ['ablative', 'by, with, from', 'puella', 'puellis']] },
+  servus: { title: 'Second declension: servus, puer, ager, vir', cols: ['', 'servus', 'puer', 'ager', 'vir'],
+    rows: [['nom sg', 'servus', 'puer', 'ager', 'vir'], ['voc sg', 'serve', 'puer', 'ager', 'vir'], ['acc sg', 'servum', 'puerum', 'agrum', 'virum'], ['gen sg', 'servi', 'pueri', 'agri', 'viri'], ['dat sg', 'servo', 'puero', 'agro', 'viro'], ['abl sg', 'servo', 'puero', 'agro', 'viro'],
+      ['nom pl', 'servi', 'pueri', 'agri', 'viri'], ['voc pl', 'servi', 'pueri', 'agri', 'viri'], ['acc pl', 'servos', 'pueros', 'agros', 'viros'], ['gen pl', 'servorum', 'puerorum', 'agrorum', 'virorum'], ['dat pl', 'servis', 'pueris', 'agris', 'viris'], ['abl pl', 'servis', 'pueris', 'agris', 'viris']],
+    note: 'magister and liber go like ager.' },
+  bellum: { title: 'Neuter nouns: bellum (war)', cols: ['case', 'singular', 'plural'],
+    rows: [['nominative', 'bellum', 'bella'], ['vocative', 'bellum', 'bella'], ['accusative', 'bellum', 'bella'], ['genitive', 'belli', 'bellorum'], ['dative', 'bello', 'bellis'], ['ablative', 'bello', 'bellis']] },
+  bonus: { title: 'Adjectives: bonus (good)', cols: ['', 'masculine', 'feminine', 'neuter'],
+    rows: [['nom sg', 'bonus', 'bona', 'bonum'], ['voc sg', 'bone', 'bona', 'bonum'], ['acc sg', 'bonum', 'bonam', 'bonum'], ['gen sg', 'boni', 'bonae', 'boni'], ['dat sg', 'bono', 'bonae', 'bono'], ['abl sg', 'bono', 'bona', 'bono'],
+      ['nom pl', 'boni', 'bonae', 'bona'], ['voc pl', 'boni', 'bonae', 'bona'], ['acc pl', 'bonos', 'bonas', 'bona'], ['gen pl', 'bonorum', 'bonarum', 'bonorum'], ['dat pl', 'bonis', 'bonis', 'bonis'], ['abl pl', 'bonis', 'bonis', 'bonis']],
+    note: 'An adjective has the same gender, case and number as its noun.' },
+  miser: { title: 'Adjectives in -er: miser and pulcher', cols: ['', 'miser (m)', 'misera (f)', 'miserum (n)', 'pulcher (m)', 'pulchra (f)', 'pulchrum (n)'],
+    rows: [['nom sg', 'miser', 'misera', 'miserum', 'pulcher', 'pulchra', 'pulchrum'], ['acc sg', 'miserum', 'miseram', 'miserum', 'pulchrum', 'pulchram', 'pulchrum'], ['gen sg', 'miseri', 'miserae', 'miseri', 'pulchri', 'pulchrae', 'pulchri'], ['dat sg', 'misero', 'miserae', 'misero', 'pulchro', 'pulchrae', 'pulchro'], ['abl sg', 'misero', 'misera', 'misero', 'pulchro', 'pulchra', 'pulchro'],
+      ['nom pl', 'miseri', 'miserae', 'misera', 'pulchri', 'pulchrae', 'pulchra'], ['acc pl', 'miseros', 'miseras', 'misera', 'pulchros', 'pulchras', 'pulchra'], ['gen pl', 'miserorum', 'miserarum', 'miserorum', 'pulchrorum', 'pulchrarum', 'pulchrorum'], ['dat pl', 'miseris', 'miseris', 'miseris', 'pulchris', 'pulchris', 'pulchris'], ['abl pl', 'miseris', 'miseris', 'miseris', 'pulchris', 'pulchris', 'pulchris']],
+    note: 'noster and sacer go like pulcher.' },
+  prep: { title: 'Prepositions', cols: ['Latin', 'case', 'English'],
+    rows: [['ad', 'accusative', 'to, towards'], ['contra', 'accusative', 'against'], ['in', 'accusative', 'into'], ['per', 'accusative', 'through, along'], ['prope', 'accusative', 'near'], ['trans', 'accusative', 'across'], ['a / ab', 'ablative', 'away from'], ['cum', 'ablative', 'with'], ['de', 'ablative', 'down from'], ['e / ex', 'ablative', 'out of'], ['in', 'ablative', 'in, on']] },
+  ego: { title: 'ego and tu', cols: ['', 'first person', '', 'second person', ''],
+    rows: [['nom sg', 'ego', 'I', 'tu', 'you'], ['acc sg', 'me', 'me', 'te', 'you'], ['nom pl', 'nos', 'we', 'vos', 'you'], ['acc pl', 'nos', 'us', 'vos', 'you']] },
+  imp: { title: 'Imperatives', cols: ['conjugation', 'present', 'singular', 'plural', 'English'],
+    rows: [['1', 'amo', 'ama', 'amate', 'love!'], ['2', 'moneo', 'mone', 'monete', 'warn!'], ['3', 'rego', 'rege', 'regite', 'rule!'], ['3½', 'capio', 'cape', 'capite', 'take!'], ['4', 'audio', 'audi', 'audite', 'hear! listen!']] },
+  inf: { title: 'Infinitives', cols: ['conjugation', 'present', 'infinitive', 'English'],
+    rows: [['1', 'amo', 'amare', 'to love'], ['2', 'moneo', 'monere', 'to warn'], ['3', 'rego', 'regere', 'to rule'], ['3½', 'capio', 'capere', 'to take'], ['4', 'audio', 'audire', 'to hear'], ['irregular', 'sum', 'esse', 'to be']] },
+  impf: { title: 'Imperfect tense', cols: ['', 'amo', 'moneo', 'rego', 'audio', 'sum'],
+    rows: [['I was', 'amabam', 'monebam', 'regebam', 'audiebam', 'eram'], ['you (sg) were', 'amabas', 'monebas', 'regebas', 'audiebas', 'eras'], ['he was', 'amabat', 'monebat', 'regebat', 'audiebat', 'erat'], ['we were', 'amabamus', 'monebamus', 'regebamus', 'audiebamus', 'eramus'], ['you (pl) were', 'amabatis', 'monebatis', 'regebatis', 'audiebatis', 'eratis'], ['they were', 'amabant', 'monebant', 'regebant', 'audiebant', 'erant']],
+    note: 'Endings: -bam, -bas, -bat, -bamus, -batis, -bant.' },
+  perf: { title: 'Perfect tense', cols: ['', 'amo', 'moneo', 'rego', 'audio', 'sum'],
+    rows: [['I', 'amavi', 'monui', 'rexi', 'audivi', 'fui'], ['you (sg)', 'amavisti', 'monuisti', 'rexisti', 'audivisti', 'fuisti'], ['he, she, it', 'amavit', 'monuit', 'rexit', 'audivit', 'fuit'], ['we', 'amavimus', 'monuimus', 'reximus', 'audivimus', 'fuimus'], ['you (pl)', 'amavistis', 'monuistis', 'rexistis', 'audivistis', 'fuistis'], ['they', 'amaverunt', 'monuerunt', 'rexerunt', 'audiverunt', 'fuerunt']],
+    note: 'Endings: -i, -isti, -it, -imus, -istis, -erunt. The perfect stem comes from the third principal part.' },
+  tenses: { title: 'Three tenses of amo', cols: ['', 'present', 'imperfect', 'perfect'],
+    rows: [['I', 'amo', 'amabam', 'amavi'], ['you (sg)', 'amas', 'amabas', 'amavisti'], ['he, she, it', 'amat', 'amabat', 'amavit'], ['we', 'amamus', 'amabamus', 'amavimus'], ['you (pl)', 'amatis', 'amabatis', 'amavistis'], ['they', 'amant', 'amabant', 'amaverunt']],
+    note: 'Present: now. Imperfect: was doing, used to do. Perfect: did, has done.' },
+  qw: { title: 'Question words', cols: ['Latin', 'English'],
+    rows: [['cur?', 'why?'], ['quod', 'because'], ['ubi?', 'where?'], ['ubi', 'when'], ['quis?', 'who?'], ['quid?', 'what?']] },
+  ne: { title: 'Questions with -ne', cols: ['statement', 'question'],
+    rows: [['ambulat.', 'ambulatne?'], ['puellae rident.', 'puellaene rident?'], ['Marcus Flaviam amat.', 'Marcusne Flaviam amat?']],
+    note: '-ne on the first word turns a statement into a question.' },
+  num: { title: 'Numbers', cols: ['', 'cardinal', '', 'ordinal', ''],
+    rows: [['1', 'unus', 'one', 'primus', 'first'], ['2', 'duo', 'two', 'secundus', 'second'], ['3', 'tres', 'three', 'tertius', 'third'], ['4', 'quattuor', 'four', 'quartus', 'fourth'], ['5', 'quinque', 'five', 'quintus', 'fifth'], ['6', 'sex', 'six', 'sextus', 'sixth'], ['7', 'septem', 'seven', 'septimus', 'seventh'], ['8', 'octo', 'eight', 'octavus', 'eighth'], ['9', 'novem', 'nine', 'nonus', 'ninth'], ['10', 'decem', 'ten', 'decimus', 'tenth']] },
+};
+// Hint shown for translate / unscramble questions: the table for the most advanced point in the sentence
+const TAG_TABLE = { R: 'perf', Q: 'impf', O: 'inf', M: 'imp', P: 'miser', N: 'num', L: 'bellum', K: 'ego', J: 'prep', I: 'servus', H: 'puella', G: 'ne', F: 'pres', E: 'bonus', D: 'sum', C: 'qw', B: 'puellaNA', A: 'amo' };
+const TAG_ORDER = 'RQOMPNLKJIHGFEDCBA';
+// ════════════════════════════════════════════════════════════════
+// QUESTION BANK — every Latin sentence and form is taken from
+// Prep School Latin (R. C. Bass, 2018), CE Level 1, Chapters 2–73.
+// ch  = Bass chapter the sentence comes from
+// t   = grammar points the sentence needs (see GRAMMAR below)
+// d   = three wrong English translations
+// u   = 1 if usable as an unscramble question
+// g   = [word index, [correct form, wrong forms...], extra grammar needed, hint table]
+// p   = [word index, 'pn' | 'case' | 'tense', answer, hint table]
+// ════════════════════════════════════════════════════════════════
+const BANK = [];
+function T(ch, lat, en, t, d, x) { BANK.push(Object.assign({ ch, lat, en, t: t.split(' '), d }, x || {})); }
+
+// ── A: Present tense, amo and moneo verbs (Ch 2–8) ──
+T(2, 'porto.', 'I carry.', 'A', ['He carries.', 'They carry.', 'We carry.'], { g: [[0, ['porto', 'portat', 'portant', 'portas']]], p: [[0, 'pn', '1s']] });
+T(2, 'intrat.', 'He enters.', 'A', ['They enter.', 'You (sg) enter.', 'We enter.'], { g: [[0, ['intrat', 'intrant', 'intras', 'intramus']]], p: [[0, 'pn', '3s']] });
+T(2, 'habitant.', 'They live.', 'A', ['He lives.', 'We live.', 'You (pl) live.'], { g: [[0, ['habitant', 'habitat', 'habitas', 'habitamus']]], p: [[0, 'pn', '3p']] });
+T(2, 'amas.', 'You (sg) love.', 'A', ['You (pl) love.', 'They love.', 'We love.'], { g: [[0, ['amas', 'amat', 'amatis', 'amant']]], p: [[0, 'pn', '2s']] });
+T(2, 'cantamus.', 'We are singing.', 'A', ['They are singing.', 'You (pl) are singing.', 'I am singing.'], { g: [[0, ['cantamus', 'cantant', 'cantatis', 'canto']]], p: [[0, 'pn', '1p']] });
+T(2, 'festinatis.', 'You (pl) are hurrying.', 'A', ['We are hurrying.', 'They are hurrying.', 'You (sg) are hurrying.'], { g: [[0, ['festinatis', 'festinas', 'festinant', 'festinamus']]], p: [[0, 'pn', '2p']] });
+T(2, 'laborant.', 'They are working.', 'A', ['He is working.', 'We are working.', 'You (pl) are working.'], { g: [[0, ['laborant', 'laborat', 'laboratis', 'laboramus']]], p: [[0, 'pn', '3p']] });
+T(2, 'clamo.', 'I shout.', 'A', ['He shouts.', 'We shout.', 'I sing.'], { g: [[0, ['clamo', 'clamat', 'clamant', 'clamas']]], p: [[0, 'pn', '1s']] });
+T(2, 'pugnas.', 'You (sg) are fighting.', 'A', ['You (pl) are fighting.', 'We are fighting.', 'He is fighting.'], { g: [[0, ['pugnas', 'pugnat', 'pugnatis', 'pugnamus']]], p: [[0, 'pn', '2s']] });
+T(2, 'parant.', 'They prepare.', 'A', ['He prepares.', 'They carry.', 'You (pl) prepare.'], { g: [[0, ['parant', 'parat', 'paras', 'paratis']]], p: [[0, 'pn', '3p']] });
+T(2, 'ambulamus.', 'We are walking.', 'A', ['They are walking.', 'I am walking.', 'We are working.'], { g: [[0, ['ambulamus', 'ambulant', 'ambulatis', 'ambulo']]], p: [[0, 'pn', '1p']] });
+T(2, 'portatis.', 'You (pl) carry.', 'A', ['You (sg) carry.', 'We carry.', 'They carry.'], { g: [[0, ['portatis', 'portas', 'portamus', 'portant']]], p: [[0, 'pn', '2p']] });
+T(4, 'habitamus et laboramus.', 'We live and work.', 'A', ['They live and work.', 'We live and walk.', 'You (pl) live and work.'], { p: [[0, 'pn', '1p']] });
+T(4, 'clamant et pugnant.', 'They shout and fight.', 'A', ['They sing and fight.', 'He shouts and fights.', 'We shout and fight.'], { p: [[1, 'pn', '3p']] });
+T(4, 'canto et clamo.', 'I sing and shout.', 'A', ['I sing and walk.', 'They sing and shout.', 'He sings and shouts.'], { p: [[0, 'pn', '1s']] });
+T(4, 'ambulas et clamas.', 'You (sg) walk and shout.', 'A', ['You (pl) walk and shout.', 'You (sg) walk and sing.', 'They walk and shout.'], { p: [[2, 'pn', '2s']] });
+T(5, 'Marcus festinat.', 'Marcus is hurrying.', 'A', ['Marcus and Sextus are hurrying.', 'Marcus is shouting.', 'Marcus is walking.'], { g: [[1, ['festinat', 'festinant', 'festinas', 'festino']]], p: [[1, 'pn', '3s']] });
+T(5, 'Aurelia et Iulia laborant.', 'Aurelia and Julia are working.', 'A', ['Aurelia and Julia are walking.', 'Aurelia and Julia are fighting.', 'Aurelia is working.'], { g: [[3, ['laborant', 'laborat', 'laboras', 'laboramus']]], p: [[3, 'pn', '3p']] });
+T(5, 'Cornelius et Publius pugnant.', 'Cornelius and Publius are fighting.', 'A', ['Cornelius and Publius are shouting.', 'Cornelius and Publius are working.', 'Cornelius is fighting.'], { g: [[3, ['pugnant', 'pugnat', 'pugnatis', 'pugnamus']]] });
+T(5, 'Flavia clamat.', 'Flavia is shouting.', 'A', ['Flavia is singing.', 'Flavia and Julia are shouting.', 'Flavia is hurrying.'], { g: [[1, ['clamat', 'clamant', 'clamas', 'clamo']]], p: [[1, 'pn', '3s']] });
+T(6, 'video.', 'I see.', 'A', ['He sees.', 'I have.', 'I warn.'], { g: [[0, ['video', 'videt', 'vident', 'videmus']]], p: [[0, 'pn', '1s']] });
+T(6, 'non video.', 'I do not see.', 'A', ['I see.', 'He does not see.', 'I do not have.'], { p: [[1, 'pn', '1s']] });
+T(6, 'Marcus manet.', 'Marcus stays.', 'A', ['Marcus sees.', 'Marcus warns.', 'Marcus and Sextus stay.'], { g: [[1, ['manet', 'manent', 'manes', 'maneo']]], p: [[1, 'pn', '3s']] });
+T(6, 'Aurelia et Valeria manent.', 'Aurelia and Valeria are staying.', 'A', ['Aurelia is staying.', 'Aurelia and Valeria are warning.', 'Aurelia and Valeria are seeing.'], { g: [[3, ['manent', 'manet', 'manes', 'manemus']]], p: [[3, 'pn', '3p']] });
+T(6, 'monetis.', 'You (pl) warn.', 'A', ['We warn.', 'They warn.', 'You (pl) see.'], { g: [[0, ['monetis', 'mones', 'monent', 'monemus']]], p: [[0, 'pn', '2p']] });
+T(6, 'habemus.', 'We have.', 'A', ['We live.', 'They have.', 'You (pl) have.'], { g: [[0, ['habemus', 'habent', 'habet', 'habeo']]], p: [[0, 'pn', '1p']] });
+T(6, 'non videmus.', 'We do not see.', 'A', ['We see.', 'They do not see.', 'We do not stay.'], { p: [[1, 'pn', '1p']] });
+T(6, 'Marcus et Sextus non manent.', 'Marcus and Sextus do not stay.', 'A', ['Marcus and Sextus stay.', 'Marcus does not stay.', 'Marcus and Sextus do not see.'], { p: [[4, 'pn', '3p']] });
+T(6, 'Iulia non videt.', 'Julia does not see.', 'A', ['Julia sees.', 'Julia does not stay.', 'Julia does not warn.'], { g: [[2, ['videt', 'vident', 'vides', 'video']]] });
+T(6, 'video et maneo.', 'I see and I stay.', 'A', ['I see and I warn.', 'He sees and he stays.', 'We see and we stay.'], { p: [[2, 'pn', '1s']] });
+T(6, 'manes.', 'You (sg) stay.', 'A', ['You (pl) stay.', 'He stays.', 'You (sg) see.'], { g: [[0, ['manes', 'manet', 'manent', 'maneo']]], p: [[0, 'pn', '2s']] });
+T(6, 'videtis.', 'You (pl) see.', 'A', ['We see.', 'They see.', 'You (sg) see.'], { g: [[0, ['videtis', 'videmus', 'vident', 'vides']]], p: [[0, 'pn', '2p']] });
+T(6, 'habent.', 'They have.', 'A', ['They live.', 'He has.', 'We have.'], { g: [[0, ['habent', 'habet', 'habemus', 'habes']]], p: [[0, 'pn', '3p']] });
+T(8, 'cantas.', 'You (sg) are singing.', 'A', ['You (pl) are singing.', 'They are singing.', 'You (sg) are shouting.'], { p: [[0, 'pn', '2s']] });
+T(8, 'clamatis.', 'You (pl) are shouting.', 'A', ['We are shouting.', 'They are shouting.', 'You (pl) are singing.'], { g: [[0, ['clamatis', 'clamas', 'clamant', 'clamamus']]], p: [[0, 'pn', '2p']] });
+T(8, 'manet.', 'She stays.', 'A', ['They stay.', 'She sees.', 'I stay.'], { p: [[0, 'pn', '3s']] });
+
+// ── B: First declension nouns, nominative and accusative (Ch 9–18) ──
+T(10, 'puella clamat.', 'The girl is shouting.', 'A B', ['The girls are shouting.', 'The girl is singing.', 'The woman is shouting.'], { g: [[1, ['clamat', 'clamant', 'clamas', 'clamatis']]], p: [[0, 'case', 'nom sg'], [1, 'pn', '3s']] });
+T(10, 'puellae clamant.', 'The girls are shouting.', 'A B', ['The girl is shouting.', 'The girls are singing.', 'The women are shouting.'], { g: [[1, ['clamant', 'clamat', 'clamas', 'clamamus']]], p: [[0, 'case', 'nom pl']] });
+T(10, 'feminae vident.', 'The women see.', 'A B', ['The woman sees.', 'The women stay.', 'The girls see.'], { g: [[1, ['vident', 'videt', 'vides', 'videtis']]], p: [[0, 'case', 'nom pl']] });
+T(10, 'agricolae manent.', 'The farmers are staying.', 'A B', ['The farmer is staying.', 'The farmers are warning.', 'The sailors are staying.'], { g: [[1, ['manent', 'manet', 'manes', 'manemus']]], p: [[0, 'case', 'nom pl']] });
+T(10, 'nautae pugnant.', 'The sailors are fighting.', 'A B', ['The sailor is fighting.', 'The farmers are fighting.', 'The sailors are shouting.'], { g: [[1, ['pugnant', 'pugnat', 'pugnas', 'pugnamus']]], p: [[0, 'case', 'nom pl']] });
+T(10, 'filiae cantant.', 'The daughters are singing.', 'A B', ['The daughter is singing.', 'The daughters are shouting.', 'The girls are singing.'], { p: [[0, 'case', 'nom pl'], [1, 'pn', '3p']] });
+T(10, 'agricolae laborant et clamant.', 'The farmers work and shout.', 'A B', ['The farmer works and shouts.', 'The farmers walk and shout.', 'The sailors work and shout.'], { p: [[3, 'pn', '3p']] });
+T(10, 'puellae et feminae festinant.', 'The girls and the women are hurrying.', 'A B', ['The girl and the woman are hurrying.', 'The girls and the women are singing.', 'The girls and the daughters are hurrying.'], { g: [[3, ['festinant', 'festinat', 'festinas', 'festinatis']]] });
+T(10, 'nauta clamat et pugnat.', 'The sailor shouts and fights.', 'A B', ['The sailors shout and fight.', 'The sailor sings and fights.', 'The farmer shouts and fights.'], { p: [[0, 'case', 'nom sg']] });
+T(10, 'agricola festinat.', 'The farmer is hurrying.', 'A B', ['The farmers are hurrying.', 'The sailor is hurrying.', 'The farmer is working.'], { g: [[1, ['festinat', 'festinant', 'festinas', 'festino']]] });
+T(11, 'puella nautam amat.', 'The girl loves the sailor.', 'A B', ['The sailor loves the girl.', 'The girls love the sailor.', 'The girl loves the sailors.'], { u: 1, g: [[1, ['nautam', 'nauta', 'nautae', 'nautas']]], p: [[1, 'case', 'acc sg'], [0, 'case', 'nom sg']] });
+T(11, 'nauta puellam amat.', 'The sailor loves the girl.', 'A B', ['The girl loves the sailor.', 'The sailors love the girl.', 'The sailor loves the girls.'], { u: 1, g: [[1, ['puellam', 'puella', 'puellae', 'puellas']]], p: [[1, 'case', 'acc sg']] });
+T(11, 'agricola filiam amat.', 'The farmer loves the daughter.', 'A B', ['The daughter loves the farmer.', 'The farmer loves the daughters.', 'The farmers love the daughter.'], { u: 1, g: [[1, ['filiam', 'filia', 'filiae', 'filias']]], p: [[1, 'case', 'acc sg']] });
+T(11, 'femina nautam non amat.', 'The woman does not love the sailor.', 'A B', ['The woman loves the sailor.', 'The sailor does not love the woman.', 'The women do not love the sailor.'], { u: 1 });
+T(11, 'agricola hastam tenet.', 'The farmer is holding a spear.', 'A B', ['The farmer has a spear.', 'The farmers are holding a spear.', 'The farmer is holding spears.'], { u: 1, g: [[2, ['tenet', 'tenent', 'teneo']]], p: [[1, 'case', 'acc sg']] });
+T(11, 'nauta pecuniam amat.', 'The sailor loves money.', 'A B', ['The sailors love money.', 'The sailor carries money.', 'The sailor loves the girl.'], { u: 1 });
+T(11, 'puella reginam laudat.', 'The girl praises the queen.', 'A B', ['The queen praises the girl.', 'The girl calls the queen.', 'The girls praise the queen.'], { u: 1, g: [[1, ['reginam', 'regina', 'reginae']]], p: [[1, 'case', 'acc sg']] });
+T(11, 'agricola reginam spectat.', 'The farmer is watching the queen.', 'A B', ['The queen is watching the farmer.', 'The farmers are watching the queen.', 'The farmer is calling the queen.'], { u: 1 });
+T(11, 'regina filiam habet.', 'The queen has a daughter.', 'A B', ['The daughter has a queen.', 'The queen loves the daughter.', 'The queen has daughters.'], { u: 1, p: [[1, 'case', 'acc sg']] });
+T(11, 'agricola filiam vocat.', 'The farmer calls the daughter.', 'A B', ['The daughter calls the farmer.', 'The farmer warns the daughter.', 'The farmers call the daughter.'], { u: 1, g: [[2, ['vocat', 'vocant', 'vocas', 'voco']]] });
+T(11, 'regina deam videt.', 'The queen sees the goddess.', 'A B', ['The goddess sees the queen.', 'The queen praises the goddess.', 'The queens see the goddess.'], { u: 1, p: [[1, 'case', 'acc sg']] });
+T(13, 'feminam necant.', 'They are killing the woman.', 'A B', ['The woman is killing them.', 'They are killing the women.', 'He is killing the woman.'], { p: [[0, 'case', 'acc sg'], [1, 'pn', '3p']] });
+T(13, 'pecuniam teneo.', 'I am holding the money.', 'A B', ['He is holding the money.', 'I have the money.', 'I am carrying the money.'], { p: [[1, 'pn', '1s']] });
+T(13, 'reginam vocat.', 'He calls the queen.', 'A B', ['The queen calls.', 'They call the queen.', 'He praises the queen.'], { p: [[0, 'case', 'acc sg']] });
+T(15, 'reginae rident.', 'The queens are laughing.', 'A B', ['The queen is laughing.', 'The queens are crying.', 'The goddesses are laughing.'], { p: [[0, 'case', 'nom pl']] });
+T(15, 'hasta necat.', 'The spear kills.', 'A B', ['The spears kill.', 'He kills the spear.', 'The arrow kills.'], { p: [[0, 'case', 'nom sg']] });
+T(18, 'puella nautas monet.', 'The girl warns the sailors.', 'A B', ['The girl warns the sailor.', 'The sailors warn the girl.', 'The girls warn the sailors.'], { u: 1, g: [[1, ['nautas', 'nautam', 'nauta', 'nautae']]], p: [[1, 'case', 'acc pl']] });
+T(18, 'puellae nautam monent.', 'The girls warn the sailor.', 'A B', ['The girl warns the sailor.', 'The sailor warns the girls.', 'The girls warn the sailors.'], { u: 1, p: [[0, 'case', 'nom pl'], [1, 'case', 'acc sg']] });
+T(18, 'feminae agricolas amant.', 'The women love the farmers.', 'A B', ['The farmers love the women.', 'The women love the farmer.', 'The woman loves the farmers.'], { u: 1, g: [[1, ['agricolas', 'agricolam', 'agricola', 'agricolae']]], p: [[1, 'case', 'acc pl']] });
+T(18, 'agricola puellas spectat.', 'The farmer is watching the girls.', 'A B', ['The girls are watching the farmer.', 'The farmer is watching the girl.', 'The farmers are watching the girls.'], { u: 1, p: [[1, 'case', 'acc pl']] });
+T(18, 'femina cenam parat.', 'The woman is preparing dinner.', 'A B', ['The women are preparing dinner.', 'The woman is eating dinner.', 'The woman is carrying dinner.'], { u: 1, g: [[2, ['parat', 'parant', 'paras', 'paro']]] });
+T(18, 'feminae puellas vocant.', 'The women are calling the girls.', 'A B', ['The girls are calling the women.', 'The women are calling the girl.', 'The woman is calling the girls.'], { u: 1, p: [[1, 'case', 'acc pl']] });
+T(18, 'puellae hastas non portant.', 'The girls are not carrying spears.', 'A B', ['The girls are carrying spears.', 'The girl is not carrying spears.', 'The girls are not carrying a spear.'], { u: 1, p: [[1, 'case', 'acc pl']] });
+T(18, 'feminae agricolas timent.', 'The women fear the farmers.', 'A B', ['The farmers fear the women.', 'The women frighten the farmers.', 'The women fear the farmer.'], { u: 1, g: [[2, ['timent', 'timet', 'timeo', 'timetis']]] });
+T(18, 'agricolae deam non laudant.', 'The farmers do not praise the goddess.', 'A B', ['The goddess does not praise the farmers.', 'The farmers praise the goddess.', 'The farmer does not praise the goddess.'], { u: 1 });
+T(18, 'nauta villam habet.', 'The sailor has a villa.', 'A B', ['The sailor lives in a villa.', 'The sailors have a villa.', 'The sailor has villas.'], { u: 1, g: [[2, ['habet', 'habent', 'habes', 'habeo']]] });
+T(18, 'villam intramus.', 'We enter the villa.', 'A B', ['They enter the villa.', 'We enter the villas.', 'We have the villa.'], { p: [[1, 'pn', '1p']] });
+T(18, 'hastam moveo.', 'I am moving the spear.', 'A B', ['I am holding the spear.', 'He is moving the spear.', 'I am moving the spears.'], { p: [[1, 'pn', '1s']] });
+T(18, 'nautae non pugnant.', 'The sailors are not fighting.', 'A B', ['The sailor is not fighting.', 'The sailors are fighting.', 'The farmers are not fighting.'], {});
+T(18, 'puellas spectamus.', 'We are watching the girls.', 'A B', ['The girls are watching us.', 'We are watching the girl.', 'They are watching the girls.'], { p: [[0, 'case', 'acc pl'], [1, 'pn', '1p']] });
+T(18, 'deam laudamus.', 'We praise the goddess.', 'A B', ['The goddess praises us.', 'We praise the goddesses.', 'They praise the goddess.'], { p: [[1, 'pn', '1p']] });
+T(18, 'feminas amatis.', 'You (pl) love the women.', 'A B', ['You (sg) love the women.', 'The women love you (pl).', 'You (pl) love the woman.'], { p: [[0, 'case', 'acc pl'], [1, 'pn', '2p']] });
+T(18, 'agricolam vides.', 'You (sg) see the farmer.', 'A B', ['The farmer sees you (sg).', 'You (pl) see the farmer.', 'You (sg) see the farmers.'], { p: [[1, 'pn', '2s']] });
+
+// ── C: Question words and quod (Ch 14, 16, 20) ──
+T(14, 'cur Marcus ridet?', 'Why is Marcus laughing?', 'A C', ['Where is Marcus laughing?', 'Why is Marcus singing?', 'Marcus is laughing because...'], { g: [[2, ['ridet', 'rident', 'rideo', 'ridemus']]] });
+T(14, 'Marcus ridet quod non laborat.', 'Marcus is laughing because he is not working.', 'A C', ['Marcus is laughing but he is not working.', 'Marcus is not laughing because he is working.', 'Marcus is working because he is not laughing.'], { p: [[1, 'pn', '3s']] });
+T(14, 'nauta hastam habet quod pugnat.', 'The sailor has a spear because he is fighting.', 'A B C', ['The sailor is fighting because he has a spear.', 'Why does the sailor have a spear?', 'The sailor has a spear but he is not fighting.'], {});
+T(14, 'cur puella nautam amat?', 'Why does the girl love the sailor?', 'A B C', ['Why does the sailor love the girl?', 'Where does the girl love the sailor?', 'The girl loves the sailor because...'], {});
+T(14, 'puella nautam amat quod nauta pecuniam habet.', 'The girl loves the sailor because the sailor has money.', 'A B C', ['The sailor loves the girl because the girl has money.', 'The girl loves the sailor because she has money.', 'The girl loves the money because the sailor has it.'], {});
+T(14, 'femina agricolam timet quod hastam portat.', 'The woman fears the farmer because he is carrying a spear.', 'A B C', ['The farmer fears the woman because she is carrying a spear.', 'The woman frightens the farmer because he is carrying a spear.', 'Why does the woman fear the farmer?'], {});
+T(14, 'Iulia Flaviam timet quod Flavia Iuliam terret.', 'Julia fears Flavia because Flavia frightens Julia.', 'A B C', ['Flavia fears Julia because Julia frightens Flavia.', 'Julia frightens Flavia because Flavia fears Julia.', 'Julia fears Flavia but Flavia does not frighten Julia.'], {});
+T(14, 'agricola reginam necat quod reginam non amat.', 'The farmer kills the queen because he does not love the queen.', 'A B C', ['The queen kills the farmer because she does not love the farmer.', 'The farmer does not kill the queen because he loves the queen.', 'Why does the farmer kill the queen?'], {});
+T(14, 'cur Publius puellam terret?', 'Why is Publius frightening the girl?', 'A B C', ['Why is the girl frightening Publius?', 'Why is Publius afraid of the girl?', 'Where is Publius frightening the girl?'], {});
+T(20, 'quis laborat? Flavia laborat.', 'Who is working? Flavia is working.', 'A C', ['Why is Flavia working? Flavia is working.', 'Who is working? Flavia is not working.', 'Where is Flavia working? Flavia is working.'], {});
+
+// ── D: The verb sum (Ch 22) ──
+T(22, 'puella sum.', 'I am a girl.', 'B D', ['You (sg) are a girl.', 'She is a girl.', 'We are girls.'], { g: [[1, ['sum', 'es', 'est', 'sumus']]], p: [[1, 'pn', '1s', 'sum']] });
+T(22, 'nauta es.', 'You (sg) are a sailor.', 'B D', ['I am a sailor.', 'He is a sailor.', 'You (pl) are sailors.'], { g: [[1, ['es', 'est', 'sum', 'estis']]], p: [[1, 'pn', '2s', 'sum']] });
+T(22, 'agricolae sumus.', 'We are farmers.', 'B D', ['They are farmers.', 'You (pl) are farmers.', 'We are sailors.'], { g: [[1, ['sumus', 'sunt', 'estis', 'sum']]], p: [[1, 'pn', '1p', 'sum']] });
+T(22, 'deae estis.', 'You (pl) are goddesses.', 'B D', ['We are goddesses.', 'They are goddesses.', 'You (sg) are a goddess.'], { g: [[1, ['estis', 'sumus', 'sunt', 'es']]], p: [[1, 'pn', '2p', 'sum']] });
+T(22, 'puellae sunt.', 'They are girls.', 'B D', ['We are girls.', 'She is a girl.', 'They are women.'], { g: [[1, ['sunt', 'est', 'sumus', 'estis']]], p: [[1, 'pn', '3p', 'sum']] });
+T(22, 'quis es?', 'Who are you (sg)?', 'C D', ['Who is he?', 'Who are they?', 'Why are you (sg) here?'], { p: [[1, 'pn', '2s', 'sum']] });
+T(22, 'regina sum.', 'I am the queen.', 'B D', ['You (sg) are the queen.', 'She is the queen.', 'I am a goddess.'], { p: [[1, 'pn', '1s', 'sum']] });
+T(22, 'Flavia puella est.', 'Flavia is a girl.', 'B D', ['Flavia is a woman.', 'Flavia and Julia are girls.', 'Flavia is not a girl.'], { g: [[2, ['est', 'sunt', 'es', 'sum']]] });
+T(22, 'Flavia et Iulia nautae non sunt.', 'Flavia and Julia are not sailors.', 'B D', ['Flavia and Julia are sailors.', 'Flavia is not a sailor.', 'Flavia and Julia are not farmers.'], { p: [[4, 'pn', '3p', 'sum']] });
+
+// ── E: Adjectives like bonus (Ch 23, 46) ──
+T(23, 'Flavia Romana est.', 'Flavia is Roman.', 'D E', ['Flavia is Greek.', 'Flavia and Julia are Roman.', 'Flavia is not Roman.'], { g: [[1, ['Romana', 'Romanus', 'Romani', 'Romanae'], '', 'bonus']] });
+T(23, 'Marcus et Sextus Romani sunt.', 'Marcus and Sextus are Romans.', 'D E', ['Marcus and Sextus are Greeks.', 'Marcus is a Roman.', 'Marcus and Sextus are not Romans.'], { g: [[3, ['Romani', 'Romanus', 'Romana', 'Romanae'], '', 'bonus']] });
+T(23, 'Flavia et Iulia Graecae non sunt.', 'Flavia and Julia are not Greek.', 'D E', ['Flavia and Julia are Greek.', 'Flavia is not Greek.', 'Flavia and Julia are not Roman.'], { g: [[3, ['Graecae', 'Graeca', 'Graeci', 'Graecus'], '', 'bonus']] });
+T(23, 'Marcus Graecus non est.', 'Marcus is not Greek.', 'D E', ['Marcus is Greek.', 'Marcus is not Roman.', 'Marcus and Sextus are not Greek.'], { g: [[1, ['Graecus', 'Graeca', 'Graeci', 'Graecae'], '', 'bonus']] });
+T(23, 'nautae Romani sumus.', 'We are Roman sailors.', 'B D E', ['They are Roman sailors.', 'We are Greek sailors.', 'You (pl) are Roman sailors.'], { p: [[2, 'pn', '1p', 'sum']] });
+T(23, 'agricola est laetus.', 'The farmer is happy.', 'B D E', ['The farmers are happy.', 'The farmer is not happy.', 'The sailor is happy.'], { g: [[2, ['laetus', 'laeta', 'laeti'], '', 'bonus']] });
+T(23, 'agricolae sunt laeti.', 'The farmers are happy.', 'B D E', ['The farmer is happy.', 'The farmers are good.', 'The girls are happy.'], { g: [[2, ['laeti', 'laetus', 'laeta'], '', 'bonus']] });
+T(24, 'Marcus est nauta Romanus.', 'Marcus is a Roman sailor.', 'B D E', ['Marcus is a Greek sailor.', 'Marcus is a Roman farmer.', 'Marcus and Sextus are Roman sailors.'], {});
+T(24, 'cena bona est.', 'The dinner is good.', 'B D E', ['The dinners are good.', 'The dinner is not good.', 'The wine is good.'], {});
+T(23, 'puellae Romanae sunt.', 'The girls are Roman.', 'B D E', ['The girl is Roman.', 'The girls are Greek.', 'The girls are not Roman.'], {});
+
+// ── F: Present tense, rego, audio and capio verbs (Ch 25) ──
+T(25, 'mitto.', 'I send.', 'F', ['I put.', 'He sends.', 'I say.'], { g: [[0, ['mitto', 'mittit', 'mittis', 'mittimus']]], p: [[0, 'pn', '1s']] });
+T(25, 'curris.', 'You (sg) are running.', 'F', ['You (pl) are running.', 'He is running.', 'They are running.'], { g: [[0, ['curris', 'currit', 'currunt', 'curro']]], p: [[0, 'pn', '2s']] });
+T(25, 'currunt.', 'They are running.', 'F', ['He is running.', 'We are running.', 'They are coming.'], { g: [[0, ['currunt', 'currit', 'curris', 'currimus']]], p: [[0, 'pn', '3p']] });
+T(25, 'dormitis.', 'You (pl) are sleeping.', 'F', ['We are sleeping.', 'You (sg) are sleeping.', 'They are sleeping.'], { g: [[0, ['dormitis', 'dormit', 'dormiunt', 'dormimus']]], p: [[0, 'pn', '2p']] });
+T(25, 'ducitis.', 'You (pl) are leading.', 'F', ['You (sg) are leading.', 'They are leading.', 'You (pl) are saying.'], { p: [[0, 'pn', '2p']] });
+T(25, 'venimus.', 'We are coming.', 'F', ['They are coming.', 'I am coming.', 'We are sleeping.'], { g: [[0, ['venimus', 'veniunt', 'venitis', 'venio']]], p: [[0, 'pn', '1p']] });
+T(25, 'ducunt.', 'They lead.', 'F', ['He leads.', 'They say.', 'We lead.'], { g: [[0, ['ducunt', 'ducit', 'ducimus', 'ducitis']]], p: [[0, 'pn', '3p']] });
+T(25, 'audimus.', 'We hear.', 'F', ['They hear.', 'You (pl) hear.', 'We come.'], { g: [[0, ['audimus', 'audiunt', 'auditis', 'audio']]], p: [[0, 'pn', '1p']] });
+T(25, 'audis.', 'You (sg) hear.', 'F', ['He hears.', 'You (pl) hear.', 'I hear.'], { g: [[0, ['audis', 'audit', 'auditis', 'audio']]], p: [[0, 'pn', '2s']] });
+T(25, 'faciunt.', 'They make.', 'F', ['They take.', 'He makes.', 'They say.'], { g: [[0, ['faciunt', 'facis', 'facimus']]], p: [[0, 'pn', '3p']] });
+T(25, 'capis.', 'You (sg) take.', 'F', ['He takes.', 'You (pl) take.', 'You (sg) make.'], { g: [[0, ['capis', 'capit', 'capimus', 'capiunt']]], p: [[0, 'pn', '2s']] });
+T(25, 'audiunt.', 'They hear.', 'F', ['He hears.', 'We hear.', 'They come.'], { g: [[0, ['audiunt', 'audit', 'audis', 'audimus']]], p: [[0, 'pn', '3p']] });
+T(25, 'dormiunt.', 'They are sleeping.', 'F', ['He is sleeping.', 'We are sleeping.', 'They are coming.'], { p: [[0, 'pn', '3p']] });
+T(25, 'capit.', 'He takes.', 'F', ['They take.', 'He makes.', 'You (sg) take.'], { g: [[0, ['capit', 'capiunt', 'capis', 'capimus']]], p: [[0, 'pn', '3s']] });
+T(25, 'regitis.', 'You (pl) rule.', 'F', ['We rule.', 'They rule.', 'You (sg) rule.'], { g: [[0, ['regitis', 'regit', 'regunt', 'regimus']]], p: [[0, 'pn', '2p']] });
+T(25, 'veniunt.', 'They are coming.', 'F', ['He is coming.', 'We are coming.', 'They are sleeping.'], { p: [[0, 'pn', '3p']] });
+T(25, 'ponit.', 'He puts.', 'F', ['They put.', 'He sends.', 'I put.'], { g: [[0, ['ponit', 'ponitis', 'ponis', 'pono']]], p: [[0, 'pn', '3s']] });
+T(25, 'dicit.', 'He says.', 'F', ['They say.', 'He leads.', 'You (sg) say.'], { p: [[0, 'pn', '3s']] });
+T(25, 'puella non laborat. dormit.', 'The girl is not working. She is sleeping.', 'A B F', ['The girl is working. She is not sleeping.', 'The girls are not working. They are sleeping.', 'The girl is not sleeping. She is working.'], {});
+T(25, 'feminae pecuniam capiunt.', 'The women take the money.', 'B F', ['The woman takes the money.', 'The women make the money.', 'The women take the spear.'], { u: 1, g: [[2, ['capiunt', 'capit', 'capis', 'capimus']]] });
+T(25, 'puella reginam audit.', 'The girl hears the queen.', 'B F', ['The queen hears the girl.', 'The girls hear the queen.', 'The girl sees the queen.'], { u: 1, g: [[2, ['audit', 'audiunt', 'audis', 'audio']]] });
+T(25, 'agricola currit.', 'The farmer runs.', 'B F', ['The farmers run.', 'The farmer comes.', 'The sailor runs.'], { g: [[1, ['currit', 'currunt', 'curris', 'curro']]] });
+T(25, 'curro quod festino.', 'I am running because I am hurrying.', 'A C F', ['I am hurrying because I am running.', 'He is running because he is hurrying.', 'Why am I running?'], {});
+T(25, 'laboramus quod villam facimus.', 'We are working because we are making a villa.', 'A B C F', ['They are working because they are making a villa.', 'We are making a villa because we are working.', 'We are working because we have a villa.'], {});
+T(32, 'poeta pecuniam capit.', 'The poet takes the money.', 'B F', ['The poets take the money.', 'The poet makes money.', 'The poet takes the spear.'], { u: 1 });
+T(32, 'ancillae reginam audiunt.', 'The maidservants listen to the queen.', 'B F', ['The queen listens to the maidservants.', 'The maidservant listens to the queen.', 'The maidservants see the queen.'], { u: 1 });
+T(32, 'undas audis.', 'You (sg) hear the waves.', 'B F', ['You (sg) hear the wave.', 'The waves hear you (sg).', 'You (pl) hear the waves.'], { p: [[1, 'pn', '2s']] });
+T(32, 'incolae dormiunt.', 'The inhabitants are sleeping.', 'B F', ['The inhabitant is sleeping.', 'The inhabitants are coming.', 'The sailors are sleeping.'], {});
+T(32, 'regina venit.', 'The queen is coming.', 'B F', ['The queens are coming.', 'The queen is sleeping.', 'The goddess is coming.'], {});
+
+// ── G: Questions with -ne (Ch 26) ──
+T(26, 'currone?', 'Am I running?', 'F G', ['I am running.', 'Are they running?', 'Is he running?'], {});
+T(26, 'mittimusne?', 'Are we sending?', 'F G', ['We are sending.', 'Are they sending?', 'Are you (pl) sending?'], {});
+T(26, 'ridentne?', 'Are they laughing?', 'A G', ['They are laughing.', 'Is he laughing?', 'Are they crying?'], {});
+T(26, 'regitne?', 'Is he ruling?', 'F G', ['He is ruling.', 'Are they ruling?', 'Is he leading?'], {});
+T(26, 'festinatisne?', 'Are you (pl) hurrying?', 'A G', ['You (pl) are hurrying.', 'Are we hurrying?', 'Are you (sg) hurrying?'], {});
+T(26, 'audisne?', 'Are you (sg) listening?', 'F G', ['You (sg) are listening.', 'Is he listening?', 'Are you (pl) listening?'], {});
+T(26, 'timesne?', 'Are you (sg) afraid?', 'A G', ['You (sg) are afraid.', 'Is he afraid?', 'Are you (sg) frightening?'], {});
+T(26, 'amasne puellam?', 'Do you (sg) love the girl?', 'A B G', ['You (sg) love the girl.', 'Does the girl love you (sg)?', 'Do you (sg) love the girls?'], {});
+T(26, 'agricolane laborat?', 'Is the farmer working?', 'A B G', ['The farmer is working.', 'Are the farmers working?', 'Why is the farmer working?'], {});
+T(26, 'agricolaene laborant?', 'Are the farmers working?', 'A B G', ['The farmers are working.', 'Is the farmer working?', 'Are the sailors working?'], {});
+T(26, 'deamne timet?', 'Does he fear the goddess?', 'A B G', ['He fears the goddess.', 'Does the goddess fear him?', 'Does he frighten the goddess?'], {});
+T(26, 'reginane ridet?', 'Is the queen laughing?', 'A B G', ['The queen is laughing.', 'Why is the queen laughing?', 'Are the queens laughing?'], {});
+T(26, 'estne Flavia nauta?', 'Is Flavia a sailor?', 'B D G', ['Flavia is a sailor.', 'Is Flavia a farmer?', 'Who is Flavia?'], {});
+T(26, 'nautane pecuniam habet?', 'Does the sailor have money?', 'A B G', ['The sailor has money.', 'Do the sailors have money?', 'Where does the sailor have money?'], {});
+T(26, 'puellaene currunt?', 'Are the girls running?', 'B F G', ['The girls are running.', 'Is the girl running?', 'Are the girls coming?'], {});
+T(26, 'nautaene puellam amant?', 'Do the sailors love the girl?', 'A B G', ['The sailors love the girl.', 'Does the girl love the sailors?', 'Does the sailor love the girl?'], {});
+T(26, 'mittisne pecuniam?', 'Are you (sg) sending the money?', 'B F G', ['You (sg) are sending the money.', 'Is he sending the money?', 'Are you (sg) taking the money?'], {});
+T(26, 'Marcusne Flaviam amat?', 'Does Marcus love Flavia?', 'A B G', ['Marcus loves Flavia.', 'Does Flavia love Marcus?', 'Why does Marcus love Flavia?'], {});
+
+// ── H: First declension, all six cases (Ch 28–31) ──
+T(31, 'hasta nautae necat.', 'The spear of the sailor kills.', 'A B H', ['The spear kills the sailor.', 'The spears of the sailors kill.', 'The spear of the girl kills.'], { g: [[1, ['nautae', 'nautam', 'nauta', 'nautis'], '', 'puella']], p: [[1, 'case', 'gen sg', 'puella']] });
+T(31, 'filia reginae venit.', 'The daughter of the queen is coming.', 'B F H', ['The daughter is coming to the queen.', 'The daughters of the queen are coming.', 'The queen of the daughter is coming.'], { p: [[1, 'case', 'gen sg', 'puella']] });
+T(31, 'ancilla poetae cantat.', 'The maidservant of the poet is singing.', 'A B H', ['The poet of the maidservant is singing.', 'The maidservant is singing to the poet.', 'The maidservants of the poet are singing.'], { p: [[1, 'case', 'gen sg', 'puella']] });
+T(31, 'filia feminae timet.', 'The daughter of the woman is afraid.', 'A B H', ['The daughter is afraid of the woman.', 'The daughters of the woman are afraid.', 'The woman of the daughter is afraid.'], {});
+T(31, 'regina insulae ridet.', 'The queen of the island is laughing.', 'A B H', ['The queen is laughing on the island.', 'The queens of the island are laughing.', 'The queen of the island is crying.'], { p: [[1, 'case', 'gen sg', 'puella']] });
+T(31, 'turba nautarum venit.', 'A crowd of sailors is coming.', 'B F H', ['A crowd of girls is coming.', 'The sailors of the crowd are coming.', 'A crowd of sailors is running.'], { g: [[1, ['nautarum', 'nautas', 'nautis', 'nautae'], '', 'puella']], p: [[1, 'case', 'gen pl', 'puella']] });
+T(31, 'agricolae puellas hastis terrent.', 'The farmers frighten the girls with spears.', 'A B H', ['The girls frighten the farmers with spears.', 'The farmers frighten the girl with a spear.', 'The farmers give spears to the girls.'], { u: 1, p: [[2, 'case', 'abl pl', 'puella'], [1, 'case', 'acc pl', 'puella']] });
+T(31, 'filia agricolae cantat.', 'The daughter of the farmer is singing.', 'A B H', ['The daughters of the farmer are singing.', 'The daughter is singing to the farmer.', 'The farmer of the daughter is singing.'], {});
+T(31, 'nauta filiam reginae amat.', 'The sailor loves the daughter of the queen.', 'A B H', ['The daughter of the queen loves the sailor.', 'The sailor loves the queen of the daughter.', 'The sailors love the daughter of the queen.'], { p: [[2, 'case', 'gen sg', 'puella']] });
+T(31, 'cenam agricolis paramus.', 'We are preparing dinner for the farmers.', 'A B H', ['We are preparing dinner for the farmer.', 'The farmers are preparing dinner for us.', 'They are preparing dinner for the farmers.'], { p: [[1, 'case', 'dat pl', 'puella']] });
+T(31, 'nautae incolas sagittis necant.', 'The sailors kill the inhabitants with arrows.', 'A B H', ['The inhabitants kill the sailors with arrows.', 'The sailors kill the inhabitant with an arrow.', 'The sailors give arrows to the inhabitants.'], { u: 1, p: [[2, 'case', 'abl pl', 'puella']] });
+T(31, 'turbam puellarum videmus.', 'We see a crowd of girls.', 'A B H', ['A crowd of girls sees us.', 'We see the girls of the crowd.', 'They see a crowd of girls.'], { p: [[1, 'case', 'gen pl', 'puella']] });
+T(31, 'puella pecuniam agricolae dat.', 'The girl gives money to the farmer.', 'A B H', ['The farmer gives money to the girl.', 'The girl gives money to the farmers.', 'The girl takes money from the farmer.'], { u: 1, g: [[2, ['agricolae', 'agricolam', 'agricola', 'agricolis'], '', 'puella']], p: [[2, 'case', 'dat sg', 'puella']] });
+T(31, 'puella pecuniam agricolis dat.', 'The girl gives money to the farmers.', 'A B H', ['The girl gives money to the farmer.', 'The farmers give money to the girl.', 'The girls give money to the farmers.'], { u: 1, g: [[2, ['agricolis', 'agricolae', 'agricolas'], '', 'puella']], p: [[2, 'case', 'dat pl', 'puella']] });
+T(31, 'poeta insulam nautae ostendit.', 'The poet shows the island to the sailor.', 'B F H', ['The sailor shows the island to the poet.', 'The poet shows the island to the sailors.', 'The poet shows the sailor to the island.'], { u: 1, p: [[2, 'case', 'dat sg', 'puella']] });
+T(31, 'poeta insulam nautis ostendit.', 'The poet shows the island to the sailors.', 'B F H', ['The poet shows the island to the sailor.', 'The sailors show the island to the poet.', 'The poets show the island to the sailors.'], { u: 1, p: [[2, 'case', 'dat pl', 'puella']] });
+T(31, 'femina aquam poetae dat.', 'The woman gives water to the poet.', 'A B H', ['The poet gives water to the woman.', 'The woman gives water to the poets.', 'The woman gives wine to the poet.'], { u: 1 });
+T(31, 'sagittas nautis paro.', 'I am preparing arrows for the sailors.', 'A B H', ['I am preparing arrows for the sailor.', 'The sailors are preparing arrows for me.', 'He is preparing arrows for the sailors.'], { p: [[1, 'case', 'dat pl', 'puella']] });
+T(32, 'turba puellas terret.', 'The crowd frightens the girls.', 'A B', ['The girls frighten the crowd.', 'The crowds frighten the girls.', 'The crowd frightens the girl.'], { u: 1 });
+T(32, 'nautae undas non timent.', 'The sailors do not fear the waves.', 'A B', ['The waves do not frighten the sailors.', 'The sailors fear the waves.', 'The sailor does not fear the waves.'], { u: 1 });
+T(32, 'poetae timent.', 'The poets are afraid.', 'A B', ['The poet is afraid.', 'The poets are frightening.', 'The girls are afraid.'], {});
+
+// ── I: Second declension nouns, servus, puer, ager, vir (Ch 35–37) ──
+T(35, 'amicus currit.', 'The friend is running.', 'F I', ['The friends are running.', 'The friend is coming.', 'He is running to the friend.'], { g: [[0, ['amicus', 'amicum', 'amici', 'amicos'], '', 'servus']], p: [[0, 'case', 'nom sg', 'servus']] });
+T(35, 'amicum habeo.', 'I have a friend.', 'A I', ['A friend has me.', 'I have friends.', 'He has a friend.'], { p: [[0, 'case', 'acc sg', 'servus']] });
+T(35, 'amici pugnant.', 'The friends are fighting.', 'A I', ['The friend is fighting.', 'They are fighting the friends.', 'The friends are shouting.'], { p: [[0, 'case', 'nom pl', 'servus']] });
+T(35, 'gladios habemus.', 'We have swords.', 'A I', ['We have a sword.', 'They have swords.', 'We have spears.'], { p: [[0, 'case', 'acc pl', 'servus']] });
+T(35, 'dominum timent.', 'They fear the master.', 'A I', ['The master fears them.', 'They fear the masters.', 'They frighten the master.'], { p: [[0, 'case', 'acc sg', 'servus']] });
+T(35, 'nuntii veniunt.', 'The messengers are coming.', 'F I', ['The messenger is coming.', 'The messengers are running.', 'The allies are coming.'], { p: [[0, 'case', 'nom pl', 'servus']] });
+T(35, 'muros spectas.', 'You (sg) are looking at the walls.', 'A I', ['You (sg) are looking at the wall.', 'You (pl) are looking at the walls.', 'The walls are looking at you (sg).'], { p: [[0, 'case', 'acc pl', 'servus']] });
+T(35, 'equos amamus.', 'We love horses.', 'A I', ['Horses love us.', 'We love the horse.', 'They love horses.'], { p: [[0, 'case', 'acc pl', 'servus']] });
+T(35, 'ventum audimus.', 'We hear the wind.', 'F I', ['The wind hears us.', 'We hear the winds.', 'They hear the wind.'], {});
+T(35, 'dominus servum habet.', 'The master has a slave.', 'A I', ['The slave has a master.', 'The master has slaves.', 'The masters have a slave.'], { u: 1, g: [[1, ['servum', 'servus', 'servi', 'servos'], '', 'servus']], p: [[1, 'case', 'acc sg', 'servus']] });
+T(35, 'domini servos habent.', 'The masters have slaves.', 'A I', ['The slaves have masters.', 'The master has slaves.', 'The masters have a slave.'], { u: 1, g: [[1, ['servos', 'servum', 'servi', 'servus'], '', 'servus']], p: [[1, 'case', 'acc pl', 'servus']] });
+T(35, 'servi cibum parant.', 'The slaves are preparing food.', 'A I', ['The slave is preparing food.', 'The slaves are carrying food.', 'The slaves are preparing dinner.'], { u: 1, p: [[0, 'case', 'nom pl', 'servus']] });
+T(35, 'servi dominum audiunt.', 'The slaves listen to the master.', 'F I', ['The master listens to the slaves.', 'The slave listens to the master.', 'The slaves listen to the masters.'], { u: 1, g: [[1, ['dominum', 'dominus', 'domini'], '', 'servus']] });
+T(35, 'gladius amicum terret.', 'The sword frightens the friend.', 'A I', ['The friend frightens the sword.', 'The sword frightens the friends.', 'The friend fears the sword.'], { u: 1 });
+T(35, 'deus gladios non timet.', 'The god does not fear swords.', 'A I', ['The god fears swords.', 'Swords do not frighten the god.', 'The gods do not fear swords.'], { u: 1 });
+T(35, 'dominus nuntium mittit.', 'The master sends a messenger.', 'F I', ['The messenger sends the master.', 'The master sends messengers.', 'The masters send a messenger.'], { u: 1, g: [[2, ['mittit', 'mittunt', 'mittis', 'mitto']]] });
+T(35, 'gladii servos necant.', 'The swords kill the slaves.', 'A I', ['The slaves kill with swords.', 'The sword kills the slave.', 'The slaves kill the swords.'], { u: 1 });
+T(35, 'deus dominum vocat.', 'The god calls the master.', 'A I', ['The master calls the god.', 'The god calls the masters.', 'The gods call the master.'], { u: 1 });
+T(35, 'filius dominum audit.', 'The son listens to the master.', 'F I', ['The master listens to the son.', 'The sons listen to the master.', 'The son sees the master.'], { u: 1 });
+T(35, 'equi cibum amant.', 'The horses love food.', 'A I', ['The horse loves food.', 'The horses love wine.', 'Food loves the horses.'], { u: 1, p: [[0, 'case', 'nom pl', 'servus']] });
+T(35, 'socii muros spectant.', 'The allies are looking at the walls.', 'A I', ['The ally is looking at the walls.', 'The allies are looking at the wall.', 'The walls are looking at the allies.'], { u: 1 });
+T(35, 'servus cibum portat.', 'The slave is carrying food.', 'A I', ['The slaves are carrying food.', 'The slave is preparing food.', 'The slave is carrying wine.'], { u: 1 });
+T(40, 'magister librum scribit.', 'The teacher is writing a book.', 'F I', ['The teacher is reading a book.', 'The teachers are writing a book.', 'The teacher is writing books.'], { u: 1, p: [[1, 'case', 'acc sg', 'ager']] });
+T(40, 'vir libros non legit.', 'The man does not read books.', 'F I', ['The man reads books.', 'The men do not read books.', 'The man does not write books.'], { u: 1 });
+T(40, 'puella puerum non amat.', 'The girl does not love the boy.', 'A B I', ['The boy does not love the girl.', 'The girl loves the boy.', 'The girl does not love the boys.'], { u: 1, g: [[1, ['puerum', 'puer', 'pueri', 'pueros'], '', 'servus']], p: [[1, 'case', 'acc sg', 'servus']] });
+T(40, 'pueri librum magistro dant.', 'The boys give a book to the teacher.', 'A H I', ['The teacher gives a book to the boys.', 'The boy gives a book to the teacher.', 'The boys give books to the teacher.'], { u: 1, p: [[2, 'case', 'dat sg', 'ager']] });
+T(40, 'magister librum pueris scribit.', 'The teacher is writing a book for the boys.', 'F H I', ['The boys are writing a book for the teacher.', 'The teacher is writing a book for the boy.', 'The teacher is reading a book to the boys.'], { u: 1, p: [[2, 'case', 'dat pl', 'servus']] });
+T(46, 'servus cibum bonum parat.', 'The slave is preparing good food.', 'A E I', ['The good slave is preparing food.', 'The slaves are preparing good food.', 'The slave is preparing bad food.'], { u: 1, g: [[2, ['bonum', 'bonus', 'boni', 'bonos'], '', 'bonus']] });
+T(46, 'magister iratus pueros malos monet.', 'The angry teacher warns the bad boys.', 'A E I', ['The bad teacher warns the angry boys.', 'The angry teacher warns the bad boy.', 'The angry boys warn the bad teacher.'], { p: [[2, 'case', 'acc pl', 'servus']] });
+T(46, 'agricola multos agros habet.', 'The farmer has many fields.', 'A B E I', ['The farmer has a big field.', 'Many farmers have fields.', 'The farmer has few fields.'], { u: 1, g: [[1, ['multos', 'multus', 'multi', 'multa'], '', 'bonus']] });
+T(46, 'puer multas puellas spectat.', 'The boy is looking at many girls.', 'A B E I', ['Many boys are looking at the girl.', 'The boy is looking at the girl.', 'The girls are looking at the boy.'], { u: 1 });
+T(46, 'pueri boni bellum saevum timent.', 'The good boys fear a savage war.', 'A E I L', ['The savage boys fear a good war.', 'The good boy fears a savage war.', 'The good boys fear savage wars.'], {});
+T(46, 'nauta iratus puellam terret.', 'The angry sailor frightens the girl.', 'A B E', ['The angry girl frightens the sailor.', 'The sailor frightens the angry girl.', 'The angry sailors frighten the girl.'], { u: 1 });
+T(46, 'puella nautam saevum non amat.', 'The girl does not love the savage sailor.', 'A B E', ['The savage girl does not love the sailor.', 'The savage sailor does not love the girl.', 'The girl loves the savage sailor.'], { u: 1, g: [[2, ['saevum', 'saevus', 'saeva'], '', 'bonus']] });
+T(46, 'dominus multam pecuniam servis dat.', 'The master gives much money to the slaves.', 'A B E H I', ['The master gives money to many slaves.', 'The slaves give much money to the master.', 'The master gives much money to the slave.'], {});
+T(46, 'dominus pecuniam multis servis dat.', 'The master gives money to many slaves.', 'A B E H I', ['The master gives much money to the slaves.', 'Many slaves give money to the master.', 'The master gives money to the slave.'], { p: [[3, 'case', 'dat pl', 'servus']] });
+T(46, 'libros bonos saepe lego.', 'I often read good books.', 'E F I', ['I always read good books.', 'I often write good books.', 'He often reads good books.'], {});
+T(46, 'femina bona aquam nautae fesso dat.', 'The good woman gives water to the tired sailor.', 'A B E H', ['The tired woman gives water to the good sailor.', 'The good woman gives water to the tired sailors.', 'The tired sailor gives water to the good woman.'], {});
+T(46, 'dominus vinum servis fessis dat.', 'The master gives wine to the tired slaves.', 'A E H I L', ['The tired master gives wine to the slaves.', 'The master gives wine to the tired slave.', 'The tired slaves give wine to the master.'], {});
+T(46, 'pueri sunt laeti quod magister est bonus.', 'The boys are happy because the teacher is good.', 'C D E I', ['The teacher is happy because the boys are good.', 'The boys are good because the teacher is happy.', 'The boy is happy because the teacher is good.'], {});
+T(46, 'magister iratus est quod pueri boni non sunt.', 'The teacher is angry because the boys are not good.', 'C D E I', ['The boys are angry because the teacher is not good.', 'The teacher is not angry because the boys are good.', 'The teacher is angry because the boy is not good.'], {});
+
+// ── J: Prepositions (Ch 38) ──
+T(38, 'in muro sedeo.', 'I am sitting on the wall.', 'A I J', ['I am sitting near the wall.', 'He is sitting on the wall.', 'I am running into the wall.'], { g: [[1, ['muro', 'murum', 'murus', 'muri'], '', 'prep']] });
+T(38, 'ad villam ambulamus.', 'We are walking to the villa.', 'A B J', ['We are walking away from the villa.', 'We are walking in the villa.', 'They are walking to the villa.'], { g: [[0, ['ad', 'a', 'in', 'e'], '', 'prep']] });
+T(38, 'contra Romanos pugnat.', 'He fights against the Romans.', 'A I J', ['He fights with the Romans.', 'They fight against the Romans.', 'He fights near the Romans.'], { g: [[0, ['contra', 'cum', 'prope', 'ad'], '', 'prep']] });
+T(38, 'per viam currimus.', 'We are running along the road.', 'B F J', ['We are running across the road.', 'We are running into the road.', 'They are running along the road.'], { g: [[0, ['per', 'trans', 'in', 'ad'], '', 'prep']] });
+T(38, 'in villa habitas.', 'You (sg) live in the villa.', 'A B J', ['You (sg) live near the villa.', 'You (pl) live in the villa.', 'You (sg) run into the villa.'], { g: [[1, ['villa', 'villam', 'villis', 'villas'], '', 'prep']] });
+T(38, 'prope insulam habitamus.', 'We live near the island.', 'A B J', ['We live on the island.', 'They live near the island.', 'We sail to the island.'], { g: [[0, ['prope', 'trans', 'contra', 'per'], '', 'prep']] });
+T(38, 'trans viam ambulat.', 'He walks across the road.', 'A B J', ['He walks along the road.', 'He walks in the road.', 'They walk across the road.'], { g: [[0, ['trans', 'per', 'ad', 'in'], '', 'prep']] });
+T(38, 'cum amicis cantamus.', 'We are singing with friends.', 'A I J', ['We are singing to friends.', 'We are singing with a friend.', 'They are singing with friends.'], {});
+T(38, 'a villa curris.', 'You (sg) are running away from the villa.', 'B F J', ['You (sg) are running to the villa.', 'You (sg) are running into the villa.', 'You (pl) are running away from the villa.'], { g: [[0, ['a', 'ad', 'in', 'per'], '', 'prep']] });
+T(38, 'in villam curris.', 'You (sg) are running into the villa.', 'B F J', ['You (sg) are running in the villa.', 'You (sg) are running away from the villa.', 'They are running into the villa.'], { g: [[1, ['villam', 'villa', 'villis', 'villas'], '', 'prep']] });
+T(38, 'puer a magistro currit.', 'The boy runs away from the teacher.', 'F I J', ['The boy runs to the teacher.', 'The teacher runs away from the boy.', 'The boy runs with the teacher.'], { u: 1, g: [[1, ['a', 'ad', 'cum', 'contra'], '', 'prep']] });
+T(38, 'puella cum amicis venit.', 'The girl comes with friends.', 'B F I J', ['The girl comes to her friends.', 'The girls come with a friend.', 'The girl comes with a friend.'], { u: 1, g: [[2, ['amicis', 'amicos', 'amicum', 'amici'], '', 'prep']] });
+T(38, 'nautae in muro sedent.', 'The sailors are sitting on the wall.', 'A B I J', ['The sailor is sitting on the wall.', 'The sailors are running into the wall.', 'The sailors are sitting near the wall.'], { u: 1 });
+T(38, 'servus in villa habitat.', 'The slave lives in the villa.', 'A B I J', ['The slaves live in the villa.', 'The slave runs into the villa.', 'The slave lives in the villas.'], { u: 1 });
+T(38, 'servi in villis habitant.', 'The slaves live in the villas.', 'A B I J', ['The slaves live in the villa.', 'The slave lives in the villas.', 'The slaves walk into the villas.'], { u: 1, g: [[2, ['villis', 'villas', 'villa', 'villam'], '', 'prep']] });
+T(38, 'vir per vias festinat.', 'The man hurries through the streets.', 'A B I J', ['The man hurries across the street.', 'The men hurry through the streets.', 'The man hurries into the streets.'], { u: 1 });
+T(38, 'equus ad murum ambulat.', 'The horse walks towards the wall.', 'A I J', ['The horse walks away from the wall.', 'The horses walk towards the wall.', 'The horse walks on the wall.'], { u: 1, g: [[2, ['murum', 'muro', 'murus', 'muros'], '', 'prep']] });
+T(38, 'Romani contra Graecos pugnant.', 'The Romans fight against the Greeks.', 'A I J', ['The Greeks fight against the Romans.', 'The Romans fight with the Greeks.', 'The Roman fights against the Greeks.'], { u: 1 });
+T(38, 'turba puellarum in viam currit.', 'A crowd of girls runs into the road.', 'B F H J', ['A crowd of girls runs in the road.', 'The girls run into the crowd.', 'A crowd of girls runs away from the road.'], { u: 1, g: [[3, ['viam', 'via', 'viae', 'vias'], '', 'prep']] });
+T(38, 'puer amicum in via videt.', 'The boy sees a friend in the road.', 'A B I J', ['The friend sees the boy in the road.', 'The boy sees a friend on the island.', 'The boy sees friends in the road.'], { u: 1 });
+T(38, 'puellae in equis sedent.', 'The girls are sitting on horses.', 'A B I J', ['The girl is sitting on a horse.', 'The girls are sitting near the horses.', 'The horses are sitting on the girls.'], { u: 1 });
+T(38, 'Marcus et Flavia per viam ambulant.', 'Marcus and Flavia are walking along the road.', 'A B J', ['Marcus and Flavia are walking across the road.', 'Marcus is walking with Flavia into the road.', 'Marcus and Flavia are running along the road.'], {});
+T(38, 'servus aquam in villam portat.', 'The slave carries water into the villa.', 'A B I J', ['The slave carries water in the villa.', 'The slaves carry water into the villa.', 'The slave carries wine into the villa.'], { u: 1, g: [[3, ['villam', 'villa', 'villis'], '', 'prep']] });
+T(38, 'ancilla cenam in villa parat.', 'The maidservant prepares dinner in the villa.', 'A B J', ['The maidservant prepares dinner for the villa.', 'The maidservants prepare dinner in the villa.', 'The maidservant carries dinner into the villa.'], { u: 1 });
+T(38, 'equum ex aqua ducit.', 'He leads the horse out of the water.', 'B F I J', ['He leads the horse into the water.', 'The horse leads him out of the water.', 'He leads the horses out of the water.'], { g: [[1, ['ex', 'in', 'ad', 'trans'], '', 'prep']] });
+T(38, 'agricolae contra nautas pugnant.', 'The farmers fight against the sailors.', 'A B J', ['The sailors fight against the farmers.', 'The farmers fight with the sailors.', 'The farmer fights against the sailors.'], { u: 1 });
+T(38, 'nautae ab insula currunt.', 'The sailors run away from the island.', 'B F J', ['The sailors run to the island.', 'The sailors run across the island.', 'The sailor runs away from the island.'], { u: 1, g: [[1, ['ab', 'ad', 'in', 'trans'], '', 'prep']] });
+T(38, 'pueri prope magistrum laborant.', 'The boys work near the teacher.', 'A I J', ['The boys work with the teacher.', 'The boy works near the teacher.', 'The teacher works near the boys.'], { u: 1 });
+T(38, 'agricola nuntium ad amicum mittit.', 'The farmer sends a messenger to the friend.', 'B F I J', ['The friend sends a messenger to the farmer.', 'The farmer sends a messenger away from the friend.', 'The farmer sends the friend to the messenger.'], { u: 1 });
+T(40, 'puer et vir in agro currunt.', 'The boy and the man are running in the field.', 'F I J', ['The boy and the man are running into the field.', 'The boy and the man are running near the field.', 'The boys and the men are running in the fields.'], { g: [[4, ['agro', 'agrum', 'ager', 'agri'], '', 'prep']] });
+T(40, 'puer et vir in agrum currunt.', 'The boy and the man are running into the field.', 'F I J', ['The boy and the man are running in the field.', 'The boy and the man are running away from the field.', 'The boy is running into the field with the man.'], { g: [[4, ['agrum', 'agro', 'ager', 'agri'], '', 'prep']] });
+T(40, 'equos in agris videmus.', 'We see horses in the fields.', 'A I J', ['We see horses in the field.', 'Horses see us in the fields.', 'We see a horse in the fields.'], {});
+T(40, 'libri pueri in villa sunt.', 'The books of the boy are in the villa.', 'B D H I J', ['The boy\'s book is in the villa.', 'The books of the boys are in the villa.', 'The books of the boy are in the field.'], { p: [[1, 'case', 'gen sg', 'servus']] });
+T(40, 'turba puerorum ad agrum festinat.', 'A crowd of boys is hurrying to the field.', 'A H I J', ['A crowd of boys is hurrying away from the field.', 'The boys are hurrying to the crowd in the field.', 'A crowd of girls is hurrying to the field.'], { u: 1, p: [[1, 'case', 'gen pl', 'servus']] });
+
+// ── K: ego, tu, nos, vos (Ch 41) ──
+T(41, 'ego te amo.', 'I love you.', 'A K', ['You love me.', 'We love you.', 'I love him.'], { g: [[1, ['te', 'tu', 'me', 'ego'], '', 'ego']] });
+T(41, 'tune me amas?', 'Do you love me?', 'A G K', ['Do I love you?', 'You love me.', 'Do you love us?'], {});
+T(41, 'me amat.', 'He loves me.', 'A K', ['I love him.', 'He loves you.', 'They love me.'], {});
+T(41, 'vos amamus.', 'We love you (pl).', 'A K', ['You (pl) love us.', 'We love them.', 'They love you (pl).'], {});
+T(41, 'nos amant.', 'They love us.', 'A K', ['We love them.', 'They love you (pl).', 'We love you (pl).'], {});
+T(41, 'nos currimus, vos ambulatis.', 'We are running, you (pl) are walking.', 'A F K', ['You (pl) are running, we are walking.', 'We are walking, you (pl) are running.', 'They are running, you (pl) are walking.'], {});
+T(41, 'ego rideo, tu fles.', 'I am laughing, you are crying.', 'A K', ['You are laughing, I am crying.', 'I am crying, you are laughing.', 'We are laughing, you are crying.'], { g: [[1, ['rideo', 'ridet', 'ridemus']]] });
+T(41, 'vos disceditis, nos manemus.', 'You (pl) are departing, we are staying.', 'A F K', ['We are departing, you (pl) are staying.', 'You (pl) are staying, we are departing.', 'They are departing, we are staying.'], {});
+T(41, 'puellae nos spectant.', 'The girls are watching us.', 'A B K', ['We are watching the girls.', 'The girls are watching you (pl).', 'The girl is watching us.'], { u: 1 });
+T(41, 'ego te amo, sed tu me non amas.', 'I love you, but you do not love me.', 'A K', ['You love me, but I do not love you.', 'I do not love you, but you love me.', 'I love you, and you love me.'], {});
+T(41, 'nos Romani sumus, vos Graeci estis.', 'We are Romans, you (pl) are Greeks.', 'D E K', ['You (pl) are Romans, we are Greeks.', 'We are Greeks, you (pl) are Romans.', 'They are Romans, we are Greeks.'], {});
+T(51, 'puella te non amat.', 'The girl does not love you.', 'A B K', ['You do not love the girl.', 'The girl loves you.', 'The girl does not love me.'], { u: 1 });
+
+// ── L: Neuter nouns, bellum (Ch 42) ──
+T(42, 'pueri bella amant.', 'The boys love wars.', 'A I L', ['The boys love war.', 'The boy loves wars.', 'Wars love the boys.'], { u: 1, p: [[1, 'case', 'acc pl', 'bellum']] });
+T(42, 'templa specto.', 'I am looking at the temples.', 'A L', ['I am looking at the temple.', 'He is looking at the temples.', 'The temples are looking at me.'], { p: [[0, 'case', 'acc pl', 'bellum']] });
+T(42, 'servus scutum portat.', 'The slave is carrying a shield.', 'A I L', ['The slave is carrying shields.', 'The slaves are carrying a shield.', 'The slave is carrying a sword.'], { u: 1, g: [[1, ['scutum', 'scuta', 'scuto'], '', 'bellum']] });
+T(42, 'servi scuta portant.', 'The slaves are carrying shields.', 'A I L', ['The slaves are carrying a shield.', 'The slave is carrying shields.', 'The shields are carrying the slaves.'], { u: 1, g: [[1, ['scuta', 'scutum', 'scuto'], '', 'bellum']], p: [[1, 'case', 'acc pl', 'bellum']] });
+T(42, 'agricola caelum spectat.', 'The farmer is looking at the sky.', 'A B L', ['The farmers are looking at the sky.', 'The farmer is looking at the temple.', 'The farmer is looking at the field.'], { u: 1 });
+T(42, 'nautae pericula non timent.', 'The sailors do not fear dangers.', 'A B L', ['The sailors fear dangers.', 'Dangers do not frighten the sailors.', 'The sailor does not fear danger.'], { u: 1, p: [[1, 'case', 'acc pl', 'bellum']] });
+T(42, 'nauta vinum amat.', 'The sailor loves wine.', 'A B L', ['The sailors love wine.', 'The sailor loves water.', 'The sailor carries wine.'], { u: 1 });
+T(42, 'auxilium non venit.', 'Help is not coming.', 'F L', ['Help is coming.', 'He is not coming to help.', 'The allies are not coming.'], { p: [[0, 'case', 'nom sg', 'bellum']] });
+T(42, 'puella bellum timet.', 'The girl fears war.', 'A B L', ['War frightens the girl.', 'The girls fear war.', 'The girl fears wars.'], { u: 1 });
+T(42, 'dominus auxilium servis dat.', 'The master gives help to the slaves.', 'A H I L', ['The slaves give help to the master.', 'The master gives help to the slave.', 'The master asks the slaves for help.'], { u: 1, p: [[2, 'case', 'dat pl', 'servus']] });
+T(42, 'templum in oppido est.', 'The temple is in the town.', 'D J L', ['The temple is near the town.', 'The temples are in the town.', 'The town is in the temple.'], { u: 1, g: [[2, ['oppido', 'oppidum', 'oppida', 'oppidis'], '', 'prep']] });
+T(42, 'pueri verba magistri non audiunt.', 'The boys do not listen to the words of the teacher.', 'F H I L', ['The teacher does not listen to the words of the boys.', 'The boys listen to the words of the teacher.', 'The boy does not listen to the words of the teacher.'], { p: [[2, 'case', 'gen sg', 'ager']] });
+T(42, 'nautae in proeliis saepe pugnant.', 'Sailors often fight in battles.', 'A B J L', ['Sailors always fight in battles.', 'Sailors often fight in a battle.', 'Sailors never fight in battles.'], {});
+T(42, 'Romani oppidum capiunt.', 'The Romans capture the town.', 'F I L', ['The town captures the Romans.', 'The Romans capture the towns.', 'The Roman captures the town.'], { u: 1 });
+T(42, 'oppidum auxilio Graecorum capiunt.', 'They capture the town with the help of the Greeks.', 'F H I L', ['The Greeks capture the town with their help.', 'They capture the Greeks with the help of the town.', 'They capture the towns with the help of the Greeks.'], {});
+T(42, 'magister puellas verbis terret.', 'The teacher frightens the girls with words.', 'A B H I L', ['The girls frighten the teacher with words.', 'The teacher frightens the girl with a word.', 'The teacher praises the girls with words.'], { u: 1, p: [[2, 'case', 'abl pl', 'bellum']] });
+T(51, 'vinum bibimus.', 'We are drinking wine.', 'F L', ['We are drinking water.', 'They are drinking wine.', 'We love wine.'], { p: [[1, 'pn', '1p']] });
+T(51, 'periculum timeo.', 'I fear danger.', 'A L', ['Danger frightens me.', 'He fears danger.', 'I fear dangers.'], {});
+T(51, 'librum legunt.', 'They are reading a book.', 'F I', ['They are writing a book.', 'He is reading a book.', 'They are reading books.'], { p: [[1, 'pn', '3p']] });
+T(51, 'discipuli laeti sunt.', 'The pupils are happy.', 'D E I', ['The pupil is happy.', 'The pupils are tired.', 'The pupils are not happy.'], {});
+T(51, 'servi in agris laborant.', 'The slaves work in the fields.', 'A I J', ['The slaves work in the field.', 'The slave works in the fields.', 'The slaves run into the fields.'], { u: 1 });
+T(51, 'puer multos amicos habet.', 'The boy has many friends.', 'A E I', ['The boy has a good friend.', 'Many boys have friends.', 'The boy has few friends.'], { u: 1 });
+T(51, 'bella me non terrent.', 'Wars do not frighten me.', 'A K L', ['I do not fear wars.', 'Wars frighten me.', 'War does not frighten me.'], {});
+
+// ── M: Imperatives (Ch 48) ──
+T(48, 'ride, puer!', 'Laugh, boy!', 'A H I M', ['The boy laughs.', 'Laugh, boys!', 'Cry, boy!'], { g: [[0, ['ride', 'ridet', 'rideo'], '', 'imp']] });
+T(48, 'currite, servi!', 'Run, slaves!', 'F H I M', ['Run, slave!', 'The slaves are running.', 'Come, slaves!'], { g: [[0, ['currite', 'curre', 'currunt', 'curritis'], '', 'imp']] });
+T(48, 'magistrum audite, pueri!', 'Listen to the teacher, boys!', 'F H I M', ['Listen to the teacher, boy!', 'The boys listen to the teacher.', 'Listen to the boys, teacher!'], {});
+T(48, 'veni, amice!', 'Come, friend!', 'F H I M', ['Come, friends!', 'The friend comes.', 'Run, friend!'], {});
+T(48, 'oppidum capite, servi!', 'Capture the town, slaves!', 'F H I L M', ['Capture the town, slave!', 'The slaves capture the town.', 'Look at the town, slaves!'], {});
+T(48, 'templum spectate, servi!', 'Look at the temple, slaves!', 'A H I L M', ['Look at the temple, slave!', 'The slaves look at the temple.', 'Look at the temples, slaves!'], {});
+T(48, 'cibum para, serve!', 'Prepare the food, slave!', 'A H I M', ['Prepare the food, slaves!', 'The slave prepares the food.', 'Carry the food, slave!'], { g: [[1, ['para', 'parat', 'paras'], '', 'imp']] });
+T(48, 'pueri, laborate!', 'Boys, work!', 'A H I M', ['Boy, work!', 'The boys are working.', 'Boys, play!'], { g: [[1, ['laborate', 'labora', 'laborant', 'laboratis'], '', 'imp']] });
+T(48, 'hic mane, Marce!', 'Stay here, Marcus!', 'A H I M', ['Marcus stays here.', 'Stay there, Marcus!', 'Come here, Marcus!'], {});
+T(48, 'servum puni, domine!', 'Punish the slave, master!', 'F H I M', ['Punish the master, slave!', 'The master punishes the slave.', 'Punish the slaves, master!'], {});
+T(48, 'pugnate, nautae!', 'Fight, sailors!', 'A B H M', ['Fight, sailor!', 'The sailors are fighting.', 'Shout, sailors!'], { g: [[0, ['pugnate', 'pugna', 'pugnant', 'pugnatis'], '', 'imp']] });
+T(48, 'Graecos necate, Romani!', 'Kill the Greeks, Romans!', 'A H I M', ['Kill the Romans, Greeks!', 'The Romans kill the Greeks.', 'Kill the Greek, Romans!'], {});
+T(48, 'cenam para, femina!', 'Prepare dinner, woman!', 'A B H M', ['Prepare dinner, women!', 'The woman prepares dinner.', 'Eat dinner, woman!'], {});
+T(48, 'librum lege, poeta!', 'Read the book, poet!', 'B F H I M', ['Read the book, poets!', 'The poet reads the book.', 'Write the book, poet!'], {});
+T(48, 'cantate, puellae!', 'Sing, girls!', 'A B H M', ['Sing, girl!', 'The girls are singing.', 'Shout, girls!'], { g: [[0, ['cantate', 'cantant', 'cantatis'], '', 'imp']] });
+T(48, 'dormite, puellae!', 'Sleep, girls!', 'B F H M', ['Sleep, girl!', 'The girls are sleeping.', 'Come, girls!'], {});
+T(48, 'vinum bibe, regina!', 'Drink the wine, queen!', 'B F H L M', ['Drink the wine, queens!', 'The queen drinks the wine.', 'Drink the water, queen!'], {});
+T(48, 'terram rege, regina!', 'Rule the land, queen!', 'B F H M', ['Rule the land, queens!', 'The queen rules the land.', 'Look at the land, queen!'], {});
+T(48, 'contra Romanos pugnate!', 'Fight against the Romans!', 'A I J M', ['They fight against the Romans.', 'Fight with the Romans!', 'Fight against the Greeks!'], {});
+T(48, 'scuta movete, servi!', 'Move the shields, slaves!', 'A H I L M', ['Move the shield, slave!', 'The slaves move the shields.', 'Hold the shields, slaves!'], {});
+
+// ── N: Numbers (Ch 49) ──
+T(45, 'quattuor nautae quoque in taberna adsunt.', 'Four sailors are also present in the pub.', 'B D J N', ['Four sailors are also away from the pub.', 'Three sailors are also present in the pub.', 'The fourth sailor is also present in the pub.'], {});
+T(47, 'nauta primus clamat.', 'The first sailor shouts.', 'A B N', ['The second sailor shouts.', 'One sailor shouts.', 'The first sailors shout.'], {});
+T(47, 'nauta secundus rogat.', 'The second sailor asks.', 'A B N', ['The first sailor asks.', 'Two sailors ask.', 'The second sailor replies.'], {});
+T(47, 'quattuor nautae rident.', 'The four sailors laugh.', 'A B N', ['The fourth sailor laughs.', 'The three sailors laugh.', 'The four sailors cry.'], {});
+T(47, 'nauta tertius clamat.', 'The third sailor shouts.', 'A B N', ['Three sailors shout.', 'The fourth sailor shouts.', 'The third sailor laughs.'], {});
+T(47, '‘ubi est pecunia?’ clamat nauta quartus.', '‘Where is the money?’ shouts the fourth sailor.', 'B C D N', ['‘Where is the money?’ shout the four sailors.', '‘Why is the money here?’ shouts the fourth sailor.', '‘Where is the money?’ shouts the third sailor.'], {});
+
+// ── O: Infinitives (Ch 53) ──
+T(53, 'ludere cupimus.', 'We want to play.', 'F O', ['We are playing.', 'They want to play.', 'We want to read.'], { g: [[0, ['ludere', 'ludimus', 'ludunt', 'ludo'], '', 'inf']] });
+T(53, 'laborare non cupimus.', 'We do not want to work.', 'A F O', ['We want to work.', 'We are not working.', 'They do not want to work.'], { g: [[0, ['laborare', 'laboramus', 'laborant', 'laboro'], '', 'inf']] });
+T(53, 'festinare cupio.', 'I want to hurry.', 'A F O', ['I am hurrying.', 'He wants to hurry.', 'I want to walk.'], { g: [[0, ['festinare', 'festino', 'festinat', 'festinant'], '', 'inf']] });
+T(53, 'puellae cantare parant.', 'The girls are preparing to sing.', 'A B O', ['The girls are singing.', 'The girl is preparing to sing.', 'The girls want to sing.'], { u: 1 });
+T(53, 'Marcus pugnare cupit.', 'Marcus wants to fight.', 'A F O', ['Marcus is fighting.', 'Marcus decides to fight.', 'Marcus does not want to fight.'], { u: 1, g: [[1, ['pugnare', 'pugnat', 'pugnant', 'pugno'], '', 'inf']] });
+T(53, 'nautae bibere cupiunt.', 'The sailors want to drink.', 'B F O', ['The sailor wants to drink.', 'The sailors are drinking.', 'The sailors want to eat.'], { u: 1 });
+T(53, 'puer scribere non cupit.', 'The boy does not want to write.', 'F I O', ['The boy wants to write.', 'The boy is not writing.', 'The boy does not want to read.'], { u: 1 });
+T(53, 'discipuli dormire cupiunt.', 'The pupils want to sleep.', 'F I O', ['The pupils are sleeping.', 'The pupil wants to sleep.', 'The pupils want to play.'], { u: 1, g: [[1, ['dormire', 'dormiunt', 'dormit', 'dormio'], '', 'inf']] });
+T(53, 'poeta librum legere cupit.', 'The poet wants to read a book.', 'B F I O', ['The poet wants to write a book.', 'The poet is reading a book.', 'The poets want to read a book.'], { u: 1 });
+T(53, 'manere constituit.', 'He decides to stay.', 'A F O', ['He is staying.', 'They decide to stay.', 'He decides to depart.'], {});
+T(53, 'discedere parant.', 'They prepare to depart.', 'A F O', ['They are departing.', 'He prepares to depart.', 'They prepare to stay.'], {});
+T(53, 'servus currere constituit.', 'The slave decides to run.', 'F I O', ['The slave is running.', 'The slaves decide to run.', 'The slave decides to stay.'], { u: 1 });
+T(53, 'magister discipulos punire constituit.', 'The teacher decides to punish the pupils.', 'F I O', ['The pupils decide to punish the teacher.', 'The teacher punishes the pupils.', 'The teacher decides to punish the pupil.'], { u: 1 });
+T(53, 'regina terram regere constituit.', 'The queen decides to rule the land.', 'B F O', ['The queen rules the land.', 'The queen wants to rule the land.', 'The queen decides to rule the island.'], { u: 1, g: [[2, ['regere', 'regit', 'regunt', 'rego'], '', 'inf']] });
+T(53, 'dominus servos laborare iubet.', 'The master orders the slaves to work.', 'A I O', ['The slaves order the master to work.', 'The master orders the slave to work.', 'The master wants the slaves to work.'], { u: 1, g: [[2, ['laborare', 'laborant', 'laborat', 'laboro'], '', 'inf']] });
+T(53, 'magister discipulos scribere iubet.', 'The teacher orders the pupils to write.', 'A F I O', ['The pupils order the teacher to write.', 'The teacher orders the pupils to read.', 'The teacher orders the pupil to write.'], { u: 1 });
+T(53, 'Marcus nautam discedere iubet.', 'Marcus orders the sailor to depart.', 'A B F O', ['The sailor orders Marcus to depart.', 'Marcus orders the sailors to depart.', 'Marcus orders the sailor to stay.'], { u: 1 });
+T(53, 'ego te hic manere iubeo.', 'I order you to stay here.', 'A K O', ['You order me to stay here.', 'I order you to depart.', 'I want you to stay here.'], {});
+T(53, 'regina viros hastas parare iubet.', 'The queen orders the men to prepare spears.', 'A B I O', ['The men order the queen to prepare spears.', 'The queen orders the man to prepare a spear.', 'The queen orders the men to carry spears.'], {});
+T(53, 'dea ancillas templum spectare iubet.', 'The goddess orders the maidservants to look at the temple.', 'A B L O', ['The maidservants order the goddess to look at the temple.', 'The goddess orders the maidservant to look at the temple.', 'The goddess orders the maidservants to build the temple.'], {});
+
+// ── P: Adjectives in -er (Ch 52, 54) ──
+T(54, 'in templo sacro sedemus.', 'We are sitting in the sacred temple.', 'A J L P', ['We are sitting in the big temple.', 'They are sitting in the sacred temple.', 'We are running into the sacred temple.'], {});
+T(54, 'Flavia misera est quod nautae mali sunt.', 'Flavia is miserable because the sailors are wicked.', 'B C D E P', ['Flavia is wicked because the sailors are miserable.', 'The sailors are miserable because Flavia is wicked.', 'Flavia is miserable because the sailor is wicked.'], {});
+T(54, 'viri mali oppidum sacrum hastis et gladiis oppugnant.', 'Wicked men attack the sacred town with spears and swords.', 'A B E H I L P', ['Sacred men attack the wicked town with spears and swords.', 'A wicked man attacks the sacred town with spears and swords.', 'Wicked men attack the sacred town with arrows and swords.'], {});
+T(23, 'dea est misera.', 'The goddess is miserable.', 'B D P', ['The goddesses are miserable.', 'The goddess is happy.', 'The queen is miserable.'], { g: [[2, ['misera', 'miser', 'miseri', 'miserae'], '', 'miser']] });
+T(23, 'puella misera es.', 'You (sg) are a miserable girl.', 'B D P', ['She is a miserable girl.', 'You (pl) are miserable girls.', 'You (sg) are a happy girl.'], {});
+T(23, 'agricolae miseri sumus.', 'We are miserable farmers.', 'B D P', ['They are miserable farmers.', 'We are happy farmers.', 'You (pl) are miserable farmers.'], { g: [[1, ['miseri', 'miser', 'misera', 'miserae'], '', 'miser']] });
+T(23, 'regina misera est.', 'The queen is miserable.', 'B D P', ['The queens are miserable.', 'The queen is not miserable.', 'The goddess is miserable.'], {});
+T(52, 'pecunia nostra tuta est.', 'Our money is safe.', 'B D E P', ['Your money is safe.', 'Our money is not safe.', 'Our money is good.'], {});
+T(46, 'puer puellam scuto magno terret.', 'The boy frightens the girl with a big shield.', 'A B E H I L', ['The girl frightens the boy with a big shield.', 'The boy frightens the girl with a small shield.', 'The boy frightens the girls with big shields.'], { u: 1 });
+T(54, 'servi murum aedificant.', 'The slaves are building a wall.', 'A I', ['The slave is building a wall.', 'The slaves are attacking a wall.', 'The slaves are building walls.'], { u: 1, g: [[2, ['aedificant', 'aedificat', 'aedificamus']]] });
+T(54, 'Romani muros oppugnant.', 'The Romans attack the walls.', 'A I', ['The Romans build the walls.', 'The Romans attack the wall.', 'The walls attack the Romans.'], { u: 1 });
+T(54, 'nautae ad insulam navigant.', 'The sailors sail to the island.', 'A B J', ['The sailors sail away from the island.', 'The sailor sails to the island.', 'The sailors sail around the island.'], { u: 1 });
+T(54, 'agricolae multas hastas iaciunt.', 'The farmers throw many spears.', 'B E F', ['Many farmers throw spears.', 'The farmer throws many spears.', 'The farmers throw many arrows.'], { u: 1 });
+T(54, 'regina ad terram navigat et oppidum novum aedificat.', 'The queen sails to the land and builds a new town.', 'A B E J L', ['The queen sails away from the land and builds a new town.', 'The queen sails to the land and attacks a new town.', 'The queen sails to the land and builds a big town.'], {});
+T(54, 'Marcus nauta notus et clarus est.', 'Marcus is a well-known and famous sailor.', 'B D E', ['Marcus is a well-known and wicked sailor.', 'Marcus and the sailor are well known and famous.', 'Marcus is a new and famous sailor.'], {});
+
+// ── Q: Imperfect tense (Ch 57) ──
+T(57, 'laudabat.', 'He was praising.', 'Q', ['He praises.', 'They were praising.', 'I was praising.'], { g: [[0, ['laudabat', 'laudat', 'laudabatis']]], p: [[0, 'tense', 'impf'], [0, 'pn', '3s', 'impf']] });
+T(57, 'ponebam.', 'I was putting.', 'Q', ['I put.', 'He was putting.', 'We were putting.'], { p: [[0, 'tense', 'impf'], [0, 'pn', '1s', 'impf']] });
+T(57, 'ludebant.', 'They were playing.', 'Q', ['They play.', 'He was playing.', 'We were playing.'], { g: [[0, ['ludebant', 'ludebat', 'ludunt']]], p: [[0, 'pn', '3p', 'impf']] });
+T(57, 'mittebat.', 'He was sending.', 'Q', ['He sends.', 'They were sending.', 'He was putting.'], { p: [[0, 'tense', 'impf']] });
+T(57, 'capiebat.', 'He was taking.', 'Q', ['He takes.', 'They were taking.', 'He was making.'], { p: [[0, 'pn', '3s', 'impf']] });
+T(57, 'erat.', 'He was.', 'D Q', ['He is.', 'They were.', 'I was.'], { g: [[0, ['erat', 'est', 'erant', 'eram'], '', 'impf']], p: [[0, 'tense', 'impf']] });
+T(57, 'faciebam.', 'I was making.', 'Q', ['I make.', 'They were making.', 'I was taking.'], { p: [[0, 'pn', '1s', 'impf']] });
+T(57, 'ambulabamus.', 'We were walking.', 'Q', ['We walk.', 'They were walking.', 'You (pl) were walking.'], { g: [[0, ['ambulabamus', 'ambulamus', 'ambulabat', 'ambulabas']]], p: [[0, 'pn', '1p', 'impf']] });
+T(57, 'currebat.', 'He was running.', 'Q', ['He runs.', 'They were running.', 'He was coming.'], { p: [[0, 'tense', 'impf']] });
+T(57, 'puniebant.', 'They were punishing.', 'Q', ['They punish.', 'He was punishing.', 'They were coming.'], { p: [[0, 'pn', '3p', 'impf']] });
+T(57, 'veniebas.', 'You (sg) were coming.', 'Q', ['You (sg) come.', 'You (pl) were coming.', 'He was coming.'], { g: [[0, ['veniebas', 'veniebat', 'venis']]], p: [[0, 'pn', '2s', 'impf']] });
+T(57, 'videbamus.', 'We were seeing.', 'Q', ['We see.', 'They were seeing.', 'We were having.'], { p: [[0, 'pn', '1p', 'impf']] });
+T(57, 'bibebant.', 'They were drinking.', 'Q', ['They drink.', 'He was drinking.', 'They were eating.'], { p: [[0, 'tense', 'impf']] });
+T(57, 'dormiebam.', 'I was sleeping.', 'Q', ['I sleep.', 'He was sleeping.', 'We were sleeping.'], { g: [[0, ['dormiebam', 'dormio', 'dormit']]], p: [[0, 'pn', '1s', 'impf']] });
+T(57, 'ridebas.', 'You (sg) were laughing.', 'Q', ['You (sg) laugh.', 'He was laughing.', 'You (pl) were laughing.'], { p: [[0, 'pn', '2s', 'impf']] });
+T(57, 'iam laborat; heri ludebat.', 'Now he is working; yesterday he was playing.', 'A Q', ['Now he is playing; yesterday he was working.', 'Now they are working; yesterday they were playing.', 'Now he is working; today he is playing.'], { p: [[3, 'tense', 'impf'], [1, 'tense', 'pres']] });
+T(57, 'heri librum legebam; hodie nihil facio.', 'Yesterday I was reading a book; today I am doing nothing.', 'F I Q', ['Today I am reading a book; yesterday I was doing nothing.', 'Yesterday I was writing a book; today I am doing nothing.', 'Yesterday he was reading a book; today he is doing nothing.'], { p: [[2, 'tense', 'impf']] });
+T(57, 'magister multa verba dicebat.', 'The teacher was saying many words.', 'E I L Q', ['The teacher says many words.', 'The teachers were saying many words.', 'The teacher was writing many words.'], { u: 1 });
+T(57, 'nautae in villa saepe manebant.', 'The sailors often used to stay in the villa.', 'B J Q', ['The sailors always used to stay in the villa.', 'The sailors often stay in the villa.', 'The sailor often used to stay in the villa.'], {});
+T(57, 'cur currebas, puer?', 'Why were you running, boy?', 'C H I Q', ['Why are you running, boy?', 'Where were you running, boy?', 'Why was the boy running?'], {});
+T(57, 'currebam quod timebam.', 'I was running because I was afraid.', 'C Q', ['I was afraid because I was running.', 'He was running because he was afraid.', 'I run because I am afraid.'], {});
+T(57, 'femina aquam pueris saepe dabat.', 'The woman often used to give water to the boys.', 'B H I Q', ['The boys often used to give water to the woman.', 'The woman often used to give water to the boy.', 'The woman often gives water to the boys.'], {});
+T(57, 'multi servi ex oppido currebant.', 'Many slaves were running out of the town.', 'E I J L Q', ['Many slaves were running into the town.', 'Many slaves run out of the town.', 'The slave was running out of the big town.'], {});
+T(57, 'Romani contra Graecos saepe pugnabant.', 'The Romans often used to fight against the Greeks.', 'I J Q', ['The Greeks often used to fight against the Romans.', 'The Romans often fight against the Greeks.', 'The Romans often used to fight with the Greeks.'], {});
+T(57, 'Graeci Romanos non timebant.', 'The Greeks were not afraid of the Romans.', 'I Q', ['The Romans were not afraid of the Greeks.', 'The Greeks are not afraid of the Romans.', 'The Greeks were not frightening the Romans.'], { u: 1, g: [[3, ['timebant', 'timent', 'timebam']]] });
+T(57, 'Romani oppidum oppugnabant.', 'The Romans were attacking the town.', 'I L Q', ['The Romans attack the town.', 'The town was attacking the Romans.', 'The Romans were building the town.'], { u: 1, p: [[2, 'tense', 'impf']] });
+T(57, 'puer ad villam ambulabat.', 'The boy was walking to the villa.', 'B I J Q', ['The boy walks to the villa.', 'The boys were walking to the villa.', 'The boy was walking away from the villa.'], { u: 1 });
+T(57, 'magister saevus erat.', 'The teacher was savage.', 'D E I Q', ['The teacher is savage.', 'The teachers were savage.', 'The teacher was angry.'], {});
+T(57, 'puellas amabam.', 'I used to love the girls.', 'B Q', ['The girls used to love me.', 'I love the girls.', 'I used to love the girl.'], { p: [[1, 'pn', '1s', 'impf']] });
+T(57, 'servi in agris pugnabant.', 'The slaves were fighting in the fields.', 'I J Q', ['The slaves are fighting in the fields.', 'The slave was fighting in the fields.', 'The slaves were working in the fields.'], { u: 1 });
+T(57, 'pueri magistrum non audiebant.', 'The boys were not listening to the teacher.', 'I Q', ['The teacher was not listening to the boys.', 'The boys are not listening to the teacher.', 'The boy was not listening to the teacher.'], { u: 1 });
+T(57, 'per viam ambulabamus.', 'We were walking along the road.', 'B J Q', ['We walk along the road.', 'They were walking along the road.', 'We were walking across the road.'], {});
+T(57, 'timebam quod magister iratus erat.', 'I was afraid because the teacher was angry.', 'C D E I Q', ['The teacher was angry because I was afraid.', 'I am afraid because the teacher is angry.', 'He was afraid because the teacher was angry.'], {});
+T(57, 'magna turba puerorum veniebat.', 'A big crowd of boys was coming.', 'B E H I Q', ['A big crowd of boys is coming.', 'A small crowd of boys was coming.', 'A big crowd of girls was coming.'], {});
+T(57, 'nautae vinum saepe bibebant.', 'The sailors often used to drink wine.', 'B L Q', ['The sailors often drink wine.', 'The sailor often used to drink wine.', 'The sailors always used to drink wine.'], { u: 1 });
+T(57, 'celeriter currebam.', 'I was running quickly.', 'Q', ['I was running slowly.', 'I run quickly.', 'He was running quickly.'], {});
+T(57, 'puellae ludebant sed pueri non ludebant.', 'The girls were playing but the boys were not playing.', 'B I Q', ['The boys were playing but the girls were not playing.', 'The girls are playing but the boys are not playing.', 'The girls were playing and the boys were playing.'], {});
+
+// ── R: Perfect tense (Ch 60–73) ──
+T(60, 'oppidum oppugnavimus.', 'We attacked the town.', 'L R', ['We were attacking the town.', 'They attacked the town.', 'We attack the town.'], { p: [[1, 'tense', 'perf'], [1, 'pn', '1p', 'perf']] });
+T(60, 'templum intravit.', 'He entered the temple.', 'L R', ['He enters the temple.', 'They entered the temple.', 'He was entering the temple.'], { p: [[1, 'pn', '3s', 'perf']] });
+T(60, 'pecuniam portaverunt.', 'They carried the money.', 'B R', ['They carry the money.', 'He carried the money.', 'They were carrying the money.'], { p: [[1, 'pn', '3p', 'perf']] });
+T(60, 'servos laudavi.', 'I praised the slaves.', 'I R', ['The slaves praised me.', 'I praised the slave.', 'He praised the slaves.'], { p: [[1, 'pn', '1s', 'perf']] });
+T(60, 'murum aedificavisti.', 'You (sg) built a wall.', 'I R', ['You (pl) built a wall.', 'You (sg) build a wall.', 'He built a wall.'], { p: [[1, 'pn', '2s', 'perf']] });
+T(60, 'nuntium necavit.', 'He killed the messenger.', 'I R', ['The messenger killed him.', 'They killed the messenger.', 'He kills the messenger.'], {});
+T(60, 'equum necavimus.', 'We killed the horse.', 'I R', ['The horse killed us.', 'We kill the horse.', 'They killed the horse.'], { p: [[1, 'pn', '1p', 'perf']] });
+T(60, 'dominus servum laudavit.', 'The master praised the slave.', 'I R', ['The slave praised the master.', 'The master praised the slaves.', 'The master praises the slave.'], { u: 1, g: [[2, ['laudavit', 'laudat', 'laudabat', 'laudaverunt'], 'Q']] });
+T(60, 'dominus servos laudavit.', 'The master praised the slaves.', 'I R', ['The slaves praised the master.', 'The master praised the slave.', 'The masters praised the slaves.'], { u: 1 });
+T(60, 'Romani oppidum oppugnaverunt.', 'The Romans attacked the town.', 'I L R', ['The Romans attack the town.', 'The town attacked the Romans.', 'The Romans built the town.'], { u: 1, p: [[2, 'tense', 'perf']] });
+T(60, 'Romani multa oppida aedificaverunt.', 'The Romans built many towns.', 'E I L R', ['The Romans attacked many towns.', 'The Romans build many towns.', 'Many Romans built towns.'], { u: 1 });
+T(60, 'servus cenam paravit.', 'The slave prepared dinner.', 'B I R', ['The slave prepares dinner.', 'The slaves prepared dinner.', 'The slave was preparing dinner.'], { u: 1, g: [[2, ['paravit', 'parat', 'paraverunt', 'paravi']]] });
+T(60, 'Romani Graecos superaverunt.', 'The Romans overcame the Greeks.', 'I R', ['The Greeks overcame the Romans.', 'The Romans overcome the Greeks.', 'The Romans attacked the Greeks.'], { u: 1 });
+T(60, 'nuntius proelium spectavit.', 'The messenger watched the battle.', 'I L R', ['The messenger watches the battle.', 'The messengers watched the battle.', 'The messenger was watching the battles.'], { u: 1 });
+T(60, 'puer auxilium rogavit.', 'The boy asked for help.', 'I L R', ['The boy gave help.', 'The boys asked for help.', 'The boy asks for help.'], { u: 1 });
+T(60, 'femina cenam bonam paravit.', 'The woman prepared a good dinner.', 'B E R', ['The good woman prepared dinner.', 'The woman prepares a good dinner.', 'The woman prepared a bad dinner.'], { u: 1 });
+T(60, 'incolae Romanos superaverunt.', 'The inhabitants overcame the Romans.', 'B I R', ['The Romans overcame the inhabitants.', 'The inhabitants overcome the Romans.', 'The inhabitant overcame the Romans.'], { u: 1 });
+T(60, 'sagitta virum necavit.', 'The arrow killed the man.', 'B I R', ['The man killed the arrow.', 'The arrow killed the men.', 'The spear killed the man.'], { u: 1, g: [[1, ['virum', 'vir', 'viri', 'viros'], '', 'servus']] });
+T(68, 'discipuli dormiverunt.', 'The pupils slept.', 'I R', ['The pupil slept.', 'The pupils are sleeping.', 'The pupils were sleeping.'], { p: [[1, 'pn', '3p', 'perf']] });
+T(68, 'verba audivimus.', 'We heard the words.', 'L R', ['We hear the words.', 'They heard the words.', 'We heard the word.'], { p: [[1, 'pn', '1p', 'perf']] });
+T(68, 'servum punivisti.', 'You (sg) punished the slave.', 'I R', ['The slave punished you (sg).', 'You (pl) punished the slave.', 'You (sg) punished the slaves.'], { p: [[1, 'pn', '2s', 'perf']] });
+T(68, 'terram rexi.', 'I ruled the land.', 'B R', ['I rule the land.', 'He ruled the land.', 'I led the land.'], { p: [[1, 'pn', '1s', 'perf']] });
+T(68, 'magistri boni fuerunt.', 'The teachers were good.', 'D E I R', ['The teacher was good.', 'The teachers are good.', 'The boys were good.'], {});
+T(68, 'servus equum duxit.', 'The slave led the horse.', 'I R', ['The horse led the slave.', 'The slave leads the horse.', 'The slaves led the horse.'], { u: 1, g: [[2, ['duxit', 'duxerunt', 'duxi', 'duximus']]] });
+T(68, 'multa verba dixit.', 'He said many words.', 'E L R', ['He says many words.', 'They said many words.', 'He wrote many words.'], {});
+T(68, 'magister discipulos terruit.', 'The teacher frightened the pupils.', 'I R', ['The pupils frightened the teacher.', 'The teacher frightens the pupils.', 'The teacher feared the pupils.'], { u: 1 });
+T(68, 'puer gladium tenuit.', 'The boy held the sword.', 'I R', ['The boy holds the sword.', 'The boys held the sword.', 'The boy held the swords.'], { u: 1 });
+T(68, 'nautae oppidum oppugnaverunt.', 'The sailors attacked the town.', 'B L R', ['The sailors attack the town.', 'The sailor attacked the town.', 'The town attacked the sailors.'], { u: 1 });
+T(68, 'dominus servos punivit.', 'The master punished the slaves.', 'I R', ['The slaves punished the master.', 'The master punishes the slaves.', 'The master punished the slave.'], { u: 1 });
+T(68, 'discipuli nuntium audiverunt.', 'The pupils heard the messenger.', 'I R', ['The messenger heard the pupils.', 'The pupils hear the messenger.', 'The pupil heard the messenger.'], { u: 1 });
+T(72, 'vir stetit.', 'The man stood.', 'I R', ['The man stands.', 'The men stood.', 'The man ran.'], {});
+T(72, 'equus cucurrit.', 'The horse ran.', 'I R', ['The horse runs.', 'The horses ran.', 'The horse came.'], {});
+T(72, 'puellae manserunt.', 'The girls stayed.', 'B R', ['The girl stayed.', 'The girls stay.', 'The girls laughed.'], { p: [[1, 'pn', '3p', 'perf']] });
+T(72, 'auxilium venit.', 'Help came.', 'L R', ['Help is not coming.', 'The allies came.', 'Help was coming.'], {});
+T(72, 'Romani fugerunt.', 'The Romans fled.', 'I R', ['The Romans flee.', 'The Roman fled.', 'The Romans fought.'], {});
+T(72, 'regina risit.', 'The queen laughed.', 'B R', ['The queen laughs.', 'The queens laughed.', 'The queen cried.'], {});
+T(72, 'hastam ieci.', 'I threw the spear.', 'B R', ['He threw the spear.', 'I throw the spear.', 'I took the spear.'], { p: [[1, 'pn', '1s', 'perf']] });
+T(72, 'cibum consumpsistis.', 'You (pl) ate the food.', 'I R', ['You (sg) ate the food.', 'You (pl) eat the food.', 'We ate the food.'], { p: [[1, 'pn', '2p', 'perf']] });
+T(72, 'templa deleverunt.', 'They destroyed the temples.', 'L R', ['They destroyed the temple.', 'They destroy the temples.', 'They built the temples.'], { p: [[1, 'pn', '3p', 'perf']] });
+T(72, 'scutum cepit.', 'He took the shield.', 'L R', ['He takes the shield.', 'They took the shield.', 'He made the shield.'], {});
+T(72, 'reginam vidit.', 'He saw the queen.', 'B R', ['The queen saw him.', 'He sees the queen.', 'They saw the queen.'], {});
+T(72, 'murum moverunt.', 'They moved the wall.', 'I R', ['They move the wall.', 'He moved the wall.', 'They built the wall.'], {});
+T(72, 'nauta ab insula navigavit.', 'The sailor sailed away from the island.', 'B J R', ['The sailor sailed to the island.', 'The sailors sailed away from the island.', 'The sailor sails away from the island.'], { u: 1 });
+T(72, 'magister librum bonum scripsit.', 'The teacher wrote a good book.', 'E I R', ['The good teacher wrote a book.', 'The teacher read a good book.', 'The teacher writes a good book.'], { u: 1 });
+T(72, 'servi ex oppido fugerunt.', 'The slaves fled out of the town.', 'I J L R', ['The slaves fled into the town.', 'The slave fled out of the town.', 'The slaves flee out of the town.'], { u: 1 });
+T(72, 'puer parvus in viam cucurrit.', 'The small boy ran into the road.', 'B E I J R', ['The small boy ran in the road.', 'The big boy ran into the road.', 'The small boys ran into the road.'], { u: 1 });
+T(72, 'puer in muro stetit.', 'The boy stood on the wall.', 'I J R', ['The boy stands on the wall.', 'The boy ran into the wall.', 'The boys stood on the wall.'], { u: 1 });
+T(72, 'quid fecistis, pueri?', 'What did you do, boys?', 'C H I R', ['What did you do, boy?', 'What are you doing, boys?', 'Why did you do it, boys?'], {});
+T(72, 'vir hastam iecit.', 'The man threw the spear.', 'B I R', ['The man threw the spears.', 'The man throws the spear.', 'The man took the spear.'], { u: 1 });
+T(72, 'ad oppidum celeriter venimus.', 'We came quickly to the town.', 'J L R', ['We came slowly to the town.', 'We came quickly from the town.', 'They came quickly to the town.'], {});
+T(72, 'librum non legistis, discipuli.', 'You did not read the book, pupils.', 'H I R', ['You read the book, pupils.', 'You did not write the book, pupils.', 'The pupils did not read the book.'], {});
+T(72, 'ancillae aquam et vinum biberunt.', 'The maidservants drank water and wine.', 'B L R', ['The maidservant drank water and wine.', 'The maidservants drink water and wine.', 'The maidservants carried water and wine.'], {});
+T(72, 'multi servi in villa laboraverunt.', 'Many slaves worked in the villa.', 'B E I J R', ['Many slaves worked in the field.', 'Many slaves work in the villa.', 'The slave worked in the big villa.'], {});
+T(72, 'dominus multam pecuniam servo dedit.', 'The master gave much money to the slave.', 'B E H I R', ['The slave gave much money to the master.', 'The master gave much money to the slaves.', 'The master gave money to many slaves.'], {});
+T(72, 'magister discipulos laborare iussit.', 'The teacher ordered the pupils to work.', 'I O R', ['The pupils ordered the teacher to work.', 'The teacher orders the pupils to work.', 'The teacher ordered the pupils to play.'], { u: 1 });
+T(72, 'Romani murum oppugnare constituerunt.', 'The Romans decided to attack the wall.', 'I O R', ['The Romans decided to build the wall.', 'The Romans decide to attack the wall.', 'The Romans attacked the wall.'], { u: 1 });
+T(72, 'vir gladium cepit et in proelium cucurrit.', 'The man took the sword and ran into the battle.', 'I J L R', ['The man took the sword and ran away from the battle.', 'The man takes the sword and runs into the battle.', 'The man took the shield and ran into the battle.'], {});
+T(72, 'discipuli verba magistri non audiverunt.', 'The pupils did not hear the words of the teacher.', 'H I L R', ['The teacher did not hear the words of the pupils.', 'The pupils heard the words of the teacher.', 'The pupils do not hear the words of the teacher.'], { p: [[2, 'case', 'gen sg', 'ager']] });
+T(72, 'servus equos ex agris duxit.', 'The slave led the horses out of the fields.', 'I J R', ['The slave led the horses into the fields.', 'The slaves led the horses out of the fields.', 'The slave led the horse out of the field.'], { u: 1 });
+T(72, 'dominus multa verba servis dixit.', 'The master said many words to the slaves.', 'E H I L R', ['The slaves said many words to the master.', 'The master said many words to the slave.', 'The master says many words to the slaves.'], {});
+T(72, 'periculum nautas terruit.', 'The danger frightened the sailors.', 'B L R', ['The sailors feared the danger.', 'The danger frightens the sailors.', 'The danger frightened the sailor.'], { u: 1 });
+T(72, 'aurum magistro ostendimus.', 'We showed the gold to the teacher.', 'H I L R', ['The teacher showed the gold to us.', 'We showed the gold to the teachers.', 'We show the gold to the teacher.'], {});
+T(72, 'Marcus et Valeria in taberna manserunt.', 'Marcus and Valeria stayed in the pub.', 'B J R', ['Marcus and Valeria stay in the pub.', 'Marcus and Valeria ran into the pub.', 'Marcus stayed in the pub with Valeria.'], {});
+T(72, 'servus pecuniam capere cupivit.', 'The slave wanted to take the money.', 'B I O R', ['The slave took the money.', 'The slaves wanted to take the money.', 'The slave wants to take the money.'], { u: 1 });
+T(72, 'pueri cum amicis in via luserunt.', 'The boys played with friends in the road.', 'I J R', ['The boys played with friends in the field.', 'The boys play with friends in the road.', 'The boy played with a friend in the road.'], {});
+T(73, 'cucurrimus.', 'We ran.', 'R', ['We run.', 'We were running.', 'They ran.'], { g: [[0, ['cucurrimus', 'currimus', 'currebamus', 'cucurrerunt'], 'F Q']], p: [[0, 'tense', 'perf'], [0, 'pn', '1p', 'perf']] });
+T(73, 'pugnabam.', 'I was fighting.', 'Q', ['I fight.', 'I fought.', 'We were fighting.'], { g: [[0, ['pugnabam', 'pugno', 'pugnavi', 'pugnabat'], 'R']], p: [[0, 'tense', 'impf']] });
+T(73, 'pugnavi.', 'I fought.', 'R', ['I fight.', 'I was fighting.', 'He fought.'], { g: [[0, ['pugnavi', 'pugno', 'pugnabam', 'pugnavit'], 'Q']], p: [[0, 'tense', 'perf']] });
+T(73, 'viderunt.', 'They saw.', 'R', ['They see.', 'They were seeing.', 'He saw.'], { g: [[0, ['viderunt', 'vident', 'videbant', 'vidit'], 'Q']], p: [[0, 'tense', 'perf'], [0, 'pn', '3p', 'perf']] });
+T(73, 'fuit.', 'He was.', 'D R', ['He is.', 'They were.', 'I was.'], { g: [[0, ['fuit', 'est', 'fuerunt', 'fui'], '', 'perf']], p: [[0, 'tense', 'perf']] });
+T(73, 'scripsit.', 'He wrote.', 'R', ['He writes.', 'They wrote.', 'He was writing.'], { g: [[0, ['scripsit', 'scribit', 'scribebat', 'scripsi'], 'Q']], p: [[0, 'tense', 'perf']] });
+T(73, 'dedimus.', 'We gave.', 'R', ['We give.', 'We were giving.', 'They gave.'], { g: [[0, ['dedimus', 'damus', 'dabamus', 'dedit'], 'Q']], p: [[0, 'pn', '1p', 'perf']] });
+T(73, 'riserunt.', 'They laughed.', 'R', ['They laugh.', 'They were laughing.', 'He laughed.'], { g: [[0, ['riserunt', 'rident', 'ridebant', 'risit'], 'Q']], p: [[0, 'tense', 'perf']] });
+T(73, 'misisti.', 'You (sg) sent.', 'R', ['You (sg) send.', 'You (pl) sent.', 'You (sg) were sending.'], { g: [[0, ['misisti', 'mittis', 'mittebas', 'misit'], 'F Q']], p: [[0, 'pn', '2s', 'perf']] });
+T(73, 'delevi.', 'I destroyed.', 'R', ['I destroy.', 'I was destroying.', 'He destroyed.'], { p: [[0, 'tense', 'perf']] });
+T(73, 'erant.', 'They were.', 'D Q', ['They are.', 'He was.', 'We were.'], { g: [[0, ['erant', 'sunt', 'erat', 'eramus'], '', 'impf']], p: [[0, 'pn', '3p', 'impf']] });
+T(73, 'audiebatis.', 'You (pl) were listening.', 'Q', ['You (pl) listened.', 'You (pl) listen.', 'You (sg) were listening.'], { g: [[0, ['audiebatis', 'auditis', 'audivistis', 'audiebas'], 'F R']] });
+T(73, 'consumpsimus.', 'We ate.', 'R', ['We eat.', 'We were eating.', 'They ate.'], { p: [[0, 'pn', '1p', 'perf']] });
+T(73, 'discesserunt.', 'They departed.', 'R', ['They depart.', 'He departed.', 'They were departing.'], { p: [[0, 'tense', 'perf']] });
+
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+// Split a Latin sentence into words (punctuation stripped) — indices match the bank
+const words = s => s.replace(/[.,?!;:‘’"]/g, ' ').trim().split(/\s+/);
+const lc = s => s.toLowerCase();
+const subset = (need, have) => need.every(k => have.has(k));
+const extraTags = s => (s || '').split(' ').filter(Boolean);
+
+const PN_LABEL = { '1s': '1st person singular', '2s': '2nd person singular', '3s': '3rd person singular', '1p': '1st person plural', '2p': '2nd person plural', '3p': '3rd person plural' };
+const CASE_NAME = { nom: 'nominative', voc: 'vocative', acc: 'accusative', gen: 'genitive', dat: 'dative', abl: 'ablative' };
+const NUM_NAME = { sg: 'singular', pl: 'plural' };
+const caseLabel = c => { const [cs, n] = c.split(' '); return CASE_NAME[cs] + ' ' + NUM_NAME[n]; };
+const TENSE_NAME = { pres: 'present', impf: 'imperfect', perf: 'perfect' };
+const GLUE = new Set(['ad', 'a', 'ab', 'e', 'ex', 'in', 'cum', 'contra', 'per', 'prope', 'trans', 'de', 'non']);
+
+// ════════════════════════════════════════════════════════════════
+// QUESTION BUILDING
+// ════════════════════════════════════════════════════════════════
+function tensesAllowed() { const t = ['pres']; if (ticked.has('Q')) t.push('impf'); if (ticked.has('R')) t.push('perf'); return t; }
+function casesAllowed() { return ticked.has('H') ? ['nom', 'voc', 'acc', 'gen', 'dat', 'abl'] : ['nom', 'acc']; }
+
+// Which question types this sentence can make with the current ticks
+function itemTypes(it) {
+  const out = [];
+  if (types.has('tr')) out.push('tr');
+  if (types.has('un') && it.u) { const n = words(it.lat).length; if (n >= 3 && n <= 7) out.push('un'); }
+  if (types.has('gap') && (it.g || []).some(g => subset(extraTags(g[2]), ticked))) out.push('gap');
+  if (types.has('parse') && (it.p || []).some(p => p[1] !== 'tense' || tensesAllowed().length > 1)) out.push('parse');
+  return out;
+}
+function availableItems() {
+  return BANK.filter(it => subset(it.t, ticked) && itemTypes(it).length);
+}
+
+function makeQuestion(it, type) {
+  const w = words(it.lat);
+  const q = { it, type, tags: it.t };
+  if (type === 'tr') {
+    q.prompt = 'Choose the correct English translation.';
+    q.opts = shuffle([{ text: it.en, ok: true }, ...it.d.map(d => ({ text: d, ok: false }))]);
+    q.hint = topTable(it.t);
+    q.answer = it.en;
+  } else if (type === 'gap') {
+    const g = pick(it.g.filter(g => subset(extraTags(g[2]), ticked)));
+    q.gapIdx = g[0];
+    q.prompt = 'Choose the Latin word that fits the gap.';
+    q.opts = shuffle(g[1].map((o, i) => ({ text: o, ok: i === 0, latin: true })));
+    q.hint = g[3] || verbTable(it.t);
+    q.answer = g[1][0];
+  } else if (type === 'parse') {
+    const ps = it.p.filter(p => p[1] !== 'tense' || tensesAllowed().length > 1);
+    const p = pick(ps);
+    q.target = p[0];
+    const word = w[p[0]];
+    let opts = [];
+    if (p[1] === 'pn') {
+      q.prompt = `Give the person and number of ${word}.`;
+      const wrong = shuffle(Object.keys(PN_LABEL).filter(k => k !== p[2])).slice(0, 3);
+      opts = [p[2], ...wrong].map(k => ({ text: PN_LABEL[k], ok: k === p[2] }));
+      q.hint = p[3] || verbTable(it.t);
+      q.answer = PN_LABEL[p[2]];
+    } else if (p[1] === 'case') {
+      q.prompt = `Give the case and number of ${word}.`;
+      const [cs, nm] = p[2].split(' ');
+      const all = [];
+      casesAllowed().forEach(c => ['sg', 'pl'].forEach(n => all.push(c + ' ' + n)));
+      const near = shuffle(all.filter(c => c !== p[2] && (c.startsWith(cs + ' ') || c.endsWith(' ' + nm))));
+      const rest = shuffle(all.filter(c => c !== p[2] && !near.includes(c)));
+      const wrong = [...near.slice(0, 2), ...rest, ...near.slice(2)].slice(0, 3);
+      opts = [p[2], ...wrong].map(c => ({ text: caseLabel(c), ok: c === p[2] }));
+      q.hint = p[3] || (ticked.has('H') ? 'puella' : 'puellaNA');
+      q.answer = caseLabel(p[2]);
+    } else {
+      q.prompt = `What tense is ${word}?`;
+      opts = tensesAllowed().map(t => ({ text: TENSE_NAME[t], ok: t === p[2] }));
+      q.hint = 'tenses';
+      q.answer = TENSE_NAME[p[2]];
+    }
+    q.opts = shuffle(opts);
+  } else if (type === 'un') {
+    q.prompt = 'Build the Latin sentence. Tap the words in order. Not every word is needed.';
+    q.tokens = w;
+    let decoys = [];
+    const g = (it.g || []).find(g => subset(extraTags(g[2]), ticked));
+    if (g) decoys = shuffle(g[1].slice(1)).filter(d => !w.map(lc).includes(lc(d))).slice(0, 2);
+    q.bank = shuffle([...w, ...decoys]);
+    q.hint = topTable(it.t);
+    q.answer = w.join(' ');
+  }
+  if (q.hint === 'pres' && !it.t.includes('F')) q.hint = 'amo';
+  q.focus = focusTag(q);
+  return q;
+}
+// The one grammar point a question tests (used for the revision list at the end)
+const HINT_TAG = { amo: 'A', pres: 'F', sum: 'D', puellaNA: 'B', puella: 'H', servus: 'I', ager: 'I', bellum: 'L', bonus: 'E', miser: 'P', prep: 'J', ego: 'K', imp: 'M', inf: 'O', impf: 'Q', perf: 'R' };
+function topTag(tags) { for (const k of TAG_ORDER) if (tags.includes(k)) return k; return tags[0]; }
+function focusTag(q) {
+  const t = q.it.t;
+  let f = null;
+  if (q.type === 'gap' || (q.type === 'parse' && q.hint !== 'tenses')) {
+    f = HINT_TAG[q.hint];
+    if (q.type === 'parse' && q.hint === 'puella' && /^(nominative|accusative)/.test(q.answer)) f = 'B';
+  } else if (q.type === 'parse') {
+    f = q.answer === 'imperfect' ? 'Q' : q.answer === 'perfect' ? 'R' : (t.includes('F') ? 'F' : 'A');
+  }
+  return f && t.includes(f) ? f : topTag(t);
+}
+function topTable(tags) { for (const k of TAG_ORDER) if (tags.includes(k)) return TAG_TABLE[k]; return 'amo'; }
+function verbTable(tags) {
+  if (tags.includes('R')) return 'perf';
+  if (tags.includes('Q')) return 'impf';
+  if (tags.includes('F')) return 'pres';
+  if (tags.includes('A')) return 'amo';
+  if (tags.includes('D')) return 'sum';
+  return 'pres';
+}
+
+// Pick 15 sentences: spread across the ticked grammar and the ticked question types
+function buildGame() {
+  const pool = availableItems();
+  const used = new Set();
+  const qs = [];
+  const tagCycle = [];
+  const typeCycle = [];
+  while (qs.length < 15) {
+    if (!tagCycle.length) tagCycle.push(...shuffle([...ticked]));
+    if (!typeCycle.length) typeCycle.push(...shuffle([...types]));
+    const tag = tagCycle.shift();
+    const type = typeCycle[0];
+    let cands = pool.filter(it => !used.has(it) && it.t.includes(tag) && itemTypes(it).includes(type));
+    let chosenType = type;
+    if (!cands.length) cands = pool.filter(it => !used.has(it) && itemTypes(it).includes(type));
+    if (!cands.length) {
+      cands = pool.filter(it => !used.has(it) && it.t.includes(tag));
+      if (!cands.length) cands = pool.filter(it => !used.has(it));
+      if (!cands.length) break;
+      const it = pick(cands);
+      chosenType = pick(itemTypes(it));
+      used.add(it);
+      qs.push(makeQuestion(it, chosenType));
+      continue;
+    }
+    typeCycle.shift();
+    const it = pick(cands);
+    used.add(it);
+    qs.push(makeQuestion(it, chosenType));
+  }
+  // Easier chapters first
+  return qs.sort((a, b) => a.it.ch - b.it.ch);
+}
+
+// ════════════════════════════════════════════════════════════════
+// FUGA ROMANA: ESCAPE FROM POMPEII
+// A voxel escape room. The question bank and question builder above
+// come from Fuga Romana; everything below is the new game.
+// ════════════════════════════════════════════════════════════════
+
+const ROOMS = [
+  { name: 'The Villa', lat: 'villa', intro: 'Your master’s house. The front door is barred.' },
+  { name: 'The Street', lat: 'via', intro: 'Ash drifts onto the stepping stones. The far door is locked.' },
+  { name: 'The Bakery', lat: 'taberna', intro: 'Bread still bakes in the oven. The back door is locked.' },
+  { name: 'The Forum', lat: 'forum', intro: 'The temple of Jupiter. The far gate is locked.' },
+  { name: 'The Sea Gate', lat: 'porta', intro: 'The Porta Marina. Beyond it lie the sea and the boats.' },
+];
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+const SPLASHES = ['Now with volcano!', 'Cave canem!', 'Festina lente!', 'Ash included!', 'Mind the stepping stones!', 'Salve, discipule!', 'Not to scale!', 'Carpe clavem!'];
+
+// ── Setup state (the question builder reads ticked / types) ──
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('fugaRomanaMC.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('fugaRomanaMC.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+let ticked = new Set(store.get('grammar', 'ABCDEFGHIJKLMNOPQR'.split('')));
+let types = new Set(store.get('types', QTYPES.map(q => q.k)));
+
+// ════════════════════════════════════════════════════════════════
+// TEXTURES — 16×16 pixel tiles painted into one atlas
+// ════════════════════════════════════════════════════════════════
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+const nz = (c, a) => { const v = (rnd() - 0.5) * a; return [c[0] + v, c[1] + v, c[2] + v]; };
+const mulc = (c, s) => [c[0] * s, c[1] * s, c[2] * s];
+const atlasCanvas = document.createElement('canvas');
+atlasCanvas.width = atlasCanvas.height = 256;
+const actx = atlasCanvas.getContext('2d');
+const atlasImg = actx.createImageData(256, 256);
+function paint(i, f) {
+  const ox = (i % 16) * 16, oy = Math.floor(i / 16) * 16;
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const c = f(x, y), p = ((oy + y) * 256 + ox + x) * 4;
+    atlasImg.data[p] = c[0]; atlasImg.data[p + 1] = c[1]; atlasImg.data[p + 2] = c[2]; atlasImg.data[p + 3] = c[3] === undefined ? 255 : c[3];
+  }
+}
+const GRASS_C = [92, 156, 56], DIRT_C = [134, 96, 67];
+paint(0, () => nz(GRASS_C, 34));
+paint(1, (x, y) => { const h = 3 + ((x * 5 + 3) % 4 === 0 ? 1 : 0) + ((x * 3) % 5 === 0 ? 1 : 0); return y < h ? nz(GRASS_C, 30) : nz(DIRT_C, 30); });
+paint(2, () => nz(DIRT_C, 34));
+paint(3, () => rnd() < 0.06 ? nz([96, 96, 96], 10) : nz([128, 128, 128], 24));
+{ // 4: basalt paving stones
+  const pts = []; for (let i = 0; i < 7; i++) pts.push([rnd() * 16, rnd() * 16]);
+  paint(4, (x, y) => {
+    let d1 = 99, d2 = 99, id = 0;
+    pts.forEach((p, i) => { let dx = Math.abs(x + .5 - p[0]), dy = Math.abs(y + .5 - p[1]); dx = Math.min(dx, 16 - dx); dy = Math.min(dy, 16 - dy); const d = Math.hypot(dx, dy); if (d < d1) { d2 = d1; d1 = d; id = i; } else if (d < d2) d2 = d; });
+    return d2 - d1 < 1.3 ? nz([46, 44, 44], 8) : nz(mulc([92, 90, 92], 0.85 + (id % 3) * 0.1), 14);
+  });
+}
+paint(5, (x, y) => { const v = Math.sin(x * 0.6 + y * 0.35 + Math.sin(y * 0.9) * 1.6); return Math.abs(v) < 0.13 ? nz([180, 180, 188], 10) : nz([236, 233, 226], 8); });
+paint(6, (x, y) => { const off = Math.floor(y / 8) % 2 ? 8 : 0; if (y % 8 === 7 || (x + off) % 16 === 0) return nz([188, 174, 144], 8); return rnd() < 0.05 ? [168, 152, 118] : nz([222, 206, 170], 14); });
+paint(7, () => nz([158, 42, 36], 14));
+paint(8, () => nz([212, 168, 76], 14));
+paint(9, (x, y) => { const off = (Math.floor(y / 4) % 2) * 2; const s = (x + off) % 4 === 0 ? 0.72 : 1; return mulc(nz([180, 84, 50], 16), s * (1 - (y % 4) * 0.09)); });
+paint(10, (x, y) => { if (y % 4 === 3) return nz([108, 82, 48], 8); const seam = (x + Math.floor(y / 4) * 5) % 16 === 0; return mulc(nz([166, 132, 82], 14), seam ? 0.7 : 1); });
+paint(11, (x) => mulc(nz([104, 80, 52], 12), x % 4 === 1 ? 0.78 : 1));
+paint(12, (x, y) => { const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); return d > 6.5 ? [104, 80, 52] : (Math.floor(d) % 2 ? nz([176, 140, 90], 8) : nz([152, 118, 74], 8)); });
+paint(13, () => rnd() < 0.12 ? [0, 0, 0, 0] : nz([52, 104, 42], 40));
+paint(14, () => nz([222, 206, 160], 18));
+paint(15, (x, y) => (y % 6 === 0 && (x + y) % 5 < 3) ? nz([110, 160, 230], 10) : nz([46, 96, 190], 14));
+paint(16, (x, y) => {
+  const d = Math.abs(x - 7.5) + Math.abs(y - 7.5);
+  let c = [232, 226, 212];
+  if (x === 0 || y === 0 || (d > 4.5 && d < 6.5)) c = [40, 38, 36]; else if (d < 2) c = [156, 52, 40];
+  c = nz(c, 14); return (x + y) % 2 ? c : mulc(c, 0.94);
+});
+paint(17, (x, y) => { if (y % 4 === 3) return nz([206, 196, 174], 8); const off = (Math.floor(y / 4) % 2) * 4; return (x + off) % 8 === 7 ? nz([206, 196, 174], 8) : nz([168, 72, 52], 22); });
+paint(18, (x, y) => {
+  if (y === 2 || y === 3 || y === 12 || y === 13) return (x % 4 === 2) ? [200, 184, 120] : nz([66, 66, 72], 10);
+  return x % 4 === 0 ? nz([70, 44, 26], 8) : nz([112, 72, 40], 14);
+});
+paint(19, (x) => x % 4 === 0 ? nz([194, 192, 184], 6) : x % 4 === 1 ? nz([220, 218, 210], 6) : nz([240, 238, 232], 6));
+paint(20, () => rnd() < 0.08 ? [255, 242, 150] : nz([228, 184, 58], 30));
+paint(21, (x, y) => Math.sin(x * 0.9) + Math.cos(y * 0.8 + x * 0.3) > 1.0 ? nz([255, 200, 70], 20) : nz([216, 80, 18], 30));
+paint(22, () => nz([62, 60, 62], 22));
+paint(23, (x, y) => { // wax tablet
+  if (x < 2 || x > 13 || y < 2 || y > 13) return nz([132, 92, 52], 14);
+  if ((y === 4 || y === 7 || y === 10) && x >= 3 && x <= 12 && rnd() < 0.7) return [214, 192, 150];
+  return nz([58, 48, 38], 8);
+});
+paint(24, (x, y) => { // strongbox front
+  if (x >= 6 && x <= 9 && y >= 5 && y <= 10) return ((x === 7 || x === 8) && y >= 7 && y <= 9) ? [20, 16, 12] : nz([216, 178, 64], 14);
+  if (x === 2 || x === 3 || x === 12 || x === 13 || y === 1 || y === 14) return nz([70, 70, 76], 10);
+  return nz([126, 78, 40], 14);
+});
+paint(25, (x) => (x === 2 || x === 3 || x === 12 || x === 13) ? nz([70, 70, 76], 10) : nz([116, 72, 38], 12));
+paint(26, (x, y) => { // lararium painting
+  if (y <= 4 && Math.abs(x - 7.5) <= y * 1.8) return nz([236, 233, 226], 8);
+  if (x === 0 || x === 15 || y === 15) return [214, 168, 76];
+  if ((x === 7 || x === 8) && y === 6) return [240, 210, 170];
+  if (x >= 6 && x <= 9 && y >= 7 && y <= 12) return (x === 6 || x === 9) && y > 8 ? nz([160, 44, 36], 10) : [232, 206, 150];
+  if (y === 13 && x > 2 && x < 13) return [60, 122, 50];
+  if (y === 12 && (x === 3 || x === 12)) return [60, 122, 50];
+  return nz([160, 44, 36], 12);
+});
+paint(27, (x, y) => { // amphora
+  const body = ((x - 7.5) / 4.6) ** 2 + ((y - 9) / 4.8) ** 2 < 1;
+  const neck = x >= 6 && x <= 9 && y >= 2 && y <= 4;
+  const rim = y === 1 && x >= 5 && x <= 10;
+  const handle = (x === 4 || x === 11) && y >= 3 && y <= 6;
+  const foot = (x === 7 || x === 8) && y >= 13;
+  if (rim || handle) return nz([140, 70, 38], 10);
+  if (body || neck || foot) return y === 8 ? [60, 40, 30] : mulc(nz([188, 98, 56], 14), x > 9 ? 0.82 : 1);
+  return nz([210, 188, 142], 10);
+});
+paint(28, (x, y) => { // bronze plaque
+  if (x === 0 || x === 15 || y === 0 || y === 15) return nz([110, 78, 34], 8);
+  if ((y === 4 || y === 5 || y === 8 || y === 9 || y === 12) && x >= 3 && x <= 12 && (x * 7 + y * 3) % 5 < 3) return [236, 206, 112];
+  return rnd() < 0.08 ? [90, 150, 120] : nz([150, 116, 54], 18);
+});
+paint(29, (x, y) => (x < 2 || x > 13 || y < 2 || y > 13 || Math.abs(x - y) < 1 || Math.abs(x - (15 - y)) < 1) ? nz([124, 92, 54], 10) : nz([178, 142, 90], 14));
+paint(30, (x, y) => (x % 5 === 2 || y === 1 || y === 14) ? nz([70, 70, 74], 10) : [0, 0, 0, 0]);
+paint(31, (x, y) => { if (y < 5) return rnd() < 0.5 ? [0, 0, 0, 0] : [255, 190, 50]; return nz(y > 10 ? [255, 120, 30] : [255, 205, 70], 40); });
+paint(32, () => nz([150, 147, 143], 20));
+paint(33, (x, y) => (y === 2 || y === 3 || y === 12 || y === 13) ? nz([170, 40, 34], 10) : nz([232, 226, 212], 8));
+actx.putImageData(atlasImg, 0, 0);
+
+// Hotbar key icon
+const KEY_ICON = (() => {
+  const m = ['................', '................', '..####..........', '.#yyyy#.........', '#yy##yy#........', '#y#..#y#########', '#y#..#yyyyyyyyy#', '#yy##yy######yy#',
+    '.#yyyy#.....#yy#', '..####......#y#.', '............###.', '................', '................', '................', '................', '................'];
+  const c = document.createElement('canvas'); c.width = c.height = 16; const x = c.getContext('2d');
+  m.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '.') return; x.fillStyle = ch === '#' ? '#4a3200' : ((i + j) % 3 ? '#f2c335' : '#ffe680'); x.fillRect(i, j + 3, 1, 1); }));
+  return c.toDataURL();
+})();
+
+// ════════════════════════════════════════════════════════════════
+// BLOCKS
+// ════════════════════════════════════════════════════════════════
+const B = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, COBBLE: 4, MARBLE: 5, TRAV: 6, RED: 7, YELLOW: 8, ROOF: 9, PLANKS: 10, LOG: 11, LEAVES: 12, SAND: 13, WATER: 14, MOSAIC: 15,
+  BRICK: 16, GATE: 17, COLUMN: 18, GOLD: 19, LAVA: 20, BASALT: 21, TABLET: 22, CHEST: 23, SHRINE: 24, AMPHORA: 25, PLAQUE: 26, CRATE: 27, BARS: 28, FIRE: 29, ASH: 30, CLOTH: 31 };
+const BL = [];
+function defB(id, tex, o) { const t = Array.isArray(tex) ? tex : [tex, tex, tex]; BL[id] = Object.assign({ top: t[0], side: t[1], bottom: t[2], solid: true, opaque: true }, o || {}); }
+defB(B.AIR, 0, { solid: false, opaque: false });
+defB(B.GRASS, [0, 1, 2]); defB(B.DIRT, 2); defB(B.STONE, 3); defB(B.COBBLE, 4); defB(B.MARBLE, 5); defB(B.TRAV, 6); defB(B.RED, 7); defB(B.YELLOW, 8);
+defB(B.ROOF, [9, 9, 10]); defB(B.PLANKS, 10); defB(B.LOG, [12, 11, 12]); defB(B.LEAVES, 13, { opaque: false, alpha: true }); defB(B.SAND, 14);
+defB(B.WATER, 15, { solid: false, opaque: false, liquid: true }); defB(B.MOSAIC, [16, 3, 3]); defB(B.BRICK, 17); defB(B.GATE, [10, 18, 10]);
+defB(B.COLUMN, [5, 19, 5]); defB(B.GOLD, 20); defB(B.LAVA, 21, { emissive: true }); defB(B.BASALT, 22);
+defB(B.TABLET, [10, 23, 10], { lock: 'wax tablet' }); defB(B.CHEST, [25, 24, 25], { lock: 'strongbox' }); defB(B.SHRINE, [5, 26, 5], { lock: 'household shrine' });
+defB(B.AMPHORA, 27, { lock: 'amphora' }); defB(B.PLAQUE, 28, { lock: 'bronze plaque' }); defB(B.CRATE, 29); defB(B.BARS, 30, { opaque: false, alpha: true });
+defB(B.FIRE, 31, { opaque: false, alpha: true, emissive: true }); defB(B.ASH, 32); defB(B.CLOTH, 33);
+
+// ════════════════════════════════════════════════════════════════
+// WORLD
+// ════════════════════════════════════════════════════════════════
+const W = 112, H = 48, D = 80, G = 4, CS = 16;
+const NCX = W / CS, NCY = H / CS, NCZ = D / CS;
+const world = new Uint8Array(W * H * D);
+const ROOM_X = [4, 22, 40, 56, 76, 92];   // wall x of each room
+const WIN_X = 101;
+let LOCKS = [], lockMap = new Map(), GATES = [[], [], [], [], []], gateMap = new Map();
+const key3 = (x, y, z) => x + ',' + y + ',' + z;
+
+function getB(x, y, z) {
+  if (y < 0) return B.STONE;
+  if (x < 0 || y >= H || z < 0 || x >= W || z >= D) return B.AIR;
+  return world[(y * D + z) * W + x];
+}
+function setRaw(x, y, z, b) { if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) return; world[(y * D + z) * W + x] = b; }
+function setB(x, y, z, b) { setRaw(x, y, z, b); markDirty(x, y, z); }
+function fill(x0, y0, z0, x1, y1, z1, b) {
+  for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++)
+    for (let z = Math.min(z0, z1); z <= Math.max(z0, z1); z++)
+      for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) setRaw(x, y, z, b);
+}
+function addLock(room, k, x, y, z, b) { setRaw(x, y, z, b); const L = { room, k, x, y, z, b, done: false }; LOCKS.push(L); lockMap.set(key3(x, y, z), L); }
+function addGate(room, x0, y0, z0, x1, y1, z1) {
+  for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+    setRaw(x, y, z, B.GATE); GATES[room].push([x, y, z]); gateMap.set(key3(x, y, z), room);
+  }
+}
+function walls(x0, x1, h, b) {
+  fill(x0, G, 40, x1, G + h - 1, 40, b); fill(x0, G, 56, x1, G + h - 1, 56, b);
+  fill(x0, G, 40, x0, G + h - 1, 56, b); fill(x1, G, 40, x1, G + h - 1, 56, b);
+}
+function groundTop(x, z) { for (let y = H - 1; y >= 0; y--) if (BL[getB(x, y, z)].solid) return y; return 0; }
+
+function generateWorld() {
+  seed = 4242;
+  world.fill(0);
+  LOCKS = []; lockMap = new Map(); GATES = [[], [], [], [], []]; gateMap = new Map();
+
+  // Ground
+  fill(0, 0, 0, W - 1, 1, D - 1, B.STONE);
+  fill(0, 2, 0, W - 1, G - 2, D - 1, B.DIRT);
+  fill(0, G - 1, 0, W - 1, G - 1, D - 1, B.GRASS);
+
+  // Vesuvius
+  const VX = 56, VZ = 2, VR = 36, VH = 32;
+  for (let z = 0; z < 38; z++) for (let x = VX - VR; x <= VX + VR; x++) {
+    const r = Math.hypot(x - VX, z - VZ);
+    if (r >= VR) continue;
+    let top = G - 1 + Math.floor(VH * Math.pow(1 - r / VR, 1.15) + (rnd() - 0.5) * 1.5);
+    const crater = r < 4.5;
+    if (crater) top = G - 1 + Math.floor(VH * Math.pow(1 - 4.5 / VR, 1.15)) - 3;
+    for (let y = G; y <= top; y++) {
+      let b = y > G + 13 ? B.BASALT : B.DIRT;
+      if (y === top) b = y > G + 22 ? B.ASH : y > G + 13 ? B.BASALT : B.GRASS;
+      setRaw(x, y, z, b);
+    }
+    if (crater) setRaw(x, top, z, B.LAVA);
+  }
+
+  // Trees: cypresses and umbrella pines
+  for (let i = 0; i < 70; i++) {
+    const x = 2 + Math.floor(rnd() * (W - 4)), z = 2 + Math.floor(rnd() * (D - 4));
+    if (z > 34 && z < 62 && x < 100) continue;
+    if (x > 98) continue;
+    const gy = groundTop(x, z);
+    if (getB(x, gy, z) !== B.GRASS || gy > G + 6) continue;
+    const y = gy + 1;
+    if (rnd() < 0.6) {
+      fill(x, y, z, x, y + 1, z, B.LOG);
+      fill(x, y + 2, z, x, y + 7, z, B.LEAVES);
+      for (let h = 3; h <= 5; h++) { setRaw(x + 1, y + h, z, B.LEAVES); setRaw(x - 1, y + h, z, B.LEAVES); setRaw(x, y + h, z + 1, B.LEAVES); setRaw(x, y + h, z - 1, B.LEAVES); }
+    } else {
+      fill(x, y, z, x, y + 4, z, B.LOG);
+      for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+        if (Math.abs(dx) + Math.abs(dz) < 4) setRaw(x + dx, y + 5, z + dz, B.LEAVES);
+        if (Math.abs(dx) + Math.abs(dz) < 2) setRaw(x + dx, y + 6, z + dz, B.LEAVES);
+      }
+    }
+  }
+
+  // Clear the town strip
+  fill(4, G, 40, 94, H - 1, 56, B.AIR);
+
+  // ── Room I: the villa ──
+  fill(5, G - 1, 41, 21, G - 1, 55, B.MOSAIC);
+  walls(4, 22, 6, B.RED);
+  fill(4, G + 6, 40, 22, G + 6, 56, B.ROOF);
+  fill(11, G + 6, 46, 15, G + 6, 50, B.AIR);                  // compluvium
+  fill(11, G - 1, 46, 15, G - 1, 50, B.MARBLE);
+  fill(12, G - 1, 47, 14, G - 1, 49, B.WATER);                // impluvium
+  [[10, 45], [16, 45], [10, 51], [16, 51]].forEach(([x, z]) => fill(x, G, z, x, G + 5, z, B.COLUMN));
+  fill(5, G, 52, 21, G + 5, 52, B.RED);                       // bedrooms
+  fill(7, G, 52, 8, G + 1, 52, B.AIR); fill(18, G, 52, 19, G + 1, 52, B.AIR);
+  fill(13, G, 53, 13, G + 5, 55, B.RED);
+  fill(15, G, 55, 16, G, 55, B.CLOTH); fill(6, G, 55, 7, G, 55, B.CLOTH);
+  setRaw(11, G, 54, B.AMPHORA); setRaw(11, G, 55, B.CRATE);
+  setRaw(6, G, 48, B.PLANKS); setRaw(6, G, 47, B.PLANKS);    // desk
+  [[9, 42], [17, 42]].forEach(([x, z]) => { setRaw(x, G, z, B.BRICK); setRaw(x, G + 1, z, B.LEAVES); });
+  setRaw(20, G, 42, B.STONE); setRaw(20, G + 1, 42, B.FIRE);
+  setRaw(13, G, 41, B.MARBLE);
+  addLock(0, 0, 6, G + 1, 48, B.TABLET);
+  addLock(0, 1, 13, G + 1, 40, B.SHRINE);
+  addLock(0, 2, 20, G, 54, B.CHEST);
+  addGate(0, 22, G, 47, 22, G + 2, 49);
+
+  // ── Room II: the street ──
+  fill(23, G - 1, 41, 39, G - 1, 55, B.COBBLE);
+  fill(23, G - 1, 41, 39, G, 43, B.STONE); fill(23, G - 1, 53, 39, G, 55, B.STONE);   // pavements
+  fill(23, G, 40, 39, G + 6, 40, B.YELLOW); fill(23, G, 56, 39, G + 6, 56, B.YELLOW);
+  fill(40, G, 40, 40, G + 6, 56, B.BRICK);
+  fill(23, G + 7, 40, 39, G + 7, 40, B.ROOF); fill(23, G + 7, 56, 39, G + 7, 56, B.ROOF);
+  fill(25, G + 1, 56, 26, G + 3, 56, B.PLANKS); fill(33, G + 1, 40, 34, G + 3, 40, B.PLANKS);
+  fill(30, G + 3, 40, 31, G + 4, 40, B.BARS); fill(29, G + 3, 56, 30, G + 4, 56, B.BARS);
+  fill(36, G + 1, 40, 37, G + 2, 40, B.RED);
+  setRaw(30, G, 46, B.STONE); setRaw(30, G, 48, B.STONE); setRaw(30, G, 50, B.STONE);   // stepping stones
+  fill(23, G + 1, 53, 25, G + 1, 54, B.STONE); setRaw(24, G + 1, 53, B.WATER); fill(24, G + 1, 55, 24, G + 3, 55, B.MARBLE);  // fountain
+  fill(32, G, 45, 34, G, 46, B.PLANKS); setRaw(32, G, 44, B.LOG); setRaw(34, G, 44, B.LOG); setRaw(32, G, 47, B.LOG); setRaw(34, G, 47, B.LOG);  // cart
+  setRaw(34, G + 1, 46, B.CRATE); setRaw(32, G + 1, 46, B.AMPHORA);
+  setRaw(38, G, 44, B.CRATE); setRaw(38, G, 52, B.CRATE); setRaw(38, G + 1, 52, B.CRATE);
+  setRaw(38, G + 1, 55, B.MARBLE); setRaw(36, G + 1, 55, B.STONE); setRaw(36, G + 2, 55, B.FIRE);
+  addLock(1, 0, 27, G + 2, 40, B.TABLET);
+  addLock(1, 1, 33, G + 1, 45, B.AMPHORA);
+  addLock(1, 2, 38, G + 2, 56, B.SHRINE);
+  addGate(1, 40, G, 47, 40, G + 2, 49);
+
+  // ── Room III: the bakery ──
+  fill(41, G - 1, 41, 55, G - 1, 55, B.STONE);
+  walls(40, 56, 6, B.BRICK);
+  fill(40, G + 6, 40, 48, G + 6, 56, B.ROOF);
+  fill(43, G, 43, 51, G, 43, B.MARBLE);                       // counter
+  fill(52, G, 52, 55, G + 2, 55, B.BRICK); setRaw(52, G, 53, B.FIRE); setRaw(52, G, 54, B.FIRE);   // oven
+  fill(54, G + 3, 54, 54, G + 6, 54, B.BRICK);
+  fill(44, G, 51, 45, G, 52, B.BASALT); setRaw(44, G + 1, 51, B.BASALT); setRaw(45, G + 2, 52, B.STONE);   // millstones
+  fill(42, G + 2, 41, 46, G + 2, 41, B.PLANKS);               // shelf
+  setRaw(42, G + 3, 41, B.AMPHORA); setRaw(43, G + 3, 41, B.AMPHORA); setRaw(46, G + 3, 41, B.AMPHORA);
+  setRaw(48, G, 48, B.PLANKS); setRaw(49, G, 50, B.PLANKS);
+  setRaw(41, G, 55, B.CRATE); setRaw(41, G, 54, B.CRATE); setRaw(41, G + 1, 55, B.CRATE);
+  addLock(2, 0, 47, G, 43, B.AMPHORA);
+  addLock(2, 1, 50, G, 55, B.CHEST);
+  addLock(2, 2, 45, G + 3, 41, B.AMPHORA);
+  addGate(2, 56, G, 47, 56, G + 2, 49);
+
+  // ── Room IV: the forum and the temple of Jupiter ──
+  fill(57, G - 1, 41, 75, G - 1, 55, B.TRAV);
+  walls(56, 76, 7, B.MARBLE);
+  for (let x = 58; x <= 74; x += 3) { fill(x, G, 42, x, G + 4, 42, B.COLUMN); fill(x, G, 54, x, G + 4, 54, B.COLUMN); }
+  fill(57, G + 5, 41, 75, G + 5, 42, B.ROOF); fill(57, G + 5, 54, 75, G + 5, 55, B.ROOF);
+  fill(63, G, 44, 72, G + 2, 52, B.TRAV);                     // podium
+  fill(60, G, 45, 62, G, 51, B.TRAV); fill(61, G + 1, 45, 62, G + 1, 51, B.TRAV); fill(62, G + 2, 45, 62, G + 2, 51, B.TRAV);
+  [44, 46, 50, 52].forEach(z => fill(63, G + 3, z, 63, G + 7, z, B.COLUMN));
+  [65, 67].forEach(x => { fill(x, G + 3, 44, x, G + 7, 44, B.COLUMN); fill(x, G + 3, 52, x, G + 7, 52, B.COLUMN); });
+  fill(68, G + 3, 45, 72, G + 7, 51, B.MARBLE); fill(69, G + 3, 46, 71, G + 7, 50, B.AIR);   // cella
+  fill(68, G + 3, 47, 68, G + 5, 49, B.AIR);
+  fill(62, G + 8, 43, 73, G + 8, 53, B.ROOF); fill(62, G + 9, 45, 73, G + 9, 51, B.ROOF); fill(62, G + 10, 47, 73, G + 10, 49, B.ROOF);
+  fill(70, G + 4, 48, 70, G + 5, 48, B.MARBLE); setRaw(70, G + 6, 48, B.GOLD);   // Jupiter
+  setRaw(58, G + 1, 45, B.FIRE);
+  addLock(3, 0, 58, G, 45, B.SHRINE);
+  addLock(3, 1, 70, G + 3, 48, B.PLAQUE);
+  addLock(3, 2, 74, G + 1, 56, B.TABLET);
+  addGate(3, 76, G, 47, 76, G + 2, 49);
+
+  // ── Room V: the sea gate ──
+  fill(77, G - 1, 41, 91, G - 1, 55, B.COBBLE);
+  fill(76, G, 40, 92, G + 5, 40, B.TRAV); fill(76, G, 56, 92, G + 5, 56, B.TRAV);
+  fill(92, G, 40, 94, G + 9, 56, B.STONE);                    // town wall
+  for (let z = 40; z <= 56; z += 2) fill(92, G + 10, z, 94, G + 10, z, B.STONE);
+  fill(92, G, 47, 94, G + 3, 49, B.AIR);
+  fill(88, G + 6, 41, 91, G + 6, 55, B.TRAV);                 // wall walk
+  fill(88, G, 45, 88, G + 5, 45, B.COLUMN); fill(88, G, 51, 88, G + 5, 51, B.COLUMN);
+  for (let i = 0; i <= 6; i++) fill(81 + i, G, 54, 81 + i, G + i, 55, B.TRAV);   // stairs
+  setRaw(79, G, 42, B.PLANKS); setRaw(80, G, 42, B.PLANKS);
+  setRaw(78, G, 41, B.STONE); setRaw(78, G + 1, 41, B.FIRE);
+  fill(84, G, 41, 85, G, 42, B.CRATE); setRaw(84, G + 1, 41, B.CRATE);
+  addLock(4, 0, 79, G + 1, 42, B.TABLET);
+  addLock(4, 1, 92, G + 1, 45, B.PLAQUE);
+  addLock(4, 2, 91, G + 7, 42, B.CHEST);
+  addGate(4, 92, G, 47, 92, G + 3, 49);
+
+  // ── Outside: road, beach, sea, boat ──
+  fill(95, G, 30, W - 1, H - 1, D - 1, B.AIR);
+  fill(95, G - 1, 46, 100, G - 1, 50, B.COBBLE);
+  fill(101, G - 1, 20, 104, G - 1, D - 1, B.SAND);
+  fill(105, G - 3, 20, W - 1, G - 3, D - 1, B.SAND);
+  fill(105, G - 2, 20, W - 1, G - 1, D - 1, B.WATER);
+  fill(95, G, 40, 100, G + 1, 40, B.LEAVES); fill(95, G, 56, 100, G + 1, 56, B.LEAVES);
+  fill(105, G - 1, 46, 109, G - 1, 50, B.PLANKS); fill(105, G, 46, 109, G, 46, B.PLANKS); fill(105, G, 50, 109, G, 50, B.PLANKS);
+  fill(105, G, 46, 105, G, 50, B.PLANKS); fill(109, G, 46, 109, G, 50, B.PLANKS); fill(110, G, 48, 110, G, 48, B.PLANKS);
+  fill(107, G, 48, 107, G + 5, 48, B.LOG); fill(107, G + 2, 46, 107, G + 4, 50, B.CLOTH);
+}
+
+// ════════════════════════════════════════════════════════════════
+// WEBGL
+// ════════════════════════════════════════════════════════════════
+const canvas = $('gl');
+const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+if (!gl) $('noGL').style.display = 'grid';
+
+function compile(vs, fs) {
+  const p = gl.createProgram();
+  [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]].forEach(([t, src]) => {
+    const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    gl.attachShader(p, s);
+  });
+  gl.linkProgram(p);
+  const info = { p, a: {}, u: {} };
+  const na = gl.getProgramParameter(p, gl.ACTIVE_ATTRIBUTES);
+  for (let i = 0; i < na; i++) { const n = gl.getActiveAttrib(p, i).name; info.a[n] = gl.getAttribLocation(p, n); }
+  const nu = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < nu; i++) { const n = gl.getActiveUniform(p, i).name; info.u[n] = gl.getUniformLocation(p, n); }
+  return info;
+}
+let blockProg, pointProg, atlasTex;
+if (gl) {
+  blockProg = compile(`
+    attribute vec3 aPos; attribute vec2 aUV; attribute vec3 aCol;
+    uniform mat4 uMVP; uniform vec3 uEye; uniform vec2 uFog;
+    varying vec2 vUV; varying vec3 vCol; varying float vFog;
+    void main(){ gl_Position = uMVP * vec4(aPos,1.0); vUV = aUV; vCol = aCol;
+      vFog = clamp((distance(aPos,uEye) - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0); }`, `
+    precision mediump float;
+    uniform sampler2D uTex; uniform vec3 uFogCol; uniform float uAlpha;
+    varying vec2 vUV; varying vec3 vCol; varying float vFog;
+    void main(){ vec4 t = texture2D(uTex, vUV); if (t.a < 0.5) discard;
+      gl_FragColor = vec4(mix(t.rgb * vCol, uFogCol, vFog), uAlpha); }`);
+  pointProg = compile(`
+    attribute vec3 aPos; attribute vec4 aCol; attribute float aSize;
+    uniform mat4 uMVP; uniform float uScale; uniform vec3 uEye; uniform vec2 uFog;
+    varying vec4 vCol; varying float vFog;
+    void main(){ gl_Position = uMVP * vec4(aPos,1.0); gl_PointSize = max(1.0, aSize * uScale / gl_Position.w); vCol = aCol;
+      vFog = clamp((distance(aPos,uEye) - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0); }`, `
+    precision mediump float;
+    uniform vec3 uFogCol; varying vec4 vCol; varying float vFog;
+    void main(){ gl_FragColor = vec4(mix(vCol.rgb, uFogCol, vFog * 0.85), vCol.a); }`);
+  atlasTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlasCanvas);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+
+// ── Chunk meshing with per-vertex ambient occlusion ──
+const FACES = [];
+for (let d = 0; d < 3; d++) for (const s of [1, -1]) {
+  const n = [0, 0, 0]; n[d] = s;
+  FACES.push({ d, s, n, u: (d + 1) % 3, v: (d + 2) % 3, key: d === 1 ? (s > 0 ? 'top' : 'bottom') : 'side', shade: d === 1 ? (s > 0 ? 1.0 : 0.55) : d === 0 ? 0.82 : 0.7 });
+}
+const AOL = [0.48, 0.64, 0.82, 1.0];
+const isOpq = (x, y, z) => BL[getB(x, y, z)].opaque ? 1 : 0;
+const chunks = [];
+const dirty = new Set();
+function markDirty(x, y, z) {
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+    const cx = Math.floor((x + dx) / CS), cy = Math.floor((y + dy) / CS), cz = Math.floor((z + dz) / CS);
+    if (cx < 0 || cy < 0 || cz < 0 || cx >= NCX || cy >= NCY || cz >= NCZ) continue;
+    dirty.add((cy * NCZ + cz) * NCX + cx);
+  }
+}
+function pushFace(out, x, y, z, f, def, tint) {
+  const tile = def[f.key], tx = tile % 16, ty = Math.floor(tile / 16), e = 0.002;
+  const base = [x, y, z]; if (f.s > 0) base[f.d] += 1;
+  const nb = [x + f.n[0], y + f.n[1], z + f.n[2]];
+  const corners = f.s > 0 ? [[0, 0], [1, 0], [1, 1], [0, 1]] : [[0, 0], [0, 1], [1, 1], [1, 0]];
+  const vs = [], aos = [];
+  for (const [cu, cv] of corners) {
+    const p = base.slice(); p[f.u] += cu; p[f.v] += cv;
+    let ao = 3;
+    if (!def.emissive) {
+      const q1 = nb.slice(), q2 = nb.slice(), q3 = nb.slice();
+      q1[f.u] += cu ? 1 : -1; q2[f.v] += cv ? 1 : -1; q3[f.u] += cu ? 1 : -1; q3[f.v] += cv ? 1 : -1;
+      const s1 = isOpq(q1[0], q1[1], q1[2]), s2 = isOpq(q2[0], q2[1], q2[2]), c = isOpq(q3[0], q3[1], q3[2]);
+      ao = s1 && s2 ? 0 : 3 - (s1 + s2 + c);
+    }
+    const l = def.emissive ? 1.15 : f.shade * AOL[ao];
+    let hu, hv;
+    if (f.d === 0) { hu = cv; hv = cu; } else if (f.d === 2) { hu = cu; hv = cv; } else { hu = cv; hv = cu; }
+    const u = (tx + (hu ? 1 - e : e)) / 16, v = (ty + (hv ? e : 1 - e)) / 16;
+    vs.push([p[0], p[1], p[2], u, v, l * tint[0], l * tint[1], l * tint[2]]); aos.push(ao);
+  }
+  const order = aos[0] + aos[2] >= aos[1] + aos[3] ? [0, 1, 2, 0, 2, 3] : [1, 2, 3, 1, 3, 0];
+  for (const i of order) out.push(...vs[i]);
+}
+const NO_TINT = [1, 1, 1], DONE_TINT = [0.7, 1.3, 0.7];
+function buildChunk(ci) {
+  const cx = ci % NCX, cz = Math.floor(ci / NCX) % NCZ, cy = Math.floor(ci / (NCX * NCZ));
+  const o = [], w = [];
+  for (let y = cy * CS; y < cy * CS + CS; y++) for (let z = cz * CS; z < cz * CS + CS; z++) for (let x = cx * CS; x < cx * CS + CS; x++) {
+    const b = world[(y * D + z) * W + x]; if (!b) continue;
+    const def = BL[b];
+    let tint = NO_TINT;
+    if (def.lock) { const L = lockMap.get(key3(x, y, z)); if (L && L.done) tint = DONE_TINT; }
+    for (const f of FACES) {
+      const n = getB(x + f.n[0], y + f.n[1], z + f.n[2]);
+      if (b === B.WATER) { if (n !== B.WATER && !BL[n].opaque) pushFace(w, x, y, z, f, def, NO_TINT); continue; }
+      if (BL[n].opaque) continue;
+      if (n === b && def.alpha) continue;
+      pushFace(o, x, y, z, f, def, tint);
+    }
+  }
+  let c = chunks[ci];
+  if (!c) c = chunks[ci] = { vbo: gl.createBuffer(), wbo: gl.createBuffer(), n: 0, wn: 0 };
+  gl.bindBuffer(gl.ARRAY_BUFFER, c.vbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o), gl.STATIC_DRAW); c.n = o.length / 8;
+  gl.bindBuffer(gl.ARRAY_BUFFER, c.wbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(w), gl.STATIC_DRAW); c.wn = w.length / 8;
+}
+function buildAll() { dirty.clear(); for (let i = 0; i < NCX * NCY * NCZ; i++) buildChunk(i); }
+
+// ── Matrices ──
+function persp(fovy, a, n, f) { const t = 1 / Math.tan(fovy / 2), nf = 1 / (n - f); return [t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) * nf, -1, 0, 0, 2 * f * n * nf, 0]; }
+function lookAt(e, c) {
+  let zx = e[0] - c[0], zy = e[1] - c[1], zz = e[2] - c[2], l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xy = 0, xz = -zx; l = Math.hypot(xx, xz) || 1; xx /= l; xz /= l;   // up = (0,1,0)
+  const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  return [xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0, -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1];
+}
+function mmul(a, b) { const o = new Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; }
+
+// ── Particles (square points, like Minecraft's) ──
+const MAXP = 2500, parts = [];
+const pData = new Float32Array(MAXP * 8);
+let pBuf = null, lineBuf = null;
+if (gl) { pBuf = gl.createBuffer(); lineBuf = gl.createBuffer(); }
+function spawn(x, y, z, vx, vy, vz, life, col, size, grav, solidKill) {
+  if (parts.length >= MAXP) parts.shift();
+  parts.push({ x, y, z, vx, vy, vz, life, max: life, r: col[0], g: col[1], b: col[2], a: col[3] === undefined ? 1 : col[3], size, grav: grav || 0, kill: !!solidKill });
+}
+function burst(x, y, z, n, cols, speed, size) {
+  for (let i = 0; i < n; i++) {
+    const c = cols[Math.floor(Math.random() * cols.length)];
+    spawn(x, y, z, (Math.random() - .5) * speed, Math.random() * speed, (Math.random() - .5) * speed, 0.6 + Math.random() * 0.6, c, size || 0.09, 9);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// AUDIO — small synthesised effects
+// ════════════════════════════════════════════════════════════════
+let AC = null, noiseBuf = null;
+function initAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { AC = null; }
+}
+function tone(freq, dur, type, vol, slide, delay) {
+  if (!AC) return; const t = AC.currentTime + (delay || 0);
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'square'; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.linearRampToValueAtTime(freq + slide, t + dur);
+  g.gain.setValueAtTime(vol || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+function noise(dur, vol, freq, delay) {
+  if (!AC) return; const t = AC.currentTime + (delay || 0);
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t); s.stop(t + dur + 0.05);
+}
+const sfx = {
+  click: () => tone(700, 0.05, 'square', 0.03),
+  right: () => { tone(523, 0.1, 'square', 0.05); tone(659, 0.1, 'square', 0.05, 0, 0.09); tone(784, 0.22, 'square', 0.05, 0, 0.18); },
+  wrong: () => tone(180, 0.28, 'sawtooth', 0.06, -70),
+  unlock: () => { noise(0.12, 0.25, 900); tone(880, 0.12, 'triangle', 0.08, 0, 0.08); tone(1318, 0.3, 'triangle', 0.08, 0, 0.18); },
+  gate: () => { noise(0.18, 0.25, 260); tone(90, 0.15, 'sawtooth', 0.04, -20); },
+  rumble: (s) => noise(2.2, 0.35 * s, 110),
+  step: () => noise(0.05, 0.035, 1200),
+  win: () => [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, 0.25, 'square', 0.05, 0, i * 0.13)),
+};
+
+// ════════════════════════════════════════════════════════════════
+// GAME STATE
+// ════════════════════════════════════════════════════════════════
+let mode = 'title';          // title | story | play | pause | question | win
+let game = null, cur = null;
+const P = { x: 8.5, y: G, z: 48.5, vx: 0, vy: 0, vz: 0, yaw: Math.PI / 2, pitch: 0, onGround: false };
+const keys = {};
+const touch = { on: false, jx: 0, jy: 0, jid: null, lid: null, lx: 0, ly: 0, jump: false };
+let shake = 0, quakeT = 25, stepT = 0, sparkT = 0, smokeT = 0, ashT = 0, toastT = null, splashT = null;
+let target = null;
+// Touch controls appear on phones/tablets, or as soon as anyone touches the screen
+let isTouch = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+function setTouch(on) { isTouch = on; document.body.classList.toggle('touch', on); }
+setTouch(isTouch);
+window.addEventListener('touchstart', () => { if (!isTouch) setTouch(true); }, { passive: true, capture: true });
+
+function roomAt(x) { for (let r = 0; r < 5; r++) if (x < ROOM_X[r + 1]) return r; return 5; }
+
+function newGame() {
+  $('loading').classList.add('on');
+  setTimeout(() => {
+    generateWorld(); buildAll();
+    game = { qs: buildGame(), results: new Array(15).fill(null), keys: [0, 0, 0, 0, 0], score: 0, visited: new Set(), t0: 0 };
+    Object.assign(P, { x: 8.5, y: G, z: 48.5, vx: 0, vy: 0, vz: 0, yaw: Math.PI / 2, pitch: -0.05 });
+    parts.length = 0; quakeT = 25;
+    buildHotbar(); updateHud();
+    $('loading').classList.remove('on');
+    show('sStory'); mode = 'story';
+  }, 30);
+}
+
+function show(id) {
+  ['sTitle', 'sStory', 'sPause', 'sQ', 'sWin'].forEach(s => $(s).classList.toggle('on', s === id));
+  const playing = !id || id === 'sQ' || id === 'sPause';
+  $('hud').classList.toggle('on', !!game && playing);
+  $('touch').classList.toggle('on', !id);
+}
+
+function enterPlay() {
+  mode = 'play'; show(null);
+  if (!isTouch && canvas.requestPointerLock && document.pointerLockElement !== canvas) {
+    try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+}
+function pauseGame() {
+  if (mode !== 'play') return;
+  mode = 'pause';
+  $('pauseInfo').textContent = `${ROMAN[Math.min(4, roomAt(P.x))]} · ${ROOMS[Math.min(4, roomAt(P.x))].name}. Locks opened: ${game.keys.reduce((a, b) => a + b, 0)} of 15.`;
+  show('sPause');
+}
+
+// ── HUD ──
+function buildHotbar() {
+  $('hotbar').innerHTML = ROOMS.map((r, i) => `<div class="hslot" id="hs${i}"><span class="rn">${ROMAN[i]}</span><img src="${KEY_ICON}" alt=""><span class="cnt" id="hc${i}"></span></div>`).join('');
+}
+function updateHud() {
+  if (!game) return;
+  const r = Math.min(4, roomAt(P.x));
+  $('roomName').textContent = `${ROMAN[r]} · ${ROOMS[r].name} (${ROOMS[r].lat})`;
+  const n = game.keys[r];
+  $('roomGoal').textContent = roomAt(P.x) === 5 ? 'Run to the boats!' : n < 3 ? `Locks opened here: ${n} / 3` : r === 4 ? 'The sea gate is open. Run to the boats!' : 'The way on is open →';
+  $('scoreN').textContent = game.score;
+  for (let i = 0; i < 5; i++) {
+    const s = $('hs' + i);
+    s.classList.toggle('sel', i === r); s.classList.toggle('has', game.keys[i] > 0); s.classList.toggle('full', game.keys[i] === 3);
+    $('hc' + i).textContent = game.keys[i] ? game.keys[i] : '';
+  }
+}
+function toast(html, ms) {
+  const t = $('toast'); t.innerHTML = html; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms || 2600);
+}
+function roomSplash(r) {
+  $('spN').textContent = 'LOCUS ' + ROMAN[r]; $('spT').textContent = ROOMS[r].name; $('spL').textContent = ROOMS[r].lat; $('spI').textContent = ROOMS[r].intro;
+  const s = $('splashR'); s.classList.add('show');
+  clearTimeout(splashT); splashT = setTimeout(() => s.classList.remove('show'), 3200);
+}
+
+// ════════════════════════════════════════════════════════════════
+// PLAYER
+// ════════════════════════════════════════════════════════════════
+const PR = 0.3, PH = 1.8, EYE = 1.62;
+function collides(px, py, pz) {
+  for (let y = Math.floor(py); y <= Math.floor(py + PH - 1e-4); y++)
+    for (let z = Math.floor(pz - PR); z <= Math.floor(pz + PR - 1e-4); z++)
+      for (let x = Math.floor(px - PR); x <= Math.floor(px + PR - 1e-4); x++)
+        if (BL[getB(x, y, z)].solid) return true;
+  return false;
+}
+function updatePlayer(dt) {
+  let fx = 0, fz = 0;
+  if (keys.KeyW || keys.ArrowUp) fz += 1;
+  if (keys.KeyS || keys.ArrowDown) fz -= 1;
+  if (keys.KeyD || keys.ArrowRight) fx += 1;
+  if (keys.KeyA || keys.ArrowLeft) fx -= 1;
+  if (touch.on) { fx += touch.jx; fz -= touch.jy; }
+  const len = Math.hypot(fx, fz); if (len > 1) { fx /= len; fz /= len; }
+  const sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
+  const run = keys.ShiftLeft || keys.ShiftRight;
+  const sp = run ? 6.4 : 4.4;
+  const tx = (sy * fz + cy * fx) * sp, tz = (-cy * fz + sy * fx) * sp;
+  const k = Math.min(1, dt * (P.onGround ? 14 : 4));
+  P.vx += (tx - P.vx) * k; P.vz += (tz - P.vz) * k;
+  const inWater = getB(Math.floor(P.x), Math.floor(P.y + 0.2), Math.floor(P.z)) === B.WATER;
+  P.vy -= (inWater ? 12 : 28) * dt;
+  if (inWater) P.vy = Math.max(P.vy, -3);
+  if ((keys.Space || touch.jump) && (P.onGround || inWater)) P.vy = inWater ? 4 : 8.6;
+
+  let hit = false;
+  let nx = P.x + P.vx * dt;
+  if (collides(nx, P.y, P.z)) { hit = true; nx = P.vx > 0 ? Math.floor(nx + PR) - PR - 0.001 : Math.floor(nx - PR) + 1 + PR + 0.001; if (collides(nx, P.y, P.z)) nx = P.x; P.vx = 0; }
+  P.x = nx;
+  let nzv = P.z + P.vz * dt;
+  if (collides(P.x, P.y, nzv)) { hit = true; nzv = P.vz > 0 ? Math.floor(nzv + PR) - PR - 0.001 : Math.floor(nzv - PR) + 1 + PR + 0.001; if (collides(P.x, P.y, nzv)) nzv = P.z; P.vz = 0; }
+  P.z = nzv;
+  const wasGround = P.onGround;
+  let ny = P.y + P.vy * dt; P.onGround = false;
+  if (collides(P.x, ny, P.z)) {
+    if (P.vy < 0) { ny = Math.floor(ny) + 1; P.onGround = true; } else ny = Math.floor(ny + PH) - PH - 0.001;
+    if (collides(P.x, ny, P.z)) ny = P.y;
+    P.vy = 0;
+  }
+  P.y = ny;
+  // Auto-jump onto one-block steps
+  if (hit && wasGround && len > 0.1) {
+    const ax = P.x + (sy * fz + cy * fx) * 0.45, az = P.z + (-cy * fz + sy * fx) * 0.45;
+    if (collides(ax, P.y + 0.1, az) && !collides(ax, P.y + 1.05, az) && !collides(P.x, P.y + 1.05, P.z)) P.vy = 8.6;
+  }
+  if (P.y < -10) Object.assign(P, { x: 8.5, y: G, z: 48.5, vy: 0 });
+  if (P.onGround && Math.hypot(P.vx, P.vz) > 1) { stepT -= dt * Math.hypot(P.vx, P.vz); if (stepT < 0) { stepT = 1.9; sfx.step(); } }
+}
+
+// ── Voxel raycast (Amanatides–Woo) ──
+function raycast(ox, oy, oz, dx, dy, dz, maxD) {
+  let x = Math.floor(ox), y = Math.floor(oy), z = Math.floor(oz);
+  const sx = Math.sign(dx), sy = Math.sign(dy), sz = Math.sign(dz);
+  const tdx = dx ? Math.abs(1 / dx) : Infinity, tdy = dy ? Math.abs(1 / dy) : Infinity, tdz = dz ? Math.abs(1 / dz) : Infinity;
+  let tmx = dx ? (dx > 0 ? x + 1 - ox : ox - x) * tdx : Infinity;
+  let tmy = dy ? (dy > 0 ? y + 1 - oy : oy - y) * tdy : Infinity;
+  let tmz = dz ? (dz > 0 ? z + 1 - oz : oz - z) * tdz : Infinity;
+  let t = 0;
+  while (t <= maxD) {
+    const b = getB(x, y, z);
+    if (b && b !== B.WATER) return { x, y, z, b };
+    if (tmx < tmy && tmx < tmz) { x += sx; t = tmx; tmx += tdx; }
+    else if (tmy < tmz) { y += sy; t = tmy; tmy += tdy; }
+    else { z += sz; t = tmz; tmz += tdz; }
+  }
+  return null;
+}
+function lookDir() { const cp = Math.cos(P.pitch); return [Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp]; }
+
+function updateTarget() {
+  const d = lookDir();
+  target = raycast(P.x, P.y + EYE, P.z, d[0], d[1], d[2], 5);
+  let msg = '';
+  if (target) {
+    const k = key3(target.x, target.y, target.z);
+    const L = lockMap.get(k);
+    const verb = isTouch ? 'Tap USE' : 'Press E';
+    if (L) msg = L.done ? `The ${BL[L.b].lock} is open.` : `${verb} to read the ${BL[L.b].lock}`;
+    else if (gateMap.has(k)) { const r = gateMap.get(k); msg = `Locked. Open all three locks in ${ROOMS[r].name} (${game.keys[r]}/3).`; }
+    else if (BL[target.b].lock) msg = `Just an old ${BL[target.b].lock}. Keep looking.`;
+  }
+  $('actionbar').textContent = msg;
+}
+function interact() {
+  if (mode !== 'play' || !target) return;
+  const k = key3(target.x, target.y, target.z);
+  const L = lockMap.get(k);
+  if (L && !L.done) openQuestion(L);
+  else if (gateMap.has(k)) { sfx.wrong(); }
+}
+
+// ── Locks and gates ──
+function unlock(L) {
+  L.done = true; markDirty(L.x, L.y, L.z);
+  sfx.unlock();
+  burst(L.x + .5, L.y + .5, L.z + .5, 50, [[1, .85, .25], [.5, 1, .45], [1, 1, .7]], 5, 0.1);
+  game.keys[L.room]++;
+  const n = game.keys[L.room];
+  updateHud();
+  if (n < 3) toast(`<span class="gold">Lock opened!</span><br>${n} of 3 in ${ROOMS[L.room].name}`);
+  else {
+    toast(L.room < 4 ? `<span class="gold">All three locks are open!</span><br>The way to ${ROOMS[L.room + 1].name} is open.` : `<span class="gold">The sea gate is open!</span><br>Run to the boats!`, 3500);
+    setTimeout(() => openGate(L.room), 700);
+  }
+}
+function openGate(r) {
+  const rows = {};
+  GATES[r].forEach(p => { (rows[p[1]] = rows[p[1]] || []).push(p); });
+  Object.keys(rows).map(Number).sort((a, b) => a - b).forEach((y, i) => setTimeout(() => {
+    rows[y].forEach(([x, yy, z]) => { setB(x, yy, z, B.AIR); gateMap.delete(key3(x, yy, z)); burst(x + .5, yy + .5, z + .5, 10, [[.45, .29, .16], [.3, .2, .1], [.4, .4, .42]], 3, 0.12); });
+    sfx.gate(); shake = Math.max(shake, 0.15);
+  }, i * 260));
+}
+
+// ════════════════════════════════════════════════════════════════
+// QUESTIONS
+// ════════════════════════════════════════════════════════════════
+function maxAttempts(q) { return q.type === 'un' ? 3 : Math.max(1, Math.min(3, q.opts.length - 1)); }
+function latinHtml(q) {
+  if (q.type === 'gap' || q.type === 'parse') {
+    const idx = q.type === 'gap' ? q.gapIdx : q.target;
+    let n = -1;
+    return esc(q.it.lat).replace(/[A-Za-z]+/g, m => { n++; if (n !== idx) return m; return q.type === 'gap' ? '<span class="gap" id="gapSlot">&nbsp;</span>' : `<span class="tgt">${m}</span>`; });
+  }
+  return esc(q.it.lat);
+}
+function solvedLine(q) {
+  if (q.type === 'parse') return `<em>${esc(words(q.it.lat)[q.target])}</em>: ${esc(q.answer)}.`;
+  return `<em>${esc(q.it.lat)}</em> = ${esc(q.it.en)}`;
+}
+function orderCorrect(q, placedWords) {
+  const want = q.tokens.map(lc), got = placedWords.map(lc);
+  if (got.join(' ') === want.join(' ')) return true;
+  if (got.length !== want.length) return false;
+  if ([...got].sort().join(' ') !== [...want].sort().join(' ')) return false;
+  if (got[got.length - 1] !== want[want.length - 1]) return false;
+  const pairs = new Set(got.slice(0, -1).map((g, i) => g + ' ' + got[i + 1]));
+  for (let i = 0; i < want.length - 1; i++) if (GLUE.has(want[i]) && !pairs.has(want[i] + ' ' + want[i + 1])) return false;
+  return true;
+}
+
+function openQuestion(L) {
+  const qi = L.room * 3 + L.k;
+  cur = { L, qi, q: game.qs[qi], attempts: 0, answered: false, placed: [] };
+  mode = 'question';
+  if (document.pointerLockElement) document.exitPointerLock();
+  keys.KeyW = keys.KeyA = keys.KeyS = keys.KeyD = false;
+  sfx.click();
+  renderQuestion();
+  show('sQ');
+}
+function renderQuestion() {
+  const { q, L } = cur;
+  const lockName = BL[L.b].lock;
+  let h = `<div class="q-head"><span>${ROMAN[L.room]} · ${esc(ROOMS[L.room].name)} · question ${cur.qi + 1} of 15</span><span class="nm">\u{1F512} The ${esc(lockName)}</span></div>`;
+  h += `<div class="q-task">${esc(q.prompt)}</div>`;
+  if (q.type === 'un') h += `<div class="q-en big">${esc(q.it.en)}</div>`;
+  else {
+    h += `<div class="q-latin">${latinHtml(q)}</div>`;
+    if (q.type === 'gap') h += `<div class="q-en">${esc(q.it.en)}</div>`;
+  }
+  h += `<div class="q-meta"><div class="dots">Tries:`;
+  for (let a = 0; a < maxAttempts(q); a++) h += `<div class="dot" id="qd${a}"></div>`;
+  h += `</div>`;
+  const t = TABLES[q.hint];
+  if (t) h += `<button class="mc-btn small" id="qHelp">\u{1F4D6} Grammar table</button>`;
+  h += `</div>`;
+  if (t) {
+    h += `<div class="gtable" id="qTable"><strong>${esc(t.title)}</strong><table><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr>`;
+    t.rows.forEach(row => { h += '<tr>' + row.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>'; });
+    h += '</table>' + (t.note ? `<div class="note">${esc(t.note)}</div>` : '') + '</div>';
+  }
+  if (q.type === 'un') {
+    h += `<div class="slots" id="qSlots"></div><div class="bank">`;
+    q.bank.forEach((wd, i) => { h += `<button class="mc-btn tok" data-tok="${i}">${esc(wd)}</button>`; });
+    h += `</div><div class="row"><button class="mc-btn" id="qCheck">Check</button><button class="mc-btn" id="qClear">Clear</button></div>`;
+  } else {
+    h += '<div class="choices">';
+    q.opts.forEach((o, i) => { h += `<button class="mc-btn choice${o.latin ? ' lat' : ''}" data-opt="${i}"><span class="k">${i + 1}</span><span>${esc(o.text)}</span></button>`; });
+    h += '</div>';
+  }
+  h += `<div class="feed" id="qFeed"></div><div class="q-done" id="qDoneRow"><button class="mc-btn big" id="qDone">Open the lock ▶</button></div>`;
+  $('qPanel').innerHTML = h;
+  if (q.type === 'un') renderSlots();
+  $('sQ').scrollTop = 0;
+}
+function renderSlots() {
+  const q = cur.q;
+  $('qSlots').innerHTML = cur.placed.length
+    ? cur.placed.map((t, i) => `<button class="mc-btn tok" data-placed="${i}">${esc(q.bank[t])}</button>`).join('')
+    : '<span class="ph">Tap the words in order. Not every word is needed.</span>';
+  document.querySelectorAll('[data-tok]').forEach(el => el.classList.toggle('used', cur.placed.includes(+el.dataset.tok)));
+}
+function feedback(ok, html) { const b = $('qFeed'); b.className = 'feed show ' + (ok ? 'ok' : 'no'); b.innerHTML = html; }
+function markDot(a, ok) { const d = $('qd' + a); if (d) d.classList.add(ok ? 'ok' : 'no'); }
+function triesLeft() { const n = maxAttempts(cur.q) - cur.attempts; return n === 1 ? '1 try left.' : n + ' tries left.'; }
+function finishQ(ok) {
+  cur.answered = true;
+  const first = ok && cur.attempts === 1;
+  if (first) game.score++;
+  game.results[cur.qi] = { q: cur.q, first, ok };
+  document.querySelectorAll('#qPanel [data-opt], #qPanel [data-tok], #qPanel [data-placed], #qCheck, #qClear').forEach(b => b.disabled = true);
+  if (!ok) $('qDone').textContent = 'Force the lock ▶';
+  $('qDoneRow').classList.add('show');
+  setTimeout(() => $('qDone').focus({ preventScroll: true }), 50);
+  updateHud();
+}
+function chooseOpt(i) {
+  if (cur.answered) return;
+  const q = cur.q, o = q.opts[i];
+  const btn = document.querySelector(`#qPanel [data-opt="${i}"]`);
+  if (!btn || btn.classList.contains('no')) return;
+  cur.attempts++;
+  markDot(cur.attempts - 1, o.ok);
+  btn.classList.add(o.ok ? 'ok' : 'no');
+  if (q.type === 'gap' && o.ok) $('gapSlot').textContent = o.text;
+  if (o.ok) { sfx.right(); feedback(true, '✓ ' + solvedLine(q)); finishQ(true); return; }
+  sfx.wrong();
+  if (cur.attempts >= maxAttempts(q)) {
+    q.opts.forEach((x, j) => { if (x.ok) document.querySelector(`#qPanel [data-opt="${j}"]`).classList.add('ok'); });
+    if (q.type === 'gap') $('gapSlot').textContent = q.answer;
+    feedback(false, '✗ The answer: ' + solvedLine(q));
+    finishQ(false);
+  } else feedback(false, '✗ Not that one. ' + triesLeft());
+}
+function checkOrder() {
+  if (cur.answered || !cur.placed.length) return;
+  const q = cur.q;
+  cur.attempts++;
+  const ok = orderCorrect(q, cur.placed.map(t => q.bank[t]));
+  markDot(cur.attempts - 1, ok);
+  if (ok) { sfx.right(); feedback(true, '✓ ' + solvedLine(q)); finishQ(true); return; }
+  sfx.wrong();
+  if (cur.attempts >= maxAttempts(q)) { feedback(false, '✗ The answer: ' + solvedLine(q)); finishQ(false); }
+  else feedback(false, '✗ Not yet. ' + triesLeft());
+}
+function closeQuestion() {
+  const L = cur.L; cur = null;
+  enterPlay();
+  unlock(L);
+}
+
+// ── Victory ──
+function winGame() {
+  mode = 'win';
+  if (document.pointerLockElement) document.exitPointerLock();
+  sfx.win();
+  const secs = Math.round((performance.now() - game.t0) / 1000);
+  $('winScore').innerHTML = `${game.score} / 15<small>correct first time · escaped in ${Math.floor(secs / 60)}m ${secs % 60}s</small>`;
+  const missed = {};
+  game.results.forEach(r => { if (r && !r.first) missed[r.q.focus] = (missed[r.q.focus] || 0) + 1; });
+  let h = '';
+  const ks = GRAMMAR.filter(g => missed[g.k]);
+  if (ks.length) h += `<h3>Grammar to revise</h3><ul>` + ks.map(g => `<li>${esc(g.name)} <span class="ch">· ${esc(g.ch)} · ${missed[g.k]} ${missed[g.k] === 1 ? 'question' : 'questions'}</span></li>`).join('') + `</ul><div style="height:18px"></div>`;
+  h += `<h3>All 15 answers</h3><table class="rev">`;
+  game.results.forEach((r, i) => {
+    if (!r) return;
+    const q = r.q;
+    let qt = esc(q.it.lat), at = esc(q.it.en);
+    if (q.type === 'parse') { qt = `${esc(words(q.it.lat)[q.target])} <span class="a">in</span> ${esc(q.it.lat)}`; at = esc(q.answer); }
+    if (q.type === 'gap') at = `${esc(q.answer)} · ${esc(q.it.en)}`;
+    h += `<tr><td class="n">${i + 1}</td><td><div class="q">${qt}</div><div class="a">${at}</div></td><td class="m ${r.first ? 'ok' : 'no'}">${r.first ? '✓' : '✗'}</td></tr>`;
+  });
+  h += '</table>';
+  $('winBody').innerHTML = h;
+  show('sWin');
+}
+
+// ════════════════════════════════════════════════════════════════
+// SETUP SCREEN
+// ════════════════════════════════════════════════════════════════
+function buildSetup() {
+  $('presets').innerHTML = PRESETS.map((p, i) => `<button class="mc-btn small" data-preset="${i}">${esc(p.label)}</button>`).join('') + `<button class="mc-btn small" data-preset="clear">Clear all</button>`;
+  $('ticks').innerHTML = GRAMMAR.map(g => `<label class="tick"><input type="checkbox" data-g="${g.k}"><span class="box"></span><span>${esc(g.name)}<span class="ch">${esc(g.ch)}</span></span></label>`).join('');
+  $('qtypes').innerHTML = QTYPES.map(q => `<label class="tick"><input type="checkbox" data-t="${q.k}"><span class="box"></span><span>${esc(q.name)}</span></label>`).join('');
+  $('presets').addEventListener('click', e => {
+    const b = e.target.closest('[data-preset]'); if (!b) return;
+    const p = b.dataset.preset; ticked = new Set(p === 'clear' ? [] : PRESETS[+p].keys.split('')); syncSetup();
+  });
+  $('ticks').addEventListener('change', e => { const k = e.target.dataset.g; if (!k) return; e.target.checked ? ticked.add(k) : ticked.delete(k); syncSetup(); });
+  $('qtypes').addEventListener('change', e => { const k = e.target.dataset.t; if (!k) return; e.target.checked ? types.add(k) : types.delete(k); syncSetup(); });
+  $('splashTxt').textContent = pick(SPLASHES);
+  syncSetup();
+}
+function syncSetup() {
+  document.querySelectorAll('[data-g]').forEach(i => i.checked = ticked.has(i.dataset.g));
+  document.querySelectorAll('[data-t]').forEach(i => i.checked = types.has(i.dataset.t));
+  const keyStr = [...ticked].sort().join('');
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('on', b.dataset.preset !== 'clear' && PRESETS[+b.dataset.preset].keys === keyStr));
+  store.set('grammar', [...ticked]); store.set('types', [...types]);
+  const st = $('setupStatus'), btn = $('startBtn');
+  const warn = m => { st.textContent = m; st.className = 'status warn'; btn.disabled = true; };
+  if (!ticked.size) return warn('Tick at least one grammar point.');
+  if (!types.size) return warn('Tick at least one question type.');
+  const pool = availableItems(), n = pool.length;
+  if (n < 15) return warn(`Only ${n} Bass sentences use just this grammar. Tick more to reach 15.`);
+  const empty = GRAMMAR.filter(g => ticked.has(g.k) && !pool.some(it => it.t.includes(g.k)));
+  st.textContent = `${n} Bass sentences use only the ticked grammar.` + (empty.length ? ` None for ${empty.map(g => g.name).join('; ')} fits: those sentences also need grammar you have not ticked.` : '');
+  st.className = 'status'; btn.disabled = false;
+}
+
+// ════════════════════════════════════════════════════════════════
+// INPUT
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (mode === 'question') {
+    if (!cur) return;
+    if (/^Digit[1-4]$/.test(e.code) && !cur.answered && cur.q.opts) { chooseOpt(+e.code[5] - 1); e.preventDefault(); }
+    else if (e.code === 'Enter' && cur.answered) { e.preventDefault(); closeQuestion(); }
+    return;
+  }
+  if (mode !== 'play') return;
+  keys[e.code] = true;
+  if (e.code === 'KeyE' || e.code === 'KeyF') interact();
+  if (e.code === 'Escape' && !document.pointerLockElement) pauseGame();
+  if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (mode === 'play' && !isTouch) pauseGame(); });
+
+let dragging = false, dragX = 0, dragY = 0;
+canvas.addEventListener('mousedown', e => {
+  if (mode !== 'play') return;
+  if (isTouch) setTouch(false);
+  if (document.pointerLockElement === canvas) { if (e.button === 0) interact(); return; }
+  // No pointer lock (e.g. embedded preview): drag to look, click to use
+  dragging = true; dragX = e.clientX; dragY = e.clientY;
+  try { const r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {}
+});
+window.addEventListener('mouseup', e => {
+  if (dragging && mode === 'play' && !document.pointerLockElement && Math.hypot(e.clientX - dragX, e.clientY - dragY) < 4) interact();
+  dragging = false;
+});
+document.addEventListener('mousemove', e => {
+  if (mode !== 'play') return;
+  if (document.pointerLockElement === canvas) look(e.movementX, e.movementY, 0.0022);
+  else if (dragging) { look(e.clientX - dragX, e.clientY - dragY, 0.005); dragX = e.clientX; dragY = e.clientY; }
+});
+function look(dx, dy, s) { P.yaw += dx * s; P.pitch = Math.max(-1.55, Math.min(1.55, P.pitch - dy * s)); }
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement !== canvas && mode === 'play') pauseGame();
+});
+
+// Touch: joystick on the left, drag anywhere else to look
+function joyMove(t) {
+  const r = $('joy').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let dx = t.clientX - cx, dy = t.clientY - cy; const m = Math.hypot(dx, dy), max = r.width / 2 - 10;
+  if (m > max) { dx *= max / m; dy *= max / m; }
+  touch.jx = dx / max; touch.jy = dy / max;
+  $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
+}
+$('joy').addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; touch.jid = t.identifier; touch.on = true; joyMove(t); }, { passive: false });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); if (mode !== 'play') return; const t = e.changedTouches[0]; touch.lid = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; touch.on = true; }, { passive: false });
+document.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === touch.jid) joyMove(t);
+    else if (t.identifier === touch.lid && mode === 'play') { look(t.clientX - touch.lx, t.clientY - touch.ly, 0.006); touch.lx = t.clientX; touch.ly = t.clientY; }
+  }
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === touch.jid) { touch.jid = null; touch.jx = touch.jy = 0; $('joyKnob').style.transform = ''; }
+    if (t.identifier === touch.lid) touch.lid = null;
+  }
+});
+$('tUse').addEventListener('touchstart', e => { e.preventDefault(); interact(); }, { passive: false });
+$('tJump').addEventListener('touchstart', e => { e.preventDefault(); touch.jump = true; }, { passive: false });
+$('tJump').addEventListener('touchend', () => { touch.jump = false; });
+$('tPause').addEventListener('click', () => pauseGame());
+
+// Buttons
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('#startBtn')) { initAudio(); sfx.click(); newGame(); return; }
+  if (t.closest('#beginBtn')) { initAudio(); sfx.click(); game.t0 = performance.now(); enterPlay(); setTimeout(() => { roomSplash(0); game.visited.add(0); }, 300); setTimeout(() => toast('Look for the <span class="gold">golden sparkles</span>: each one marks a lock.', 4000), 3600); return; }
+  if (t.closest('#resumeBtn')) { sfx.click(); enterPlay(); return; }
+  if (t.closest('#quitBtn') || t.closest('#changeBtn')) { sfx.click(); mode = 'title'; game = null; generateWorld(); buildAll(); $('splashTxt').textContent = pick(SPLASHES); show('sTitle'); return; }
+  if (t.closest('#againBtn')) { sfx.click(); newGame(); return; }
+  if (mode !== 'question' || !cur) return;
+  if (t.closest('#qHelp')) { $('qTable').classList.toggle('show'); sfx.click(); return; }
+  if (t.closest('#qDone')) { closeQuestion(); return; }
+  const opt = t.closest('[data-opt]'); if (opt) { chooseOpt(+opt.dataset.opt); return; }
+  if (cur.answered) return;
+  const tok = t.closest('[data-tok]');
+  if (tok && !tok.classList.contains('used')) { cur.placed.push(+tok.dataset.tok); sfx.click(); renderSlots(); return; }
+  const pl = t.closest('[data-placed]');
+  if (pl) { cur.placed.splice(+pl.dataset.placed, 1); sfx.click(); renderSlots(); return; }
+  if (t.closest('#qCheck')) { checkOrder(); return; }
+  if (t.closest('#qClear')) { cur.placed = []; renderSlots(); }
+});
+
+// ════════════════════════════════════════════════════════════════
+// MAIN LOOP
+// ════════════════════════════════════════════════════════════════
+const SKY0 = [0.55, 0.74, 0.92], SKY1 = [0.52, 0.40, 0.36];
+let last = performance.now(), titleT = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr);
+}
+window.addEventListener('resize', resize);
+
+function updateWorldFx(dt, room) {
+  // Smoke from the crater
+  smokeT -= dt;
+  while (smokeT < 0) {
+    smokeT += 0.05;
+    const g = 0.18 + Math.random() * 0.2;
+    spawn(56 + (Math.random() - .5) * 5, G + 30, 2 + (Math.random() - .5) * 5, 0.6 + Math.random() * 0.8, 2.5 + Math.random() * 2.5, (Math.random() - .3) * 0.8, 14, [g, g * 0.95, g * 0.9, 1], 2.5 + Math.random() * 3.5, -0.05);
+    if (Math.random() < 0.25) spawn(56 + (Math.random() - .5) * 3, G + 30, 2, (Math.random() - .5) * 4, 8 + Math.random() * 6, (Math.random() - .5) * 4, 3, [1, 0.45 + Math.random() * 0.3, 0.1, 1], 0.7, 9);
+  }
+  if (mode === 'title') return;
+  // Ash falls harder the further you go
+  const rate = [6, 30, 55, 85, 120, 140][room];
+  ashT -= dt * rate;
+  while (ashT < 0) {
+    ashT += 1;
+    const g = 0.35 + Math.random() * 0.25;
+    spawn(P.x + (Math.random() - .5) * 28, P.y + 10 + Math.random() * 6, P.z + (Math.random() - .5) * 28, 0.4, -1.4 - Math.random(), 0.1, 9, [g, g, g * 0.97, 1], 0.07, 0, true);
+  }
+  // Sparkles on the unopened locks of this room
+  sparkT -= dt;
+  if (sparkT < 0 && game) {
+    sparkT = 0.12;
+    LOCKS.forEach(L => {
+      if (L.done || L.room !== room || Math.random() < 0.5) return;
+      const s = Math.floor(Math.random() * 3), o = [Math.random(), Math.random(), Math.random()]; o[s] = Math.random() < 0.5 ? -0.05 : 1.05;
+      spawn(L.x + o[0], L.y + o[1], L.z + o[2], 0, 0.5, 0, 0.9, [1, 0.85 + Math.random() * 0.15, 0.3, 1], 0.07, 0);
+    });
+  }
+  // Earth tremors
+  if (mode === 'play') {
+    quakeT -= dt;
+    if (quakeT < 0) { quakeT = 22 + Math.random() * 20 - room * 2; const s = 0.5 + room * 0.15; shake = 0.08 + room * 0.03; sfx.rumble(s); $('hurt').style.opacity = 1; setTimeout(() => $('hurt').style.opacity = 0, 1300); }
+  }
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!gl) return;
+  if (canvas.width !== Math.floor(innerWidth * dpr)) resize();
+
+  let room = game ? Math.min(5, roomAt(P.x)) : 0;
+  if (mode === 'play') {
+    updatePlayer(dt);
+    room = roomAt(P.x);
+    if (room < 5 && !game.visited.has(room)) { game.visited.add(room); roomSplash(room); }
+    updateTarget();
+    updateHud();
+    if (P.x >= WIN_X) winGame();
+  }
+  updateWorldFx(dt, Math.min(room, 5));
+  // Rebuild a few changed chunks each frame
+  let nb = 0; for (const ci of dirty) { dirty.delete(ci); buildChunk(ci); if (++nb >= 6) break; }
+
+  // Camera
+  let eye, ctr;
+  if (mode === 'title' || !game) {
+    titleT += dt * 0.04;
+    eye = [58 + Math.sin(titleT) * 34, G + 22, 56 + Math.cos(titleT) * 30];
+    ctr = [58, G + 6, 40];
+  } else {
+    shake = Math.max(0, shake - dt * 0.12);
+    const sx = (Math.random() - .5) * shake, sy = (Math.random() - .5) * shake;
+    const d = lookDir();
+    eye = [P.x + sx, P.y + EYE + sy, P.z];
+    ctr = [eye[0] + d[0], eye[1] + d[1], eye[2] + d[2]];
+  }
+  const sk = Math.min(1, (game ? Math.min(room, 4) : 1) / 4 + (game && room === 5 ? 0.15 : 0));
+  const sky = SKY0.map((c, i) => c + (SKY1[i] - c) * sk);
+  const fog = [30 - sk * 6, 140 - sk * 50];
+  const fov = 1.25, aspect = canvas.width / canvas.height;
+  const mvp = mmul(persp(fov, aspect, 0.05, 400), lookAt(eye, ctr));
+
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(sky[0], sky[1], sky[2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+
+  // Blocks
+  const bp = blockProg;
+  gl.useProgram(bp.p);
+  gl.uniformMatrix4fv(bp.u.uMVP, false, mvp);
+  gl.uniform3fv(bp.u.uEye, eye); gl.uniform2fv(bp.u.uFog, fog); gl.uniform3fv(bp.u.uFogCol, sky);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, atlasTex); gl.uniform1i(bp.u.uTex, 0);
+  gl.enableVertexAttribArray(bp.a.aPos); gl.enableVertexAttribArray(bp.a.aUV); gl.enableVertexAttribArray(bp.a.aCol);
+  const bindBlock = buf => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.vertexAttribPointer(bp.a.aPos, 3, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(bp.a.aUV, 2, gl.FLOAT, false, 32, 12);
+    gl.vertexAttribPointer(bp.a.aCol, 3, gl.FLOAT, false, 32, 20);
+  };
+  gl.disable(gl.BLEND); gl.depthMask(true); gl.uniform1f(bp.u.uAlpha, 1);
+  for (const c of chunks) if (c && c.n) { bindBlock(c.vbo); gl.drawArrays(gl.TRIANGLES, 0, c.n); }
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.uniform1f(bp.u.uAlpha, 0.72);
+  for (const c of chunks) if (c && c.wn) { bindBlock(c.wbo); gl.drawArrays(gl.TRIANGLES, 0, c.wn); }
+  gl.depthMask(true);
+  gl.disableVertexAttribArray(bp.a.aUV); gl.disableVertexAttribArray(bp.a.aCol);
+
+  // Particles
+  let np = 0;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.life -= dt; p.vy -= p.grav * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+    if (p.life <= 0 || (p.kill && BL[getB(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z))].solid)) { parts.splice(i, 1); continue; }
+  }
+  for (const p of parts) {
+    const o = np * 8, fade = Math.min(1, p.life / (p.max * 0.3));
+    pData[o] = p.x; pData[o + 1] = p.y; pData[o + 2] = p.z; pData[o + 3] = p.r; pData[o + 4] = p.g; pData[o + 5] = p.b; pData[o + 6] = p.a * fade; pData[o + 7] = p.size; np++;
+  }
+  const pp = pointProg;
+  gl.useProgram(pp.p);
+  gl.uniformMatrix4fv(pp.u.uMVP, false, mvp);
+  gl.uniform1f(pp.u.uScale, canvas.height / (2 * Math.tan(fov / 2)));
+  gl.uniform3fv(pp.u.uEye, eye); gl.uniform2fv(pp.u.uFog, fog); gl.uniform3fv(pp.u.uFogCol, sky);
+  gl.enableVertexAttribArray(pp.a.aPos); gl.enableVertexAttribArray(pp.a.aCol); gl.enableVertexAttribArray(pp.a.aSize);
+  if (np) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, pBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, pData.subarray(0, np * 8), gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(pp.a.aPos, 3, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(pp.a.aCol, 4, gl.FLOAT, false, 32, 12);
+    gl.vertexAttribPointer(pp.a.aSize, 1, gl.FLOAT, false, 32, 28);
+    gl.drawArrays(gl.POINTS, 0, np);
+  }
+  // Outline on the targeted block
+  if (mode === 'play' && target) {
+    const { x, y, z } = target, a = -0.002, b = 1.002, L = [];
+    const c = [[a, a, a], [b, a, a], [b, a, b], [a, a, b], [a, b, a], [b, b, a], [b, b, b], [a, b, b]];
+    [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]].forEach(([i, j]) => {
+      L.push(x + c[i][0], y + c[i][1], z + c[i][2], 0, 0, 0, 0.7, 1, x + c[j][0], y + c[j][1], z + c[j][2], 0, 0, 0, 0.7, 1);
+    });
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(L), gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(pp.a.aPos, 3, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(pp.a.aCol, 4, gl.FLOAT, false, 32, 12);
+    gl.vertexAttribPointer(pp.a.aSize, 1, gl.FLOAT, false, 32, 28);
+    gl.drawArrays(gl.LINES, 0, 24);
+  }
+  gl.disableVertexAttribArray(pp.a.aCol); gl.disableVertexAttribArray(pp.a.aSize);
+  gl.disable(gl.BLEND);
+}
+
+// ── Boot ──
+buildSetup();
+if (gl) {
+  resize();
+  generateWorld(); buildAll();
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>
