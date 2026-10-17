@@ -47,6 +47,8 @@ button { font-family: inherit; }
 .tick .box { flex: 0 0 20px; height: 20px; margin-top: 1px; background: #8b8b8b; border: 2px solid; border-color: #373737 #fff #fff #373737; display: grid; place-items: center; }
 .tick input:checked + .box::after { content: ''; width: 10px; height: 10px; background: #5fd35f; box-shadow: 0 0 0 2px #1f4f1f; }
 .tick input:focus-visible + .box { outline: 2px solid #fff; }
+.lvhead { grid-column: 1 / -1; color: #ffe08a; font-weight: 600; letter-spacing: .06em; margin: 10px 0 2px; border-bottom: 2px solid #5d5d5d; padding-bottom: 4px; }
+.lvhead span { color: #9f9f9f; font-weight: 400; font-size: .85rem; letter-spacing: 0; }
 .tick .ch { display: block; font-size: .78rem; color: #9f9f9f; }
 .status { margin-top: 14px; color: #bde6a8; font-size: .92rem; min-height: 1.2em; }
 .status.warn { color: #ffb36b; }
@@ -85,6 +87,14 @@ kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid
 #roomBox { position: absolute; left: 12px; top: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; max-width: calc(100vw - 120px); }
 #roomName { font-size: 1.05rem; color: #ffe08a; text-shadow: 2px 2px 0 #000; }
 #roomGoal { font-size: .85rem; color: #ddd; margin-top: 3px; }
+#roomHint { font-size: .8rem; color: #ffe9a8; margin-top: 3px; }
+.ach-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.ach { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; color: #e8e8e8; }
+.ach .ic { flex: 0 0 22px; height: 22px; display: grid; place-items: center; background: #3a3a3a; border: 2px solid #000; font-size: .8rem; }
+.ach.got .ic { background: #c79a1e; color: #fff; }
+.ach .ds { display: block; font-size: .78rem; color: #9f9f9f; }
+.ach-lv { grid-column: 1 / -1; color: #ffe08a; font-size: .85rem; letter-spacing: .08em; margin-top: 8px; }
+@media (max-width: 640px) { .ach-list { grid-template-columns: 1fr; } }
 #scoreBox { position: absolute; right: 12px; top: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; font-size: .95rem; text-shadow: 2px 2px 0 #000; }
 #scoreBox b { color: #7dff7d; }
 #hotbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; background: rgba(0,0,0,.35); border: 2px solid #000; box-shadow: inset 0 0 0 2px #8b8b8b; }
@@ -98,6 +108,9 @@ kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid
 #actionbar { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); font-size: 1.08rem; text-shadow: 2px 2px 0 #3f3f3f; white-space: nowrap; max-width: 96vw; overflow: hidden; text-overflow: ellipsis; }
 #toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font-size: 1.25rem; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; text-align: center; opacity: 0; transition: opacity .4s; width: 92vw; }
 #toast.show { opacity: 1; }
+#achPop { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); background: rgba(40,28,4,.85); border: 2px solid #000; box-shadow: inset 0 0 0 2px #c79a1e; padding: 8px 16px; text-align: center; color: #ffe08a; opacity: 0; transition: opacity .4s; max-width: 92vw; }
+#achPop span { color: #f0e6d2; font-size: .9rem; }
+#achPop.show { opacity: 1; }
 #toast .gold { color: #ffd84a; }
 #splashR { position: absolute; left: 0; right: 0; top: 30%; text-align: center; opacity: 0; transition: opacity .6s; }
 #splashR.show { opacity: 1; }
@@ -200,11 +213,12 @@ body.touch #touch.on { display: block; }
 <div id="hud">
   <div id="hurt"></div>
   <div id="cross"></div>
-  <div id="roomBox"><div id="roomName"></div><div id="roomGoal"></div></div>
+  <div id="roomBox"><div id="roomName"></div><div id="roomGoal"></div><div id="roomHint"></div></div>
   <div id="scoreBox">Right first time: <b id="scoreN">0</b> / 15</div>
   <div id="say"><div class="l" id="sayL"></div><div class="e" id="sayE"></div></div>
   <div id="splashR"><div class="n" id="spN"></div><div class="t" id="spT"></div><div class="l" id="spL"></div><div class="i" id="spI"></div></div>
   <div id="toast"></div>
+  <div id="achPop"></div>
   <div id="actionbar"></div>
   <div id="hotbar"></div>
 </div>
@@ -222,7 +236,7 @@ body.touch #touch.on { display: block; }
     <div class="logo">FUGA ROMANA</div>
     <div class="splash" id="splashTxt">Now with volcano!</div>
   </div>
-  <div class="logo-sub">A LATIN ESCAPE GAME · COMMON ENTRANCE LEVEL 1</div>
+  <div class="logo-sub">A LATIN ESCAPE GAME · COMMON ENTRANCE LEVELS 1 &amp; 2</div>
   <div class="panel">
     <h3>Grammar</h3>
     <div class="presets" id="presets"></div>
@@ -236,6 +250,12 @@ body.touch #touch.on { display: block; }
   <div class="start-row">
     <button class="mc-btn big" id="startBtn" data-level="0">Level 1: Escape from Pompeii</button>
     <button class="mc-btn big" id="startBtn2" data-level="1">Level 2: The Ides of March</button>
+    <button class="mc-btn big" id="startBtn3" data-level="2">Level 3: The Fall of Troy</button>
+    <button class="mc-btn big" id="startBtn4" data-level="3">Level 4: The Cyclops</button>
+  </div>
+  <div class="panel">
+    <h3 id="achHead">Secrets and achievements</h3>
+    <div class="ach-list" id="achList"></div>
   </div>
   <div class="controls-line">
     <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse: look · <kbd>Space</kbd> jump · <kbd>Shift</kbd> run · <kbd>E</kbd> or click: use · <kbd>Esc</kbd> pause<br>
@@ -253,10 +273,10 @@ body.touch #touch.on { display: block; }
     <div class="howto">
       <h4>HOW TO OPEN THE WAY</h4>
       <ol>
-        <li>Look for <b>golden sparkles</b>. Each one marks a lock.</li>
-        <li>Walk up to the lock and press <b>E</b>. On a tablet, tap <b>USE</b>.</li>
-        <li>Answer the Latin question to open the lock.</li>
-        <li>Open all <b>three locks</b> in a place, and the door to the next place opens.</li>
+        <li>Each place has <b>three locks</b>. The box in the top corner tells you what to look for.</li>
+        <li><b>✦ Golden sparkles</b> mark a locked box or jar. <b>🗣 People</b> with sparkles over their heads will set you a question. <b>▣ Gold-edged floor tiles</b> open when you stand on them. <b>📜 Hidden scrolls</b> do not sparkle at all, so search carefully.</li>
+        <li>Walk up and press <b>E</b> (on a tablet, tap <b>USE</b>), then answer the Latin question.</li>
+        <li>Open all three, and the door to the next place opens. Every place also hides <b>secrets</b>. Explore!</li>
       </ol>
     </div>
     <button class="mc-btn big" id="beginBtn"></button>
@@ -317,7 +337,23 @@ const GRAMMAR = [
   { k: 'P', name: 'Adjectives like miser and pulcher', ch: 'Ch 54' },
   { k: 'Q', name: 'Imperfect tense', ch: 'Ch 57' },
   { k: 'R', name: 'Perfect tense', ch: 'Ch 60–73' },
+  // CE Level 2 (Bass Ch 74–116). Ticking any of these assumes all of Level 1.
+  { k: 'S', lv: 2, name: 'Third declension nouns (rex, opus, mare)', ch: 'Ch 77–79' },
+  { k: 'T', lv: 2, name: 'Future tense', ch: 'Ch 81–82' },
+  { k: 'U', lv: 2, name: 'eo (I go) and its compounds', ch: 'Ch 84' },
+  { k: 'V', lv: 2, name: '-que, et… et…, quamquam', ch: 'Ch 75, 77, 85' },
+  { k: 'W', lv: 2, name: 'hic, haec, hoc and ille, illa, illud', ch: 'Ch 89, 91' },
+  { k: 'X', lv: 2, name: 'is, ea, id and personal pronouns', ch: 'Ch 94, 96' },
+  { k: 'Y', lv: 2, name: 'Pluperfect tense', ch: 'Ch 99' },
+  { k: 'Z', lv: 2, name: 'Third declension adjectives (fortis, felix, ingens)', ch: 'Ch 101, 103' },
+  { k: 'a', lv: 2, name: 'Comparison of adjectives', ch: 'Ch 104, 106' },
+  { k: 'b', lv: 2, name: 'possum and debeo', ch: 'Ch 109, 113' },
+  { k: 'c', lv: 2, name: 'Prohibitions: noli, nolite', ch: 'Ch 111' },
+  { k: 'd', lv: 2, name: 'Questions with nonne and num', ch: 'Ch 112' },
+  { k: 'e', lv: 2, name: 'Reflexive pronoun se', ch: 'Ch 115' },
 ];
+const L2KEYS = 'STUVWXYZabcde';
+const hasL2 = () => [...ticked].some(k => L2KEYS.includes(k));
 
 const PRESETS = [
   { label: 'Ch 1–8', keys: 'A' },
@@ -325,6 +361,8 @@ const PRESETS = [
   { label: 'Ch 1–38', keys: 'ABCDEFGHIJ' },
   { label: 'Ch 1–56', keys: 'ABCDEFGHIJKLMNOP' },
   { label: 'Whole of Level 1', keys: 'ABCDEFGHIJKLMNOPQR' },
+  { label: 'Level 2: Ch 74–99', keys: 'ABCDEFGHIJKLMNOPQRSTUVWXY' },
+  { label: 'Whole of Level 2', keys: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcde' },
 ];
 
 const QTYPES = [
@@ -389,10 +427,56 @@ const TABLES = {
     note: '-ne on the first word turns a statement into a question.' },
   num: { title: 'Numbers', cols: ['', 'cardinal', '', 'ordinal', ''],
     rows: [['1', 'unus', 'one', 'primus', 'first'], ['2', 'duo', 'two', 'secundus', 'second'], ['3', 'tres', 'three', 'tertius', 'third'], ['4', 'quattuor', 'four', 'quartus', 'fourth'], ['5', 'quinque', 'five', 'quintus', 'fifth'], ['6', 'sex', 'six', 'sextus', 'sixth'], ['7', 'septem', 'seven', 'septimus', 'seventh'], ['8', 'octo', 'eight', 'octavus', 'eighth'], ['9', 'novem', 'nine', 'nonus', 'ninth'], ['10', 'decem', 'ten', 'decimus', 'tenth']] },
+  // ── CE Level 2 tables (Bass Ch 77–115) ──
+  decl3: { title: 'Third declension: rex (m.) and opus (n.)', cols: ['case', 'rex sg', 'rex pl', 'opus sg', 'opus pl'],
+    rows: [['nominative', 'rex', 'reges', 'opus', 'opera'], ['vocative', 'rex', 'reges', 'opus', 'opera'], ['accusative', 'regem', 'reges', 'opus', 'opera'], ['genitive', 'regis', 'regum', 'operis', 'operum'], ['dative', 'regi', 'regibus', 'operi', 'operibus'], ['ablative', 'rege', 'regibus', 'opere', 'operibus']],
+    note: 'Find the stem from the genitive: regis → reg-. mare has ablative mari and plural maria.' },
+  fut: { title: 'Future tense', cols: ['', 'amo (1)', 'moneo (2)', 'rego (3)', 'capio (3½)', 'audio (4)', 'sum'],
+    rows: [['I shall', 'amabo', 'monebo', 'regam', 'capiam', 'audiam', 'ero'], ['you (sg) will', 'amabis', 'monebis', 'reges', 'capies', 'audies', 'eris'], ['he will', 'amabit', 'monebit', 'reget', 'capiet', 'audiet', 'erit'], ['we shall', 'amabimus', 'monebimus', 'regemus', 'capiemus', 'audiemus', 'erimus'], ['you (pl) will', 'amabitis', 'monebitis', 'regetis', 'capietis', 'audietis', 'eritis'], ['they will', 'amabunt', 'monebunt', 'regent', 'capient', 'audient', 'erunt']] },
+  eo: { title: 'eo, ire, ii: I go', cols: ['', 'present', 'imperfect', 'perfect', 'future'],
+    rows: [['I', 'eo', 'ibam', 'ii', 'ibo'], ['you (sg)', 'is', 'ibas', 'iisti', 'ibis'], ['he, she, it', 'it', 'ibat', 'iit', 'ibit'], ['we', 'imus', 'ibamus', 'iimus', 'ibimus'], ['you (pl)', 'itis', 'ibatis', 'iistis', 'ibitis'], ['they', 'eunt', 'ibant', 'ierunt', 'ibunt']],
+    note: 'Infinitive ire. Imperatives i, ite. adeo (go towards), ineo (go in), exeo (go out), pereo (perish), redeo (return), transeo (cross) go the same way.' },
+  que: { title: 'Joining words', cols: ['Latin', 'English'],
+    rows: [['-que', 'and (joined to the second word: pueri puellaeque)'], ['et… et…', 'both… and…'], ['quamquam', 'although'], ['ubi', 'when'], ['postquam', 'after']] },
+  hic: { title: 'hic, haec, hoc: this, these', cols: ['', 'masculine', 'feminine', 'neuter'],
+    rows: [['nom sg', 'hic', 'haec', 'hoc'], ['acc sg', 'hunc', 'hanc', 'hoc'], ['gen sg', 'huius', 'huius', 'huius'], ['dat sg', 'huic', 'huic', 'huic'], ['abl sg', 'hoc', 'hac', 'hoc'],
+      ['nom pl', 'hi', 'hae', 'haec'], ['acc pl', 'hos', 'has', 'haec'], ['gen pl', 'horum', 'harum', 'horum'], ['dat pl', 'his', 'his', 'his'], ['abl pl', 'his', 'his', 'his']] },
+  ille: { title: 'ille, illa, illud: that, those', cols: ['', 'masculine', 'feminine', 'neuter'],
+    rows: [['nom sg', 'ille', 'illa', 'illud'], ['acc sg', 'illum', 'illam', 'illud'], ['gen sg', 'illius', 'illius', 'illius'], ['dat sg', 'illi', 'illi', 'illi'], ['abl sg', 'illo', 'illa', 'illo'],
+      ['nom pl', 'illi', 'illae', 'illa'], ['acc pl', 'illos', 'illas', 'illa'], ['gen pl', 'illorum', 'illarum', 'illorum'], ['dat pl', 'illis', 'illis', 'illis'], ['abl pl', 'illis', 'illis', 'illis']] },
+  is: { title: 'is, ea, id: he, she, it', cols: ['', 'masculine', 'feminine', 'neuter'],
+    rows: [['nom sg', 'is (he)', 'ea (she)', 'id (it)'], ['acc sg', 'eum (him)', 'eam (her)', 'id (it)'], ['gen sg', 'eius (his)', 'eius (her)', 'eius (of it)'], ['dat sg', 'ei (to him)', 'ei (to her)', 'ei (to it)'], ['abl sg', 'eo', 'ea', 'eo'],
+      ['nom pl', 'ei (they)', 'eae (they)', 'ea (they)'], ['acc pl', 'eos (them)', 'eas (them)', 'ea (them)'], ['gen pl', 'eorum (their)', 'earum (their)', 'eorum (their)'], ['dat pl', 'eis (to them)', 'eis', 'eis'], ['abl pl', 'eis', 'eis', 'eis']] },
+  pron: { title: 'ego, tu, nos, vos', cols: ['', 'I', 'you (sg)', 'we', 'you (pl)'],
+    rows: [['nominative', 'ego', 'tu', 'nos', 'vos'], ['accusative', 'me', 'te', 'nos', 'vos'], ['genitive', 'mei', 'tui', 'nostrum', 'vestrum'], ['dative', 'mihi', 'tibi', 'nobis', 'vobis'], ['ablative', 'me', 'te', 'nobis', 'vobis']],
+    note: 'mecum = with me, tecum = with you, nobiscum = with us, vobiscum = with you (pl).' },
+  plupf: { title: 'Pluperfect tense (had…)', cols: ['', 'amo', 'moneo', 'rego', 'capio', 'audio', 'sum'],
+    rows: [['I had', 'amaveram', 'monueram', 'rexeram', 'ceperam', 'audiveram', 'fueram'], ['you (sg) had', 'amaveras', 'monueras', 'rexeras', 'ceperas', 'audiveras', 'fueras'], ['he had', 'amaverat', 'monuerat', 'rexerat', 'ceperat', 'audiverat', 'fuerat'], ['we had', 'amaveramus', 'monueramus', 'rexeramus', 'ceperamus', 'audiveramus', 'fueramus'], ['you (pl) had', 'amaveratis', 'monueratis', 'rexeratis', 'ceperatis', 'audiveratis', 'fueratis'], ['they had', 'amaverant', 'monuerant', 'rexerant', 'ceperant', 'audiverant', 'fuerant']],
+    note: 'Perfect stem + -eram, -eras, -erat, -eramus, -eratis, -erant.' },
+  adj3: { title: 'Third declension adjectives: fortis, felix, ingens', cols: ['', 'fortis m/f', 'forte n', 'felix m/f', 'ingens m/f'],
+    rows: [['nom sg', 'fortis', 'forte', 'felix', 'ingens'], ['acc sg', 'fortem', 'forte', 'felicem', 'ingentem'], ['gen sg', 'fortis', 'fortis', 'felicis', 'ingentis'], ['dat sg', 'forti', 'forti', 'felici', 'ingenti'], ['abl sg', 'forti', 'forti', 'felici', 'ingenti'],
+      ['nom pl', 'fortes', 'fortia', 'felices', 'ingentes'], ['acc pl', 'fortes', 'fortia', 'felices', 'ingentes'], ['gen pl', 'fortium', 'fortium', 'felicium', 'ingentium'], ['dat pl', 'fortibus', 'fortibus', 'felicibus', 'ingentibus'], ['abl pl', 'fortibus', 'fortibus', 'felicibus', 'ingentibus']],
+    note: 'omnes on its own = everyone; omnia on its own = everything.' },
+  comp: { title: 'Comparison of adjectives', cols: ['positive', 'comparative', 'superlative'],
+    rows: [['altus (high)', 'altior (higher)', 'altissimus (highest, very high)'], ['pulcher (beautiful)', 'pulchrior', 'pulcherrimus'], ['fortis (brave)', 'fortior', 'fortissimus'], ['felix (lucky)', 'felicior', 'felicissimus'], ['facilis (easy)', 'facilior', 'facillimus'], ['difficilis (difficult)', 'difficilior', 'difficillimus']],
+    note: 'quam = than. Comparatives end -ior (neuter -ius) and go like fortior; superlatives go like bonus.' },
+  irrcomp: { title: 'Irregular comparison', cols: ['positive', 'comparative', 'superlative'],
+    rows: [['bonus (good)', 'melior (better)', 'optimus (very good, best)'], ['malus (bad)', 'peior (worse)', 'pessimus (very bad, worst)'], ['magnus (big)', 'maior (bigger)', 'maximus (very big, biggest)'], ['parvus (small)', 'minor (smaller)', 'minimus (very small, smallest)'], ['multus (much, many)', 'plus (more)', 'plurimus (most, very many)']] },
+  possum: { title: 'possum: I am able, I can', cols: ['', 'present', 'imperfect', 'perfect', 'future', 'pluperfect'],
+    rows: [['I', 'possum', 'poteram', 'potui', 'potero', 'potueram'], ['you (sg)', 'potes', 'poteras', 'potuisti', 'poteris', 'potueras'], ['he, she, it', 'potest', 'poterat', 'potuit', 'poterit', 'potuerat'], ['we', 'possumus', 'poteramus', 'potuimus', 'poterimus', 'potueramus'], ['you (pl)', 'potestis', 'poteratis', 'potuistis', 'poteritis', 'potueratis'], ['they', 'possunt', 'poterant', 'potuerunt', 'poterunt', 'potuerant']],
+    note: 'possum and debeo (I must, ought to) are followed by an infinitive.' },
+  noli: { title: 'Prohibitions: do not…!', cols: ['Latin', 'English'],
+    rows: [['noli currere, serve!', 'Do not run, slave! (one person)'], ['nolite currere, servi!', 'Do not run, slaves! (more than one)']],
+    note: 'noli / nolite + infinitive. The person spoken to is in the vocative.' },
+  nonne: { title: 'Questions: -ne, nonne, num', cols: ['Latin', 'English', 'answer expected'],
+    rows: [['laboratne?', 'Is he working?', 'yes or no'], ['nonne laborat?', 'He is working, isn’t he?', 'yes'], ['num laborat?', 'He isn’t working, is he?', 'no']] },
+  se: { title: 'Reflexive pronoun se', cols: ['case', 'Latin', 'English'],
+    rows: [['accusative', 'se', 'himself, herself, themselves'], ['genitive', 'sui', 'of himself, of themselves'], ['dative', 'sibi', 'to or for himself, themselves'], ['ablative', 'se', '(by) himself, themselves'], ['', 'secum', 'with him, with them']],
+    note: 'se refers back to the subject of the verb.' },
 };
 // Hint shown for translate / unscramble questions: the table for the most advanced point in the sentence
-const TAG_TABLE = { R: 'perf', Q: 'impf', O: 'inf', M: 'imp', P: 'miser', N: 'num', L: 'bellum', K: 'ego', J: 'prep', I: 'servus', H: 'puella', G: 'ne', F: 'pres', E: 'bonus', D: 'sum', C: 'qw', B: 'puellaNA', A: 'amo' };
-const TAG_ORDER = 'RQOMPNLKJIHGFEDCBA';
+const TAG_TABLE = { e: 'se', d: 'nonne', c: 'noli', b: 'possum', a: 'comp', Z: 'adj3', Y: 'plupf', X: 'is', W: 'hic', V: 'que', U: 'eo', T: 'fut', S: 'decl3', R: 'perf', Q: 'impf', O: 'inf', M: 'imp', P: 'miser', N: 'num', L: 'bellum', K: 'ego', J: 'prep', I: 'servus', H: 'puella', G: 'ne', F: 'pres', E: 'bonus', D: 'sum', C: 'qw', B: 'puellaNA', A: 'amo' };
+const TAG_ORDER = 'edcbaZYXWVUTSRQOMPNLKJIHGFEDCBA';
 // ════════════════════════════════════════════════════════════════
 // QUESTION BANK — every Latin sentence and form is taken from
 // Prep School Latin (R. C. Bass, 2018), CE Level 1, Chapters 2–73.
@@ -905,6 +989,360 @@ T(73, 'audiebatis.', 'You (pl) were listening.', 'Q', ['You (pl) listened.', 'Yo
 T(73, 'consumpsimus.', 'We ate.', 'R', ['We eat.', 'We were eating.', 'They ate.'], { p: [[0, 'pn', '1p', 'perf']] });
 T(73, 'discesserunt.', 'They departed.', 'R', ['They depart.', 'He departed.', 'They were departing.'], { p: [[0, 'tense', 'perf']] });
 
+// ════════════════════════════════════════════════════════════════
+// CE LEVEL 2 — every Latin sentence is taken from Prep School Latin
+// (R. C. Bass, 2018), Chapters 75–116. Level 2 sentences carry only
+// their Level 2 grammar keys: ticking any Level 2 point assumes the
+// whole of Level 1 has been covered.
+// ════════════════════════════════════════════════════════════════
+
+// ── V: -que, et… et…, quamquam (Ch 75, 77, 85) ──
+T(75, 'puer puellaque currunt.', 'The boy and girl are running.', 'V', ['The boy and the girls are running.', 'The boys and the girl are running.', 'The boy runs to the girl.'], { u: 1 });
+T(75, 'servus timet fugitque.', 'The slave is afraid and flees.', 'V', ['The slave flees because he is afraid.', 'The slaves are afraid and flee.', 'The slave is not afraid and stays.'], {});
+T(75, 'dominus intrat servumque punit.', 'The master enters and punishes the slave.', 'V', ['The slave enters and punishes the master.', 'The master enters and punishes the slaves.', 'The master and the slave enter.'], { u: 1 });
+T(75, 'puella intrat amicumque videt.', 'The girl enters and sees her friend.', 'V', ['The girl and her friend enter.', 'The girl enters and sees her friends.', 'The friend enters and sees the girl.'], { u: 1 });
+T(75, 'semper ridemus ludimusque.', 'We always laugh and play.', 'V', ['We never laugh and play.', 'They always laugh and play.', 'We always laugh and work.'], { u: 1 });
+T(75, 'magister Sextum Marcumque punit.', 'The teacher punishes Sextus and Marcus.', 'V', ['Sextus and Marcus punish the teacher.', 'The teacher and Sextus punish Marcus.', 'The teacher praises Sextus and Marcus.'], { u: 1 });
+T(75, 'servi fessi miserique erant.', 'The slaves were tired and miserable.', 'V', ['The slaves are tired and miserable.', 'The slave was tired and miserable.', 'The slaves were tired but happy.'], { u: 1 });
+T(75, 'templum sacrum pulchrumque erat.', 'The temple was sacred and beautiful.', 'V', ['The temple is sacred and beautiful.', 'The temples were sacred and beautiful.', 'The temple was big and beautiful.'], { u: 1 });
+T(75, 'servi cibum aquamque habebant.', 'The slaves had food and water.', 'V', ['The slaves had food but no water.', 'The slave had food and water.', 'The slaves were giving food and water.'], { u: 1 });
+T(77, 'et matrem et patrem habeo.', 'I have both a mother and a father.', 'S V', ['I have a mother but not a father.', 'He has both a mother and a father.', 'I love both my mother and my father.'], {});
+T(77, 'soror mea et pulchra et clara est.', 'My sister is both beautiful and famous.', 'S V', ['My sister is beautiful but not famous.', 'My sisters are both beautiful and famous.', 'My mother is both beautiful and famous.'], {});
+T(77, 'et mater et pater regis irati erant.', 'Both the mother and the father of the king were angry.', 'S V', ['The king was angry with his mother and father.', 'Both the mother and the father of the king are angry.', 'The mother of the king was angry with the father.'], {});
+T(85, 'vir, quamquam multam pecuniam habebat, non laetus erat.', 'Although the man had a lot of money, he was not happy.', 'V', ['Because the man had a lot of money, he was happy.', 'Although the man was not happy, he had a lot of money.', 'Although the man has a lot of money, he is not happy.'], {});
+T(85, 'nautae, quamquam undae magnae erant, non timebant.', 'Although the waves were big, the sailors were not afraid.', 'V', ['Because the waves were big, the sailors were afraid.', 'Although the waves were small, the sailors were afraid.', 'Although the waves were big, the sailor was not afraid.'], {});
+T(85, 'rex, quamquam clarus erat, uxorem non habebat.', 'Although the king was famous, he did not have a wife.', 'S V', ['Because the king was famous, he had a wife.', 'Although the king had a wife, he was not famous.', 'Although the king is famous, he does not have a wife.'], {});
+T(85, 'quamquam iter longum non erat, iuvenes fessi erant.', 'Although the journey was not long, the young men were tired.', 'S V', ['Because the journey was long, the young men were tired.', 'Although the journey was long, the young men were not tired.', 'Although the journey was not long, the young man was tired.'], {});
+T(85, 'servus, quamquam fessus erat, bene laborabat.', 'Although the slave was tired, he was working well.', 'V', ['Because the slave was tired, he was not working well.', 'Although the slave was working well, he was tired.', 'Although the slaves were tired, they were working well.'], {});
+T(85, 'Graeci, quamquam bene pugnaverunt, Romanos non superaverunt.', 'Although the Greeks fought well, they did not overcome the Romans.', 'V', ['Because the Greeks fought well, they overcame the Romans.', 'Although the Romans fought well, they did not overcome the Greeks.', 'Although the Greeks did not fight well, they overcame the Romans.'], {});
+T(85, 'Paris, ubi lucem claram vidit, magnopere timebat.', 'When Paris saw the bright light, he was very afraid.', 'S V', ['When Paris saw the bright light, he was not afraid.', 'Paris was very afraid because he did not see the light.', 'When Paris sees the bright light, he is very afraid.'], {});
+T(85, 'ubi ad urbem advenimus, ad templum festinavimus.', 'When we arrived at the city, we hurried to the temple.', 'S V', ['When we arrived at the temple, we hurried to the city.', 'When they arrived at the city, they hurried to the temple.', 'When we arrive at the city, we hurry to the temple.'], {});
+T(85, 'mater in villa sola manebat.', 'Mother was staying alone in the villa.', 'V', ['Mother was staying in the villa with a friend.', 'Mother stays alone in the villa.', 'Mother was walking alone to the villa.'], { u: 1 });
+T(116, 'miles, quamquam fessus erat, diu pugnavit.', 'Although the soldier was tired, he fought for a long time.', 'S V', ['Because the soldier was tired, he did not fight for long.', 'Although the soldiers were tired, they fought for a long time.', 'Although the soldier fought for a long time, he was not tired.'], {});
+T(116, 'Graeci, ubi Troiam ceperunt, Helenam ad Graeciam reduxerunt.', 'When the Greeks captured Troy, they led Helen back to Greece.', 'V', ['When the Trojans captured Greece, they led Helen back to Troy.', 'When the Greeks captured Helen, they led her back to Troy.', 'When the Greeks capture Troy, they will lead Helen back to Greece.'], {});
+T(116, 'Troiani, ubi equum viderunt, timebant.', 'When the Trojans saw the horse, they were afraid.', 'V', ['When the Trojans saw the horse, they were happy.', 'When the Greeks saw the horse, they were afraid.', 'When the Trojan saw the horses, he was afraid.'], { u: 1 });
+
+// ── S: Third declension nouns (Ch 77–79) ──
+T(77, 'montem vidi.', 'I saw the mountain.', 'S', ['I saw the mountains.', 'He saw the mountain.', 'I see the mountain.'], { g: [[0, ['montem', 'mons', 'montes', 'montis'], '', 'decl3']], p: [[0, 'case', 'acc sg', 'decl3']] });
+T(77, 'pater currit.', 'Father is running.', 'S', ['The fathers are running.', 'Mother is running.', 'Father is laughing.'], { p: [[0, 'case', 'nom sg', 'decl3']] });
+T(77, 'uxorem meam amo.', 'I love my wife.', 'S', ['My wife loves me.', 'I love my wives.', 'He loves my wife.'], { u: 1, g: [[0, ['uxorem', 'uxor', 'uxores', 'uxoris'], '', 'decl3']] });
+T(77, 'rex regit.', 'The king rules.', 'S', ['The kings rule.', 'The king is running.', 'The king is ruled.'], { p: [[0, 'case', 'nom sg', 'decl3']] });
+T(77, 'matrem amamus.', 'We love our mother.', 'S', ['Mother loves us.', 'We love our mothers.', 'They love their mother.'], { p: [[0, 'case', 'acc sg', 'decl3']] });
+T(77, 'fratrem et sororem habeo.', 'I have a brother and a sister.', 'S', ['I have a father and a sister.', 'I have brothers and sisters.', 'He has a brother and a sister.'], { u: 1 });
+T(77, 'rex sororem pulchram habet.', 'The king has a beautiful sister.', 'S', ['The king has a beautiful wife.', 'The sister has a handsome king.', 'The king has beautiful sisters.'], { u: 1 });
+T(77, 'multos montes vidimus.', 'We saw many mountains.', 'S', ['We saw a big mountain.', 'They saw many mountains.', 'Many mountains saw us.'], { u: 1, g: [[1, ['montes', 'montem', 'montium', 'montibus'], '', 'decl3']], p: [[1, 'case', 'acc pl', 'decl3']] });
+T(77, 'ad montem altum appropinquabamus.', 'We were approaching the high mountain.', 'S', ['We were approaching the high mountains.', 'We were walking away from the high mountain.', 'They were approaching the high mountain.'], { u: 1 });
+T(77, 'uxor mea iam venit.', 'My wife is already coming.', 'S', ['My wife is not coming.', 'My wives are already coming.', 'My sister is already coming.'], { u: 1, p: [[0, 'case', 'nom sg', 'decl3']] });
+T(77, 'Marcus frater Aureliae est.', 'Marcus is the brother of Aurelia.', 'S', ['Aurelia is the sister of Marcus.', 'Marcus is the father of Aurelia.', 'Marcus is the friend of Aurelia.'], { u: 1 });
+T(77, 'puella cibum patri parabat.', 'The girl was preparing food for her father.', 'S', ['The father was preparing food for the girl.', 'The girl was preparing food for her mother.', 'The girl was eating her father’s food.'], { g: [[2, ['patri', 'patrem', 'pater', 'patris'], '', 'decl3']], p: [[2, 'case', 'dat sg', 'decl3']] });
+T(77, 'servi ad montem festinant.', 'The slaves are hurrying to the mountain.', 'S', ['The slaves are hurrying away from the mountain.', 'The slave is hurrying to the mountain.', 'The slaves are hurrying to the mountains.'], { u: 1 });
+T(77, 'in montibus sunt multae viae.', 'In the mountains there are many roads.', 'S', ['In the mountain there is a long road.', 'There are many mountains on the road.', 'In the mountains there were many roads.'], { p: [[1, 'case', 'abl pl', 'decl3']] });
+T(77, 'rex matrem patremque amabat.', 'The king loved his mother and father.', 'S V', ['The mother and father loved the king.', 'The king loved his mother and brother.', 'The king loves his mother and father.'], { u: 1 });
+T(77, 'patrem bonum habeo.', 'I have a good father.', 'S', ['I have a good mother.', 'The good father has me.', 'He has a good father.'], { u: 1 });
+T(77, 'puer cum sorore semper pugnat.', 'The boy always fights with his sister.', 'S', ['The boy never fights with his sister.', 'The sister always fights with the boy.', 'The boy always fights with his sisters.'], { u: 1, g: [[2, ['sorore', 'sororem', 'soror', 'sororis'], '', 'prep']] });
+T(77, 'pater pueri iratus est.', 'The boy’s father is angry.', 'S', ['The father is angry with the boy.', 'The boy’s father was angry.', 'The boy’s mother is angry.'], { u: 1 });
+T(77, 'rex pecuniam sorori dat.', 'The king gives money to his sister.', 'S', ['The sister gives money to the king.', 'The king gives money to his sisters.', 'The king takes money from his sister.'], { u: 1, p: [[2, 'case', 'dat sg', 'decl3']] });
+T(77, 'puella pecuniam regis capit.', 'The girl takes the king’s money.', 'S', ['The king takes the girl’s money.', 'The girl gives money to the king.', 'The girl takes the kings’ money.'], { u: 1, g: [[2, ['regis', 'regem', 'rex', 'regum'], '', 'decl3']], p: [[2, 'case', 'gen sg', 'decl3']] });
+T(77, 'puer multa dona matri dedit.', 'The boy gave many presents to his mother.', 'S', ['The mother gave many presents to the boy.', 'The boy gave many presents to his mothers.', 'The boy gives many presents to his mother.'], { u: 1 });
+T(77, 'uxor regis pulchra est.', 'The wife of the king is beautiful.', 'S', ['The king’s wives are beautiful.', 'The wife of the king was beautiful.', 'The king’s sister is beautiful.'], { u: 1, g: [[1, ['regis', 'regem', 'rex', 'regi'], '', 'decl3']] });
+
+// ── S: Third declension neuter nouns (Ch 79) ──
+T(79, 'nauta mare non timet.', 'The sailor does not fear the sea.', 'S', ['The sea does not frighten the sailors.', 'The sailor fears the sea.', 'The sailors do not fear the sea.'], { u: 1, p: [[1, 'case', 'acc sg', 'decl3']] });
+T(79, 'iter longum et difficile erat.', 'The journey was long and difficult.', 'S Z', ['The journey was long but easy.', 'The journeys were long and difficult.', 'The journey is long and difficult.'], { u: 1 });
+T(79, 'servi corpus portabant.', 'The slaves were carrying the body.', 'S', ['The slaves were carrying the bodies.', 'The slave was carrying the body.', 'The slaves carried the body.'], { u: 1, g: [[1, ['corpus', 'corpora', 'corporis', 'corpore'], '', 'decl3']] });
+T(79, 'multa itinera longa fecimus.', 'We made many long journeys.', 'S', ['We made a long journey.', 'They made many long journeys.', 'We make many long journeys.'], { u: 1, g: [[1, ['itinera', 'iter', 'itineris', 'itinere'], '', 'decl3']] });
+T(79, 'aqua fluminis alta erat.', 'The water of the river was deep.', 'S', ['The water of the rivers was deep.', 'The river water is deep.', 'The water of the sea was deep.'], { u: 1, p: [[1, 'case', 'gen sg', 'decl3']] });
+T(79, 'sunt in urbe multa templa.', 'There are many temples in the city.', 'S', ['There are many cities in the temple.', 'There were many temples in the city.', 'There is a big temple in the city.'], {});
+T(79, 'nomen regis Sextus erat.', 'The name of the king was Sextus.', 'S', ['The name of the king is Sextus.', 'Sextus was the king of the city.', 'The name of the boy was Sextus.'], { u: 1 });
+T(79, 'pater meus trans mare solus saepe navigat.', 'My father often sails across the sea alone.', 'S', ['My father often sails across the sea with friends.', 'My father never sails across the sea alone.', 'My father often sailed across the sea alone.'], {});
+T(79, 'amici itinere fessi erant.', 'The friends were tired from the journey.', 'S', ['The friend was tired from the journey.', 'The friends were happy after the journey.', 'The friends are tired from the journey.'], { u: 1, p: [[1, 'case', 'abl sg', 'decl3']] });
+T(79, 'multa corpora in proelio vidi.', 'I saw many bodies in the battle.', 'S', ['I saw many bodies in the river.', 'They saw many bodies in the battle.', 'I saw a body in the battle.'], { u: 1 });
+T(79, 'rex lucem claram in caelo vidit.', 'The king saw a bright light in the sky.', 'S', ['The king saw a bright light in the river.', 'The kings saw bright lights in the sky.', 'The king sees a bright light in the sky.'], { u: 1, g: [[1, ['lucem', 'lux', 'lucis', 'luce'], '', 'decl3']] });
+T(79, 'nomen urbis Roma erat.', 'The name of the city was Rome.', 'S', ['The name of the city is Rome.', 'Rome was the name of the river.', 'The names of the cities were Roman.'], { u: 1 });
+T(79, 'puellae iuvenes pulchros saepe amant.', 'Girls often love handsome young men.', 'S', ['Handsome young men often love girls.', 'Girls never love handsome young men.', 'The girl often loves a handsome young man.'], {});
+T(79, 'pater multam pecuniam iuveni dedit.', 'The father gave a lot of money to the young man.', 'S', ['The young man gave a lot of money to the father.', 'The father gave a lot of money to the young men.', 'The father took a lot of money from the young man.'], { u: 1, g: [[3, ['iuveni', 'iuvenem', 'iuvenis', 'iuvenes'], '', 'decl3']] });
+T(79, 'ad flumen mox venimus.', 'We soon came to the river.', 'S', ['We soon came to the sea.', 'They soon came to the river.', 'We soon came from the river.'], { u: 1 });
+T(79, 'iuvenes advenerunt.', 'The young men arrived.', 'S', ['The young man arrived.', 'The young men are arriving.', 'The young men departed.'], { p: [[0, 'case', 'nom pl', 'decl3']] });
+T(79, 'urbes spectamus.', 'We are looking at the cities.', 'S', ['We are looking at the city.', 'The cities are looking at us.', 'They are looking at the cities.'], { p: [[0, 'case', 'acc pl', 'decl3']] });
+T(79, 'flumina longa sunt.', 'The rivers are long.', 'S', ['The river is long.', 'The rivers were long.', 'The journeys are long.'], { g: [[0, ['flumina', 'flumen', 'fluminis', 'flumine'], '', 'decl3']], p: [[0, 'case', 'nom pl', 'decl3']] });
+T(79, 'rex urbem cepit.', 'The king captured the city.', 'S', ['The city captured the king.', 'The king captures the city.', 'The kings captured the city.'], { g: [[1, ['urbem', 'urbs', 'urbes', 'urbis'], '', 'decl3']] });
+T(79, 'urbs pulchra erat.', 'The city was beautiful.', 'S', ['The cities were beautiful.', 'The city is beautiful.', 'The city was big.'], {});
+
+// ── T: Future tense (Ch 81–82) ──
+T(81, 'aedificabunt.', 'They will build.', 'T', ['They are building.', 'They were building.', 'We shall build.'], { g: [[0, ['aedificabunt', 'aedificant', 'aedificabant', 'aedificabit'], 'Q', 'fut']], p: [[0, 'pn', '3p', 'fut'], [0, 'tense', 'fut']] });
+T(81, 'iubebo.', 'I shall order.', 'T', ['I order.', 'He will order.', 'I was ordering.'], { p: [[0, 'pn', '1s', 'fut'], [0, 'tense', 'fut']] });
+T(81, 'respondebitis.', 'You (pl) will reply.', 'T', ['You (pl) reply.', 'You (sg) will reply.', 'You (pl) were replying.'], { p: [[0, 'pn', '2p', 'fut']] });
+T(81, 'pugnabimus.', 'We shall fight.', 'T', ['We are fighting.', 'They will fight.', 'We were fighting.'], { g: [[0, ['pugnabimus', 'pugnamus', 'pugnabamus', 'pugnabunt'], 'Q', 'fut']], p: [[0, 'pn', '1p', 'fut'], [0, 'tense', 'fut']] });
+T(81, 'clamabit.', 'He will shout.', 'T', ['He shouts.', 'They will shout.', 'He was shouting.'], { p: [[0, 'pn', '3s', 'fut'], [0, 'tense', 'fut']] });
+T(81, 'delebunt.', 'They will destroy.', 'T', ['They destroy.', 'He will destroy.', 'They destroyed.'], { p: [[0, 'pn', '3p', 'fut']] });
+T(81, 'videbo.', 'I shall see.', 'T', ['I see.', 'I saw.', 'You (sg) will see.'], { g: [[0, ['videbo', 'video', 'videbam', 'videbit'], 'Q', 'fut']], p: [[0, 'tense', 'fut']] });
+T(81, 'ridebimus.', 'We shall laugh.', 'T', ['We are laughing.', 'They will laugh.', 'We laughed.'], { p: [[0, 'pn', '1p', 'fut']] });
+T(81, 'manebo.', 'I shall stay.', 'T', ['I stay.', 'He will stay.', 'I was staying.'], { p: [[0, 'tense', 'fut']] });
+T(82, 'regemus.', 'We shall rule.', 'T', ['We rule.', 'We were ruling.', 'They will rule.'], { g: [[0, ['regemus', 'regimus', 'regebamus', 'regent'], 'Q', 'fut']], p: [[0, 'pn', '1p', 'fut'], [0, 'tense', 'fut']] });
+T(82, 'legam.', 'I shall read.', 'T', ['I read.', 'He will read.', 'I was reading.'], { p: [[0, 'pn', '1s', 'fut']] });
+T(82, 'curram.', 'I shall run.', 'T', ['I run.', 'You (sg) will run.', 'I ran.'], { p: [[0, 'tense', 'fut']] });
+T(82, 'eris.', 'You (sg) will be.', 'T', ['You (sg) are.', 'You (sg) were.', 'He will be.'], { g: [[0, ['eris', 'es', 'eras', 'erit'], 'Q', 'fut']], p: [[0, 'pn', '2s', 'fut']] });
+T(82, 'fugiam.', 'I shall flee.', 'T', ['I flee.', 'He will flee.', 'I fled.'], { p: [[0, 'pn', '1s', 'fut']] });
+T(82, 'mittent.', 'They will send.', 'T', ['They send.', 'He will send.', 'They were sending.'], { g: [[0, ['mittent', 'mittunt', 'mittebant', 'mittet'], 'Q', 'fut']], p: [[0, 'pn', '3p', 'fut']] });
+T(82, 'erunt.', 'They will be.', 'T', ['They are.', 'They were.', 'He will be.'], { g: [[0, ['erunt', 'sunt', 'erant', 'erit'], 'Q', 'fut']], p: [[0, 'tense', 'fut']] });
+T(82, 'bibemus.', 'We shall drink.', 'T', ['We drink.', 'They will drink.', 'We were drinking.'], { p: [[0, 'pn', '1p', 'fut']] });
+T(82, 'dormiet.', 'He will sleep.', 'T', ['He sleeps.', 'They will sleep.', 'He was sleeping.'], { g: [[0, ['dormiet', 'dormit', 'dormiebat', 'dormient'], 'Q', 'fut']], p: [[0, 'pn', '3s', 'fut']] });
+T(82, 'veniam.', 'I shall come.', 'T', ['I come.', 'He will come.', 'I came.'], { p: [[0, 'tense', 'fut']] });
+T(82, 'capiemus.', 'We shall capture.', 'T', ['We capture.', 'They will capture.', 'We were capturing.'], { p: [[0, 'pn', '1p', 'fut'], [0, 'tense', 'fut']] });
+T(82, 'dicet.', 'He will say.', 'T', ['He says.', 'They will say.', 'He said.'], { g: [[0, ['dicet', 'dicit', 'dicebat', 'dicent'], 'Q', 'fut']], p: [[0, 'pn', '3s', 'fut']] });
+T(82, 'cras servus fugiet.', 'Tomorrow the slave will flee.', 'T', ['Yesterday the slave fled.', 'Today the slave is fleeing.', 'Tomorrow the slaves will flee.'], { u: 1, g: [[2, ['fugiet', 'fugit', 'fugiebat', 'fugient'], 'Q', 'fut']] });
+T(82, 'cras oppidum capiemus.', 'Tomorrow we shall capture the town.', 'T', ['Today we are capturing the town.', 'Tomorrow they will capture the town.', 'Yesterday we were attacking the town.'], { u: 1, g: [[2, ['capiemus', 'capimus', 'capiebamus', 'capient'], 'Q', 'fut']] });
+T(82, 'cras pueri current.', 'Tomorrow the boys will run.', 'T', ['Today the boys are running.', 'Tomorrow the boy will run.', 'Yesterday the boys were running.'], { u: 1, g: [[2, ['current', 'currunt', 'currebant', 'curret'], 'Q', 'fut']] });
+T(82, 'pueri magistros numquam audient.', 'The boys will never listen to the teachers.', 'T', ['The teachers will never listen to the boys.', 'The boys never listen to the teachers.', 'The boys will always listen to the teachers.'], { u: 1 });
+T(85, 'dominus multa dona servis cras dabit.', 'Tomorrow the master will give many presents to the slaves.', 'T', ['Tomorrow the slaves will give many presents to the master.', 'Yesterday the master gave many presents to the slaves.', 'Tomorrow the master will give many presents to the slave.'], {});
+
+// ── U: eo, ire, ii and its compounds (Ch 84) ──
+T(84, 'redibo.', 'I shall return.', 'T U', ['I am returning.', 'I returned.', 'He will return.'], { p: [[0, 'pn', '1s', 'eo']] });
+T(84, 'perierunt.', 'They perished.', 'U', ['They perish.', 'He perished.', 'They will perish.'], { p: [[0, 'pn', '3p', 'eo']] });
+T(84, 'ibas.', 'You (sg) were going.', 'U', ['You (sg) are going.', 'You (pl) were going.', 'You (sg) went.'], { g: [[0, ['ibas', 'is', 'ibatis', 'ibat'], '', 'eo']], p: [[0, 'pn', '2s', 'eo']] });
+T(84, 'ineunt.', 'They go in.', 'U', ['They go out.', 'He goes in.', 'They went in.'], { p: [[0, 'pn', '3p', 'eo']] });
+T(84, 'exit.', 'He goes out.', 'U', ['He goes in.', 'They go out.', 'He went out.'], { p: [[0, 'pn', '3s', 'eo']] });
+T(84, 'ibant.', 'They were going.', 'U', ['They go.', 'He was going.', 'They went.'], { g: [[0, ['ibant', 'eunt', 'ibat', 'ibunt'], 'T', 'eo']], p: [[0, 'pn', '3p', 'eo']] });
+T(84, 'transibunt.', 'They will cross.', 'T U', ['They are crossing.', 'They crossed.', 'He will cross.'], { p: [[0, 'pn', '3p', 'eo']] });
+T(84, 'itis.', 'You (pl) are going.', 'U', ['You (sg) are going.', 'They are going.', 'You (pl) were going.'], { g: [[0, ['itis', 'is', 'eunt', 'imus'], '', 'eo']], p: [[0, 'pn', '2p', 'eo']] });
+T(84, 'rediit.', 'He returned.', 'U', ['He returns.', 'They returned.', 'He went out.'], { p: [[0, 'pn', '3s', 'eo']] });
+T(84, 'exibo.', 'I shall go out.', 'T U', ['I go out.', 'I went out.', 'He will go out.'], { p: [[0, 'pn', '1s', 'eo']] });
+T(84, 'ierunt.', 'They went.', 'U', ['They go.', 'He went.', 'They will go.'], { g: [[0, ['ierunt', 'eunt', 'iit', 'ibant'], '', 'eo']], p: [[0, 'pn', '3p', 'eo']] });
+T(84, 'ibitis.', 'You (pl) will go.', 'T U', ['You (pl) are going.', 'You (sg) will go.', 'You (pl) were going.'], { p: [[0, 'pn', '2p', 'eo']] });
+T(84, 'heri flumen transiimus.', 'Yesterday we crossed the river.', 'S U', ['Tomorrow we shall cross the river.', 'Yesterday they crossed the river.', 'Yesterday we crossed the sea.'], { u: 1 });
+T(84, 'ad urbem eo.', 'I am going to the city.', 'S U', ['I am going out of the city.', 'He is going to the city.', 'I went to the city.'], { u: 1, g: [[2, ['eo', 'it', 'eunt', 'is'], '', 'eo']], p: [[2, 'pn', '1s', 'eo']] });
+T(84, 'i, puer!', 'Go, boy!', 'U', ['Go, boys!', 'Come, boy!', 'The boy is going.'], {});
+T(84, 'per viam ibamus.', 'We were going along the road.', 'U', ['We went along the road.', 'They were going along the road.', 'We were going across the road.'], { u: 1, p: [[2, 'pn', '1p', 'eo']] });
+T(84, 'multi iuvenes perierunt.', 'Many young men perished.', 'S U', ['Many young men escaped.', 'A young man perished.', 'Many young men will perish.'], { u: 1 });
+T(84, 'pueri mox redierunt.', 'The boys soon returned.', 'U', ['The boys will soon return.', 'The boy soon returned.', 'The boys soon went out.'], { u: 1, g: [[2, ['redierunt', 'redeunt', 'rediit', 'redibunt'], 'T', 'eo']] });
+T(84, 'crasne ad urbem redibis?', 'Will you (sg) return to the city tomorrow?', 'S T U', ['Did you (sg) return to the city yesterday?', 'Will you (pl) return to the city tomorrow?', 'Are you (sg) going to the city today?'], {});
+T(84, 'celeriter exiit.', 'He went out quickly.', 'U', ['He went in quickly.', 'They went out quickly.', 'He goes out quickly.'], { p: [[1, 'pn', '3s', 'eo']] });
+T(84, 'quis ad urbem cras ibit?', 'Who will go to the city tomorrow?', 'S T U', ['Who went to the city yesterday?', 'Who is going to the city today?', 'Why will he go to the city tomorrow?'], { u: 1 });
+T(84, 'multi servi trans flumen transierunt.', 'Many slaves went across the river.', 'S U', ['Many slaves will go across the river.', 'A slave went across the river.', 'Many slaves went along the river.'], { u: 1 });
+T(84, 'multi iuvenes in bello perierunt.', 'Many young men perished in the war.', 'S U', ['Many young men escaped from the war.', 'Many young men will perish in the war.', 'Many young men fought in the war.'], { u: 1 });
+T(84, 'mater paterque ad urbem mox redibunt.', 'Mother and father will soon return to the city.', 'S T U V', ['Mother and father soon returned to the city.', 'Mother and father will soon leave the city.', 'Mother will soon return to the city with father.'], {});
+T(84, 'puer ex oppido statim exiit.', 'The boy went out of the town at once.', 'U', ['The boy went into the town at once.', 'The boys went out of the town at once.', 'The boy will go out of the town at once.'], { u: 1 });
+T(84, 'vir, ubi in templum iniit, amicum vidit.', 'When the man went into the temple, he saw his friend.', 'U', ['When the man went out of the temple, he saw his friend.', 'When the friend went into the temple, he saw the man.', 'When the man goes into the temple, he sees his friend.'], {});
+T(84, 'nauta ad urbem tandem adiit.', 'At last the sailor went towards the city.', 'S U', ['At last the sailor went out of the city.', 'At last the sailors went towards the city.', 'At last the sailor will go towards the city.'], { u: 1 });
+T(84, 'rex iuvenes e templo exire iussit.', 'The king ordered the young men to go out of the temple.', 'S U', ['The young men ordered the king to go out of the temple.', 'The king ordered the young men to go into the temple.', 'The king ordered the young man to go out of the temple.'], {});
+T(85, 'et pater et mater in bello perierunt.', 'Both father and mother perished in the war.', 'S U V', ['Father and mother escaped from the war.', 'Both father and mother will perish in the war.', 'Father perished in the war, but mother did not.'], {});
+T(116, 'multi perierunt, pauci effugerunt.', 'Many perished, few escaped.', 'U', ['Few perished, many escaped.', 'Many escaped, few perished.', 'Many will perish, few will escape.'], {});
+
+// ── W: hic, haec, hoc and ille, illa, illud (Ch 89, 91) ──
+T(89, 'hic puer est Marcus.', 'This boy is Marcus.', 'W', ['That boy is Marcus.', 'These boys are Marcus and Sextus.', 'This boy is with Marcus.'], { u: 1, g: [[0, ['hic', 'haec', 'hoc', 'hunc'], '', 'hic']] });
+T(89, 'hoc bellum est malum.', 'This war is bad.', 'W', ['That war is bad.', 'These wars are bad.', 'This war is good.'], { u: 1, g: [[0, ['hoc', 'hic', 'haec', 'hunc'], '', 'hic']] });
+T(89, 'hae puellae sunt parvae.', 'These girls are small.', 'W', ['This girl is small.', 'Those girls are small.', 'These boys are small.'], { u: 1, g: [[0, ['hae', 'hi', 'haec', 'has'], '', 'hic']] });
+T(89, 'hanc puellam amo.', 'I love this girl.', 'W', ['This girl loves me.', 'I love these girls.', 'I love that girl.'], { u: 1, g: [[0, ['hanc', 'haec', 'hunc', 'hac'], '', 'hic']] });
+T(89, 'magister pueros his verbis terret.', 'The teacher frightens the boys with these words.', 'W', ['The boys frighten the teacher with these words.', 'The teacher frightens the boys with those words.', 'The teacher frightens the boy with this word.'], { u: 1, g: [[2, ['his', 'hos', 'haec', 'hoc'], '', 'hic']] });
+T(89, 'librum huius pueri lego.', 'I am reading this boy’s book.', 'W', ['This boy is reading my book.', 'I am reading these boys’ books.', 'I am reading that boy’s book.'], { u: 1, g: [[1, ['huius', 'hic', 'hunc', 'hoc'], '', 'hic']] });
+T(89, 'iuvenis, ubi haec verba audivit, discessit.', 'When the young man heard these words, he departed.', 'S W', ['When the young man heard those words, he stayed.', 'When the young men heard these words, they departed.', 'When the young man said these words, he departed.'], {});
+T(89, 'hoc flumen sacrum est.', 'This river is sacred.', 'S W', ['That river is sacred.', 'These rivers are sacred.', 'This river is deep.'], { u: 1, g: [[0, ['hoc', 'hic', 'haec', 'hunc'], '', 'hic']] });
+T(89, 'nomen huius puellae Flavia est.', 'The name of this girl is Flavia.', 'S W', ['The name of that girl is Flavia.', 'This girl’s friend is Flavia.', 'The names of these girls are Flavia and Julia.'], { u: 1 });
+T(89, 'muri huius urbis alti sunt.', 'The walls of this city are high.', 'S W', ['The walls of that city are high.', 'The wall of this city is high.', 'The walls of these cities are high.'], { u: 1, g: [[1, ['huius', 'hic', 'hanc', 'hac'], '', 'hic']] });
+T(89, 'miles hoc gladio bene pugnavit.', 'The soldier fought well with this sword.', 'S W', ['The soldier fought well with that sword.', 'The soldiers fought well with these swords.', 'The soldier fights well with this sword.'], { u: 1, g: [[1, ['hoc', 'hic', 'hunc', 'haec'], '', 'hic']] });
+T(89, 'dominus donum his pueris dabit.', 'The master will give a present to these boys.', 'T W', ['These boys will give a present to the master.', 'The master gave a present to these boys.', 'The master will give a present to this boy.'], { u: 1 });
+T(91, 'ille servus bonus est.', 'That slave is good.', 'W', ['This slave is good.', 'Those slaves are good.', 'That slave is bad.'], { u: 1, g: [[0, ['ille', 'illa', 'illud', 'illum'], '', 'ille']] });
+T(91, 'illa navis magna est.', 'That ship is big.', 'S W', ['This ship is big.', 'Those ships are big.', 'That ship is small.'], { u: 1, g: [[0, ['illa', 'ille', 'illud', 'illam'], '', 'ille']] });
+T(91, 'illud templum magnum et pulchrum est.', 'That temple is big and beautiful.', 'W', ['This temple is big and beautiful.', 'Those temples are big and beautiful.', 'That temple was big and beautiful.'], { u: 1, g: [[0, ['illud', 'ille', 'illa', 'illum'], '', 'ille']] });
+T(91, 'illum puerum non amo.', 'I do not like that boy.', 'W', ['That boy does not like me.', 'I do not like this boy.', 'I do not like those boys.'], { u: 1, g: [[0, ['illum', 'ille', 'illud', 'illo'], '', 'ille']] });
+T(91, 'dominus illos servos saepe punit.', 'The master often punishes those slaves.', 'W', ['Those slaves often punish the master.', 'The master often punishes that slave.', 'The master never punishes those slaves.'], { u: 1, g: [[1, ['illos', 'illi', 'illas', 'illum'], '', 'ille']] });
+T(91, 'scuta illorum militum magna sunt.', 'The shields of those soldiers are big.', 'S W', ['The shields of that soldier are big.', 'Those soldiers have small shields.', 'The shields of these soldiers are big.'], { u: 1 });
+T(91, 'pecuniam illis servis cras dabo.', 'I shall give money to those slaves tomorrow.', 'T W', ['Those slaves will give me money tomorrow.', 'I gave money to those slaves yesterday.', 'I shall give money to that slave tomorrow.'], { u: 1, g: [[1, ['illis', 'illos', 'illi', 'illa'], '', 'ille']] });
+T(91, 'multi iuvenes in illa urbe habitant.', 'Many young men live in that city.', 'S W', ['Many young men live in this city.', 'A young man lives in that city.', 'Many young men are walking into that city.'], { u: 1 });
+T(91, 'sunt multae naves in illo flumine.', 'There are many ships on that river.', 'S W', ['There are many ships on this river.', 'There is a big ship on that river.', 'There were many ships on that river.'], {});
+T(91, 'ubi sunt libri illorum puerorum?', 'Where are the books of those boys?', 'W', ['Where are the books of that boy?', 'Where are those boys?', 'Why are the books of those boys here?'], { u: 1 });
+T(92, 'hic servus bonus, ille malus est.', 'This slave is good, that one is bad.', 'W', ['This slave is bad, that one is good.', 'That slave is good, this one is bad.', 'This slave is good, that master is bad.'], {});
+T(92, 'ille servus hunc dominum timebat.', 'That slave was afraid of this master.', 'W', ['This master was afraid of that slave.', 'That slave was afraid of that master.', 'That slave is afraid of this master.'], { u: 1, g: [[2, ['hunc', 'hic', 'hoc', 'huic'], '', 'hic']] });
+T(92, 'illi milites hanc urbem oppugnaverunt.', 'Those soldiers attacked this city.', 'S W', ['These soldiers attacked that city.', 'That soldier attacked this city.', 'Those soldiers were attacking this city.'], { u: 1 });
+T(92, 'haec navis ad illam insulam navigavit.', 'This ship sailed towards that island.', 'S W', ['That ship sailed towards this island.', 'This ship sailed away from that island.', 'These ships sailed towards that island.'], { u: 1 });
+T(92, 'hanc puellam in illa via vidi.', 'I saw this girl in that street.', 'W', ['I saw that girl in this street.', 'This girl saw me in that street.', 'I saw these girls in that street.'], { u: 1 });
+T(92, 'nauta navem conspexit.', 'The sailor caught sight of the ship.', 'S', ['The sailors caught sight of the ship.', 'The sailor caught sight of the ships.', 'The ship caught sight of the sailor.'], { u: 1, g: [[1, ['navem', 'navis', 'naves', 'navi'], '', 'decl3']] });
+T(97, 'illi milites in proelio fortiter pugnaverunt.', 'Those soldiers fought bravely in the battle.', 'S W', ['These soldiers fought bravely in the battle.', 'That soldier fought bravely in the battle.', 'Those soldiers fought badly in the battle.'], {});
+T(97, 'hunc civem in urbe heri conspexi.', 'I caught sight of this citizen in the city yesterday.', 'S W', ['This citizen caught sight of me in the city yesterday.', 'I shall catch sight of this citizen in the city tomorrow.', 'I caught sight of that citizen in the city yesterday.'], {});
+
+// ── X: is, ea, id and personal pronouns (Ch 94, 96) ──
+T(94, 'Marcus filium habet. eum amat.', 'Marcus has a son. He loves him.', 'X', ['Marcus has a daughter. He loves her.', 'Marcus has a son. The son loves him.', 'Marcus has sons. He loves them.'], { g: [[3, ['eum', 'eam', 'eos', 'id'], '', 'is']] });
+T(94, 'Marcus filiam habet. eam amat.', 'Marcus has a daughter. He loves her.', 'X', ['Marcus has a son. He loves him.', 'Marcus has a daughter. She loves him.', 'Marcus has daughters. He loves them.'], { g: [[3, ['eam', 'eum', 'eas', 'ea'], '', 'is']] });
+T(94, 'Marcus servum habet. pecuniam ei dat.', 'Marcus has a slave. He gives money to him.', 'X', ['Marcus has a slave. The slave gives money to him.', 'Marcus has slaves. He gives money to them.', 'Marcus has a slave. He takes money from him.'], { g: [[4, ['ei', 'eum', 'eius', 'eo'], '', 'is']] });
+T(94, 'Marcus uxorem pulchram habet. nomen eius est Aurelia.', 'Marcus has a beautiful wife. Her name is Aurelia.', 'S X', ['Marcus has a beautiful sister. Her name is Aurelia.', 'Aurelia has a handsome husband. His name is Marcus.', 'Marcus has a beautiful wife. Their name is Aurelia.'], {});
+T(94, 'Aurelia multos amicos habet. amici eius clari sunt.', 'Aurelia has many friends. Her friends are famous.', 'X', ['Aurelia has many friends. Their friends are famous.', 'Aurelia has a friend. Her friend is famous.', 'Aurelia has many famous friends. She is famous too.'], {});
+T(94, 'rex servos amat. multam pecuniam eis saepe dat.', 'The king loves his slaves. He often gives them a lot of money.', 'S X', ['The king loves his slaves. They often give him a lot of money.', 'The king loves his slave. He often gives him a lot of money.', 'The king loves his slaves. He never gives them money.'], { g: [[5, ['eis', 'eos', 'eorum', 'ei'], '', 'is']] });
+T(94, 'servus aquam rogat. dominus eam ei dat.', 'The slave asks for water. The master gives it to him.', 'X', ['The master asks for water. The slave gives it to him.', 'The slave asks for water. The master gives it to her.', 'The slave asks for food. The master gives it to him.'], {});
+T(94, 'Protesilaus fortiter pugnabat. Troiani tamen eum mox occiderunt.', 'Protesilaus was fighting bravely. However, the Trojans soon killed him.', 'X', ['Protesilaus was fighting bravely. However, he soon killed the Trojans.', 'Protesilaus was fighting badly. So the Trojans soon killed him.', 'Protesilaus fought bravely. The Trojans did not kill him.'], {});
+T(94, 'navis magna erat. erant in ea multi nautae.', 'The ship was big. There were many sailors in it.', 'S X', ['The ship was small. There were few sailors in it.', 'The ship was big. There were many soldiers in it.', 'The ships were big. There were many sailors in them.'], {});
+T(94, 'urbs magna erat. Romani eam capere constituerunt.', 'The city was big. The Romans decided to capture it.', 'S X', ['The city was big. The Romans decided to destroy it.', 'The city was big. The Romans did not capture it.', 'The city was small. The Romans decided to capture it.'], {});
+T(94, 'hoc vinum bonum est. id saepe bibo.', 'This wine is good. I often drink it.', 'W X', ['That wine is good. I often drink it.', 'This wine is bad. I never drink it.', 'This wine is good. He often drinks it.'], {});
+T(94, 'auxilio eorum urbem cepimus.', 'With their help we captured the city.', 'S X', ['With his help we captured the city.', 'With our help they captured the city.', 'With their help we shall capture the city.'], { u: 1 });
+T(96, 'tu ludis; ego laboro.', 'You (sg) are playing; I am working.', 'X', ['I am playing; you (sg) are working.', 'You (pl) are playing; we are working.', 'You (sg) are working; I am playing.'], {});
+T(96, 'nos vos non amamus.', 'We do not like you (pl).', 'X', ['You (pl) do not like us.', 'We like you (pl).', 'They do not like you (pl).'], { u: 1 });
+T(96, 'nemo me vidit.', 'No one saw me.', 'X', ['I saw no one.', 'No one saw you (sg).', 'Everyone saw me.'], { u: 1 });
+T(96, 'te in urbe vidi.', 'I saw you (sg) in the city.', 'S X', ['You (sg) saw me in the city.', 'I saw you (pl) in the city.', 'I shall see you (sg) in the city.'], { u: 1 });
+T(96, 'hostes contra nos pugnant.', 'The enemy are fighting against us.', 'S X', ['We are fighting against the enemy.', 'The enemy are fighting with us.', 'The enemy are fighting against you (pl).'], { u: 1 });
+T(96, 'pater pecuniam tibi dat.', 'Father gives money to you (sg).', 'S X', ['Father gives money to me.', 'You (sg) give money to Father.', 'Father gives money to you (pl).'], { u: 1, g: [[2, ['tibi', 'te', 'tu', 'tui'], '', 'pron']] });
+T(96, 'amici mecum ludunt.', 'My friends are playing with me.', 'X', ['My friends are playing with you (sg).', 'My friend is playing with me.', 'I am playing with my friends.'], { u: 1 });
+T(96, 'ego donum tibi dabo.', 'I shall give a present to you (sg).', 'T X', ['You (sg) will give a present to me.', 'I gave a present to you (sg).', 'I shall give a present to him.'], { u: 1 });
+T(96, 'magister dona nobis numquam dat.', 'The teacher never gives presents to us.', 'X', ['We never give presents to the teacher.', 'The teacher always gives presents to us.', 'The teacher never gives presents to you (pl).'], { u: 1, g: [[2, ['nobis', 'nos', 'nostrum', 'vobis'], '', 'pron']] });
+T(97, 'te cras videbo.', 'I shall see you (sg) tomorrow.', 'T X', ['You (sg) will see me tomorrow.', 'I saw you (sg) yesterday.', 'I shall see you (pl) tomorrow.'], { u: 1 });
+T(97, 'quod milites bene pugnabant, dux eos laudavit.', 'Because the soldiers were fighting well, the general praised them.', 'S X', ['Because the general was fighting well, the soldiers praised him.', 'Although the soldiers were fighting well, the general did not praise them.', 'Because the soldier was fighting well, the general praised him.'], {});
+T(116, 'quis nos servare poterit?', 'Who will be able to save us?', 'T X b', ['Who was able to save us?', 'Who will be able to save you (pl)?', 'Who wants to save us?'], { u: 1 });
+T(116, 'cives, quamquam hostes timebant, contra eos bene pugnaverunt.', 'Although the citizens were afraid of the enemy, they fought well against them.', 'S V X', ['Because the citizens were afraid of the enemy, they did not fight.', 'Although the enemy were afraid of the citizens, they fought well against them.', 'Although the citizens were not afraid of the enemy, they fought badly.'], {});
+
+// ── S: Third declension, revision (Ch 92–97) ──
+T(97, 'rex mortuus erat.', 'The king was dead.', 'S', ['The king is dead.', 'The kings were dead.', 'The king was alive.'], { u: 1 });
+T(97, 'dux bellum non timet.', 'The general does not fear war.', 'S', ['The general fears war.', 'The generals do not fear war.', 'War does not frighten the soldier.'], { u: 1, p: [[0, 'case', 'nom sg', 'decl3']] });
+T(97, 'cives oppida defenderunt.', 'The citizens defended the towns.', 'S', ['The citizens defended the town.', 'The citizen defended the towns.', 'The towns defended the citizens.'], { u: 1, p: [[0, 'case', 'nom pl', 'decl3']] });
+T(97, 'duces comites amabant.', 'The leaders loved their companions.', 'S', ['The companions loved their leaders.', 'The leader loved his companion.', 'The leaders love their companions.'], { u: 1 });
+T(97, 'hostes multos cives armis vulneraverunt.', 'The enemy wounded many citizens with weapons.', 'S', ['Many citizens wounded the enemy with weapons.', 'The enemy killed many citizens with weapons.', 'The enemy wounded a citizen with a weapon.'], { u: 1, g: [[2, ['cives', 'civis', 'civem', 'civibus'], '', 'decl3']] });
+T(116, 'pater meus vocem magnam habet.', 'My father has a loud voice.', 'S', ['My mother has a loud voice.', 'My father has a quiet voice.', 'My father hears a loud voice.'], { u: 1, g: [[2, ['vocem', 'vox', 'voces', 'vocis'], '', 'decl3']] });
+T(116, 'bene pugnate, cives!', 'Fight well, citizens!', 'S', ['Fight well, citizen!', 'The citizens are fighting well.', 'Do not fight, citizens!'], {});
+
+// ── Y: Pluperfect tense (Ch 99) ──
+T(99, 'amaveramus.', 'We had loved.', 'Y', ['We loved.', 'We were loving.', 'They had loved.'], { g: [[0, ['amaveramus', 'amavimus', 'amabamus', 'amaverant'], 'Q R', 'plupf']], p: [[0, 'pn', '1p', 'plupf'], [0, 'tense', 'plupf']] });
+T(99, 'ceperant.', 'They had captured.', 'Y', ['They captured.', 'He had captured.', 'They were capturing.'], { p: [[0, 'pn', '3p', 'plupf'], [0, 'tense', 'plupf']] });
+T(99, 'audiveras.', 'You (sg) had heard.', 'Y', ['You (sg) heard.', 'You (pl) had heard.', 'You (sg) were hearing.'], { p: [[0, 'pn', '2s', 'plupf']] });
+T(99, 'rexerat.', 'He had ruled.', 'Y', ['He ruled.', 'They had ruled.', 'He will rule.'], { p: [[0, 'tense', 'plupf']] });
+T(99, 'dederam.', 'I had given.', 'Y', ['I gave.', 'He had given.', 'I was giving.'], { g: [[0, ['dederam', 'dedi', 'dabam', 'dederat'], 'Q R', 'plupf']], p: [[0, 'pn', '1s', 'plupf']] });
+T(99, 'duxerat.', 'He had led.', 'Y', ['He led.', 'They had led.', 'He was leading.'], { p: [[0, 'pn', '3s', 'plupf']] });
+T(99, 'miseram.', 'I had sent.', 'Y', ['I sent.', 'He had sent.', 'I was sending.'], { p: [[0, 'tense', 'plupf']] });
+T(99, 'cucurrerant.', 'They had run.', 'Y', ['They ran.', 'He had run.', 'They were running.'], { g: [[0, ['cucurrerant', 'cucurrerunt', 'currebant', 'cucurrerat'], 'Q R', 'plupf']], p: [[0, 'pn', '3p', 'plupf']] });
+T(99, 'fugerat.', 'He had fled.', 'Y', ['He fled.', 'They had fled.', 'He was fleeing.'], { p: [[0, 'tense', 'plupf']] });
+T(99, 'dixerat.', 'He had said.', 'Y', ['He said.', 'They had said.', 'He will say.'], { p: [[0, 'pn', '3s', 'plupf']] });
+T(99, 'magister iratus erat quod riseramus.', 'The teacher was angry because we had laughed.', 'Y', ['We had laughed because the teacher was angry.', 'The teacher was angry because they had laughed.', 'The teacher was angry because we were laughing.'], { g: [[4, ['riseramus', 'risimus', 'ridebamus', 'riserant'], 'Q R', 'plupf']] });
+T(99, 'puer librum non legerat.', 'The boy had not read the book.', 'Y', ['The boy did not read the book.', 'The boys had not read the book.', 'The boy had not read the books.'], { u: 1, p: [[3, 'tense', 'plupf']] });
+T(99, 'puella puerum vulneraverat.', 'The girl had wounded the boy.', 'Y', ['The boy had wounded the girl.', 'The girl wounded the boy.', 'The girl had wounded the boys.'], { u: 1 });
+T(99, 'verba non audiveramus.', 'We had not heard the words.', 'Y', ['We did not hear the words.', 'They had not heard the words.', 'We had not said the words.'], { u: 1 });
+T(99, 'dominus laetus erat quod bene dormiverat.', 'The master was happy because he had slept well.', 'Y', ['The master was happy because he was sleeping well.', 'The master had slept well because he was happy.', 'The master was sad because he had not slept well.'], {});
+T(99, 'servi bene laboraverant.', 'The slaves had worked well.', 'Y', ['The slaves worked well.', 'The slave had worked well.', 'The slaves had worked badly.'], { u: 1, g: [[2, ['laboraverant', 'laboraverunt', 'laborabant', 'laboraverat'], 'Q R', 'plupf']] });
+T(99, 'uxor discesserat.', 'The wife had departed.', 'S Y', ['The wife departed.', 'The wives had departed.', 'The wife had arrived.'], { p: [[1, 'tense', 'plupf']] });
+T(99, 'servus cibum paraverat.', 'The slave had prepared the food.', 'Y', ['The slave prepared the food.', 'The slaves had prepared the food.', 'The slave had eaten the food.'], { u: 1 });
+T(99, 'hostes laeti erant quod Romani discesserant.', 'The enemy were happy because the Romans had departed.', 'S Y', ['The Romans were happy because the enemy had departed.', 'The enemy were happy because the Romans were departing.', 'The enemy were sad because the Romans had departed.'], {});
+T(99, 'multa oppida ceperant.', 'They had captured many towns.', 'Y', ['They captured many towns.', 'He had captured many towns.', 'They had captured a big town.'], { u: 1 });
+T(99, 'puer celeriter currebat quod magistrum iratum viderat.', 'The boy was running quickly because he had seen the angry teacher.', 'Y', ['The angry teacher was running quickly because he had seen the boy.', 'The boy was running quickly because he saw the happy teacher.', 'The boy had run quickly because he was seeing the angry teacher.'], {});
+T(99, 'milites bene pugnaverant.', 'The soldiers had fought well.', 'S Y', ['The soldiers fought well.', 'The soldier had fought well.', 'The soldiers had fought badly.'], { u: 1, g: [[2, ['pugnaverant', 'pugnaverunt', 'pugnabant', 'pugnaverat'], 'Q R', 'plupf']] });
+T(99, 'proelium longum fuerat.', 'The battle had been long.', 'Y', ['The battle was long.', 'The battles had been long.', 'The battle will be long.'], { u: 1 });
+T(99, 'dominus multos servos liberaverat.', 'The master had set many slaves free.', 'Y', ['The master set many slaves free.', 'Many slaves had set the master free.', 'The master had punished many slaves.'], { u: 1 });
+T(99, 'servi ex oppido cucurrerant.', 'The slaves had run out of the town.', 'Y', ['The slaves had run into the town.', 'The slaves ran out of the town.', 'The slave had run out of the town.'], { u: 1 });
+T(99, 'nuntius multa verba dixerat.', 'The messenger had said many words.', 'Y', ['The messenger said many words.', 'The messengers had said many words.', 'The messenger had heard many words.'], { u: 1 });
+T(99, 'milites trans flumen transierant.', 'The soldiers had crossed the river.', 'S U Y', ['The soldiers crossed the river.', 'The soldier had crossed the river.', 'The soldiers had crossed the sea.'], { u: 1 });
+T(99, 'cives oppidum fortiter defenderant.', 'The citizens had defended the town bravely.', 'S Y', ['The citizens defended the town bravely.', 'The citizens had attacked the town bravely.', 'The citizen had defended the town bravely.'], { u: 1 });
+
+// ── Z: Third declension adjectives (Ch 101, 103) ──
+T(101, 'dominum crudelem habeo.', 'I have a cruel master.', 'Z', ['The cruel master has me.', 'I have a noble master.', 'He has a cruel master.'], { u: 1, g: [[1, ['crudelem', 'crudelis', 'crudeles', 'crudeli'], '', 'adj3']] });
+T(101, 'opus facile facio.', 'I am doing an easy task.', 'S Z', ['I am doing a difficult task.', 'He is doing an easy task.', 'I am doing easy tasks.'], { u: 1, g: [[1, ['facile', 'facilis', 'facilem', 'facilia'], '', 'adj3']] });
+T(101, 'omnia vina amo.', 'I love all wines.', 'Z', ['All wines love me.', 'I love this wine.', 'I love all women.'], { u: 1, g: [[0, ['omnia', 'omnes', 'omnis', 'omne'], '', 'adj3']] });
+T(101, 'omnes libros lego.', 'I read all the books.', 'Z', ['I read the book.', 'All the boys read books.', 'He reads all the books.'], { u: 1, g: [[0, ['omnes', 'omnia', 'omnis', 'omnem'], '', 'adj3']] });
+T(101, 'ducem fortem laudo.', 'I praise the brave leader.', 'S Z', ['The brave leader praises me.', 'I praise the brave leaders.', 'I praise the cruel leader.'], { u: 1, g: [[1, ['fortem', 'fortis', 'fortes', 'forti'], '', 'adj3']] });
+T(101, 'servum tristem video.', 'I see the sad slave.', 'Z', ['The sad slave sees me.', 'I see the sad slaves.', 'I see the happy slave.'], { u: 1, g: [[1, ['tristem', 'tristis', 'tristes', 'tristi'], '', 'adj3']] });
+T(101, 'milites crudeles timeo.', 'I fear the cruel soldiers.', 'S Z', ['The cruel soldiers fear me.', 'I fear the cruel soldier.', 'I praise the cruel soldiers.'], { u: 1 });
+T(101, 'hic miles est fortis et validus.', 'This soldier is brave and strong.', 'S W Z', ['That soldier is brave and strong.', 'These soldiers are brave and strong.', 'This soldier is cruel and strong.'], {});
+T(101, 'illa puella nobilis est.', 'That girl is noble.', 'W Z', ['This girl is noble.', 'Those girls are noble.', 'That girl is sad.'], { u: 1 });
+T(101, 'cur tristis es, puer?', 'Why are you sad, boy?', 'Z', ['Why are you sad, boys?', 'Where are you, sad boy?', 'Why is the boy sad?'], {});
+T(101, 'tristis sum quod magister crudelis est.', 'I am sad because the teacher is cruel.', 'Z', ['The teacher is cruel because I am sad.', 'I am sad because the teacher is noble.', 'He is sad because the teacher is cruel.'], {});
+T(101, 'magister crudelis omnes pueros punit.', 'The cruel teacher punishes all the boys.', 'Z', ['All the boys punish the cruel teacher.', 'The cruel teacher punishes the boy.', 'The cruel teacher praises all the boys.'], { u: 1 });
+T(101, 'librum facilem legimus.', 'We are reading an easy book.', 'Z', ['We are reading a difficult book.', 'They are reading an easy book.', 'We are reading easy books.'], { u: 1, g: [[1, ['facilem', 'facilis', 'facile', 'faciles'], '', 'adj3']] });
+T(101, 'omnes puellae ludunt.', 'All the girls are playing.', 'Z', ['The girl is playing with everyone.', 'All the boys are playing.', 'All the girls are working.'], { u: 1 });
+T(101, 'servi tristes dominum crudelem timent.', 'The sad slaves fear the cruel master.', 'Z', ['The cruel master fears the sad slaves.', 'The sad slave fears the cruel master.', 'The sad slaves fear the cruel masters.'], { u: 1 });
+T(101, 'itinera difficilia saepe facimus.', 'We often make difficult journeys.', 'S Z', ['We often make easy journeys.', 'We often made a difficult journey.', 'They often make difficult journeys.'], { u: 1, g: [[1, ['difficilia', 'difficilis', 'difficile', 'difficiles'], '', 'adj3']] });
+T(103, 'templum ingens aedificamus.', 'We are building a huge temple.', 'Z', ['We are building a small temple.', 'They are building a huge temple.', 'We are building huge temples.'], { u: 1 });
+T(103, 'Roma erat urbs ingens.', 'Rome was a huge city.', 'S Z', ['Rome is a huge city.', 'Rome was a small city.', 'Rome was a beautiful city.'], { u: 1 });
+T(103, 'dux sapiens milites fortes semper laudat.', 'The wise general always praises brave soldiers.', 'S Z', ['Brave soldiers always praise the wise general.', 'The wise general never praises brave soldiers.', 'The brave general always praises wise soldiers.'], {});
+T(103, 'omnes milites Romani audaces erant.', 'All the Roman soldiers were daring.', 'S Z', ['All the Roman soldiers are daring.', 'The Roman soldier was daring.', 'Not all the Roman soldiers were daring.'], {});
+T(103, 'milites ducem felicem semper amant.', 'Soldiers always love a lucky general.', 'S Z', ['A lucky general always loves his soldiers.', 'Soldiers never love a lucky general.', 'Soldiers always love a cruel general.'], { u: 1, g: [[2, ['felicem', 'felix', 'felices', 'felici'], '', 'adj3']] });
+T(103, 'magister puerum sapientem laudat.', 'The teacher praises the wise boy.', 'Z', ['The wise boy praises the teacher.', 'The teacher praises the wise boys.', 'The teacher punishes the wise boy.'], { u: 1, g: [[2, ['sapientem', 'sapiens', 'sapientes', 'sapienti'], '', 'adj3']] });
+T(116, 'senex et fortis et audax erat.', 'The old man was both brave and daring.', 'S V Z', ['The old man was brave but not daring.', 'The young man was both brave and daring.', 'The old man is both brave and daring.'], {});
+
+// ── a: Comparison of adjectives (Ch 104, 106) ──
+T(104, 'ille miles fortior quam hic miles est.', 'That soldier is braver than this soldier.', 'S W Z a', ['This soldier is braver than that soldier.', 'That soldier is the bravest soldier.', 'That soldier is as brave as this soldier.'], {});
+T(104, 'illa puella sapientior est quam hic puer.', 'That girl is wiser than this boy.', 'W Z a', ['This boy is wiser than that girl.', 'That girl is very wise.', 'That girl is wiser than that boy.'], {});
+T(104, 'magistri sapientiores sunt quam pueri.', 'Teachers are wiser than boys.', 'Z a', ['Boys are wiser than teachers.', 'Teachers are very wise.', 'The teacher is wiser than the boy.'], { u: 1, g: [[1, ['sapientiores', 'sapientior', 'sapientissimi', 'sapientes'], '', 'comp']] });
+T(104, 'hoc templum altius quam illud est.', 'This temple is higher than that one.', 'W a', ['That temple is higher than this one.', 'This temple is very high.', 'This temple is as high as that one.'], {});
+T(104, 'hoc opus non facile sed difficillimum est.', 'This task is not easy but very difficult.', 'S W Z a', ['This task is easy, not difficult.', 'This task is not easy but more difficult.', 'That task is not easy but very difficult.'], {});
+T(104, 'milites Romani fortiores quam milites Graeci erant.', 'The Roman soldiers were braver than the Greek soldiers.', 'S Z a', ['The Greek soldiers were braver than the Roman soldiers.', 'The Roman soldiers were very brave.', 'The Roman soldiers are braver than the Greek soldiers.'], {});
+T(106, 'ego sum puer bonus, sed tu es melior.', 'I am a good boy, but you (sg) are better.', 'a', ['I am a better boy than you (sg).', 'I am a good boy, but you (sg) are the best.', 'I am a bad boy, but you (sg) are worse.'], {});
+T(106, 'Sextus puer pessimus est.', 'Sextus is a very bad boy.', 'a', ['Sextus is a very good boy.', 'Sextus is a worse boy.', 'Sextus was a very bad boy.'], { u: 1, g: [[2, ['pessimus', 'peior', 'malus', 'optimus'], '', 'irrcomp']] });
+T(106, 'Iulius Caesar erat dux optimus.', 'Julius Caesar was a very good general.', 'S a', ['Julius Caesar was a better general.', 'Julius Caesar was a very bad general.', 'Julius Caesar is a very good general.'], { u: 1, g: [[4, ['optimus', 'melior', 'bonus', 'pessimus'], '', 'irrcomp']] });
+T(106, 'hoc templum est maius quam illud.', 'This temple is bigger than that one.', 'W a', ['That temple is bigger than this one.', 'This temple is very big.', 'This temple is smaller than that one.'], {});
+T(106, 'Italia maior quam Britannia est.', 'Italy is bigger than Britain.', 'a', ['Britain is bigger than Italy.', 'Italy is smaller than Britain.', 'Italy is very big.'], { u: 1, g: [[1, ['maior', 'minor', 'maxima', 'magna'], '', 'irrcomp']] });
+T(106, 'illa puella minima est.', 'That girl is very small.', 'W a', ['That girl is smaller.', 'This girl is very small.', 'That girl is very big.'], { u: 1, g: [[2, ['minima', 'minor', 'maxima', 'parva'], '', 'irrcomp']] });
+T(106, 'plurimi milites oppidum oppugnaverunt.', 'Very many soldiers attacked the town.', 'S a', ['A few soldiers attacked the town.', 'Very many soldiers defended the town.', 'More soldiers attacked the town.'], { u: 1 });
+T(106, 'puellae meliores quam pueri sunt.', 'Girls are better than boys.', 'a', ['Boys are better than girls.', 'Girls are worse than boys.', 'Girls are very good.'], { u: 1 });
+T(106, 'pueri peiores quam puellae sunt.', 'Boys are worse than girls.', 'a', ['Girls are worse than boys.', 'Boys are better than girls.', 'Boys are very bad.'], { u: 1, g: [[1, ['peiores', 'meliores', 'pessimi', 'mali'], '', 'irrcomp']] });
+T(106, 'naves maximae appropinquabant.', 'Very big ships were approaching.', 'S a', ['Very small ships were approaching.', 'Bigger ships were approaching.', 'A very big ship was approaching.'], { u: 1 });
+T(106, 'cibus matris tuae optimus erat.', 'Your mother’s food was very good.', 'S a', ['Your mother’s food was very bad.', 'Your mother’s food was better.', 'My mother’s food was very good.'], {});
+T(107, 'cives Graeci sapientiores quam cives Romani erant.', 'The Greek citizens were wiser than the Roman citizens.', 'S Z a', ['The Roman citizens were wiser than the Greek citizens.', 'The Greek citizens were very wise.', 'The Greek citizens are wiser than the Roman citizens.'], {});
+T(116, 'Graeci fortiores quam nos non sunt.', 'The Greeks are not braver than us.', 'X Z a', ['We are not braver than the Greeks.', 'The Greeks are braver than us.', 'The Greeks were not braver than us.'], {});
+
+// ── b: possum and debeo (Ch 109, 113) ──
+T(109, 'potest.', 'He is able.', 'b', ['They are able.', 'He was able.', 'I am able.'], { g: [[0, ['potest', 'possunt', 'potes', 'possum'], '', 'possum']], p: [[0, 'pn', '3s', 'possum']] });
+T(109, 'poterat.', 'He was able.', 'b', ['He is able.', 'They were able.', 'He will be able.'], { p: [[0, 'pn', '3s', 'possum']] });
+T(109, 'possumus.', 'We are able.', 'b', ['They are able.', 'We were able.', 'You (pl) are able.'], { g: [[0, ['possumus', 'potestis', 'possunt', 'potest'], '', 'possum']], p: [[0, 'pn', '1p', 'possum']] });
+T(109, 'poterunt.', 'They will be able.', 'T b', ['They are able.', 'They were able.', 'He will be able.'], { p: [[0, 'pn', '3p', 'possum']] });
+T(109, 'laborare possum.', 'I am able to work.', 'b', ['I am able to sleep.', 'He is able to work.', 'I was able to work.'], { g: [[1, ['possum', 'potest', 'possunt', 'potes'], '', 'possum']] });
+T(109, 'effugere potest.', 'He can escape.', 'b', ['They can escape.', 'He could escape.', 'He cannot escape.'], {});
+T(109, 'vincere possumus.', 'We can win.', 'b', ['We cannot win.', 'They can win.', 'We could win.'], {});
+T(109, 'exspectare non poteram.', 'I could not wait.', 'b', ['I can wait.', 'He could not wait.', 'I cannot wait.'], { g: [[2, ['poteram', 'possum', 'poterat', 'potero'], 'T', 'possum']] });
+T(109, 'fugere poterant.', 'They were able to flee.', 'b', ['They are able to flee.', 'He was able to flee.', 'They were not able to flee.'], {});
+T(109, 'redire non possum.', 'I cannot return.', 'U b', ['I can return.', 'He cannot return.', 'I could not return.'], { u: 1 });
+T(109, 'dormire non possum.', 'I cannot sleep.', 'b', ['I can sleep.', 'They cannot sleep.', 'I could not sleep.'], { u: 1 });
+T(109, 'nautae ad insulam navigare poterant.', 'The sailors were able to sail to the island.', 'b', ['The sailors were not able to sail to the island.', 'The sailor was able to sail to the island.', 'The sailors are able to sail to the island.'], { u: 1 });
+T(109, 'hostes vincere numquam poterimus.', 'We shall never be able to conquer the enemy.', 'S T b', ['The enemy will never be able to conquer us.', 'We were never able to conquer the enemy.', 'We shall soon be able to conquer the enemy.'], { u: 1 });
+T(109, 'milites urbem delere non poterant.', 'The soldiers could not destroy the city.', 'S b', ['The soldiers were able to destroy the city.', 'The soldier could not destroy the city.', 'The soldiers cannot destroy the city.'], { u: 1 });
+T(109, 'servi ex oppido effugere non poterant.', 'The slaves could not escape from the town.', 'b', ['The slaves were able to escape from the town.', 'The slaves could not enter the town.', 'The slave could not escape from the town.'], {});
+T(109, 'Romani tela iacere non poterant.', 'The Romans could not throw their spears.', 'b', ['The Romans were able to throw their spears.', 'The Romans could not carry their spears.', 'The Romans cannot throw their spears.'], { u: 1 });
+T(109, 'ille rex bene regere non potest.', 'That king cannot rule well.', 'S W b', ['That king can rule well.', 'This king cannot rule well.', 'That king could not rule well.'], {});
+T(109, 'ad urbem hodie venire non potuimus.', 'We were not able to come to the city today.', 'S b', ['We were able to come to the city today.', 'They were not able to come to the city today.', 'We shall not be able to come to the city tomorrow.'], {});
+T(109, 'magistri omnia facere non possunt.', 'Teachers cannot do everything.', 'Z b', ['Teachers can do everything.', 'A teacher cannot do everything.', 'Teachers could not do everything.'], { u: 1 });
+T(113, 'hostes urbem capere debebant.', 'The enemy had to capture the city.', 'S b', ['The enemy had to defend the city.', 'The enemy must capture the city.', 'The enemy were able to capture the city.'], { u: 1 });
+T(113, 'milites celeriter currere debent.', 'The soldiers must run quickly.', 'S b', ['The soldiers can run quickly.', 'The soldier must run quickly.', 'The soldiers had to run quickly.'], { u: 1 });
+T(113, 'magistri pueros terrere non debent.', 'Teachers ought not to frighten boys.', 'b', ['Boys ought not to frighten teachers.', 'Teachers ought to frighten boys.', 'Teachers cannot frighten boys.'], { u: 1 });
+T(113, 'hoc statim facere debeo.', 'I must do this at once.', 'W b', ['I can do this at once.', 'He must do this at once.', 'I must do that at once.'], { u: 1 });
+T(113, 'libros semper legere debetis, pueri!', 'You must always read books, boys!', 'b', ['You must never read books, boys!', 'Boys always read books!', 'You must always read books, boy!'], {});
+T(113, 'servi cibum mox parare debebunt.', 'The slaves will soon have to prepare the food.', 'T b', ['The slaves soon had to prepare the food.', 'The slaves will soon be able to prepare the food.', 'The slave will soon have to prepare the food.'], { u: 1 });
+T(116, 'hostes flumen transire non poterant.', 'The enemy could not cross the river.', 'S U b', ['The enemy were able to cross the river.', 'The enemy could not cross the sea.', 'The enemy cannot cross the river.'], { u: 1 });
+
+// ── c: Prohibitions — noli, nolite (Ch 111) ──
+T(111, 'noli ridere, puer!', 'Do not laugh, boy!', 'c', ['Do not laugh, boys!', 'Laugh, boy!', 'The boy is not laughing.'], { g: [[2, ['puer', 'pueri', 'puerum', 'puero'], '', 'noli']] });
+T(111, 'nolite ridere, pueri!', 'Do not laugh, boys!', 'c', ['Do not laugh, boy!', 'Laugh, boys!', 'The boys are not laughing.'], { g: [[0, ['nolite', 'noli', 'non'], '', 'noli']] });
+T(111, 'nolite oppugnare, milites!', 'Do not attack, soldiers!', 'S c', ['Do not attack, soldier!', 'Attack, soldiers!', 'The soldiers are not attacking.'], { g: [[0, ['nolite', 'noli', 'non'], '', 'noli']] });
+T(111, 'nolite effugere, servi!', 'Do not escape, slaves!', 'c', ['Do not escape, slave!', 'Escape, slaves!', 'The slaves do not escape.'], {});
+T(111, 'noli exspectare, amice!', 'Do not wait, friend!', 'c', ['Do not wait, friends!', 'Wait, friend!', 'My friend is not waiting.'], { g: [[0, ['noli', 'nolite', 'non'], '', 'noli']] });
+T(111, 'noli discedere, mater!', 'Do not leave, mother!', 'S c', ['Leave, mother!', 'Do not leave, mothers!', 'Mother is not leaving.'], {});
+T(111, 'noli flere, femina!', 'Do not cry, woman!', 'c', ['Do not cry, women!', 'Cry, woman!', 'The woman is not crying.'], { g: [[2, ['femina', 'feminae', 'feminam', 'feminas'], '', 'noli']] });
+T(111, 'nolite timere, comites!', 'Do not be afraid, companions!', 'S c', ['Do not be afraid, companion!', 'Be afraid, companions!', 'The companions are not afraid.'], {});
+T(111, 'nolite oppidum oppugnare, milites!', 'Do not attack the town, soldiers!', 'S c', ['Attack the town, soldiers!', 'Do not attack the town, soldier!', 'Do not defend the town, soldiers!'], {});
+T(111, 'noli iter longum facere, amice!', 'Do not make a long journey, friend!', 'S c', ['Make a long journey, friend!', 'Do not make a long journey, friends!', 'My friend is not making a long journey.'], {});
+T(111, 'noli hunc servum punire, domine!', 'Do not punish this slave, master!', 'W c', ['Punish this slave, master!', 'Do not punish that slave, master!', 'Do not punish these slaves, master!'], {});
+T(111, 'noli e templo exire, puer!', 'Do not go out of the temple, boy!', 'U c', ['Do not go into the temple, boy!', 'Go out of the temple, boy!', 'Do not go out of the temple, boys!'], {});
+T(111, 'noli hoc vinum bibere, mater!', 'Do not drink this wine, mother!', 'S W c', ['Drink this wine, mother!', 'Do not drink that wine, mother!', 'Mother does not drink this wine.'], {});
+T(111, 'nolite hostes vulnerare, milites!', 'Do not wound the enemy, soldiers!', 'S c', ['Wound the enemy, soldiers!', 'Do not wound the enemy, soldier!', 'Do not fear the enemy, soldiers!'], {});
+T(111, 'noli flumen transire, nauta!', 'Do not cross the river, sailor!', 'S U c', ['Cross the river, sailor!', 'Do not cross the river, sailors!', 'The sailor does not cross the river.'], {});
+T(116, 'nolite me relinquere, comites!', 'Do not leave me behind, companions!', 'S X c', ['Leave me behind, companions!', 'Do not leave me behind, companion!', 'Do not leave them behind, companions!'], {});
+
+// ── d: Questions with nonne and num (Ch 112) ──
+T(112, 'num clamat?', 'He isn’t shouting, is he?', 'd', ['He is shouting, isn’t he?', 'Is he shouting?', 'He is shouting.'], { g: [[0, ['num', 'nonne'], '', 'nonne']] });
+T(112, 'nonne flet?', 'He is crying, isn’t he?', 'd', ['He isn’t crying, is he?', 'Is he crying?', 'He is not crying.'], { g: [[0, ['nonne', 'num'], '', 'nonne']] });
+T(112, 'nonne pugnant?', 'They are fighting, aren’t they?', 'd', ['They aren’t fighting, are they?', 'Are they fighting?', 'They are not fighting.'], {});
+T(112, 'num currebant?', 'They weren’t running, were they?', 'd', ['They were running, weren’t they?', 'Were they running?', 'They were not running.'], {});
+T(112, 'nonne bene pugnabat?', 'He was fighting well, wasn’t he?', 'd', ['He wasn’t fighting well, was he?', 'Was he fighting well?', 'He was not fighting well.'], {});
+T(112, 'num hic miles fortis est?', 'This soldier isn’t brave, is he?', 'W Z d', ['This soldier is brave, isn’t he?', 'Is this soldier brave?', 'That soldier isn’t brave, is he?'], {});
+T(112, 'nonne Hector audax erat?', 'Hector was daring, wasn’t he?', 'Z d', ['Hector wasn’t daring, was he?', 'Was Hector daring?', 'Hector is daring, isn’t he?'], { g: [[0, ['nonne', 'num'], '', 'nonne']] });
+T(112, 'nonne cives urbem bene defendebant?', 'The citizens were defending the city well, weren’t they?', 'S d', ['The citizens weren’t defending the city well, were they?', 'Were the citizens defending the city well?', 'The citizens were attacking the city, weren’t they?'], {});
+T(112, 'num puer hoc fecit?', 'The boy didn’t do this, did he?', 'W d', ['The boy did this, didn’t he?', 'Did the boy do this?', 'The boy will not do this, will he?'], {});
+T(112, 'num Graeci Romanos vicerunt?', 'The Greeks didn’t conquer the Romans, did they?', 'd', ['The Greeks conquered the Romans, didn’t they?', 'The Romans didn’t conquer the Greeks, did they?', 'Did the Greeks conquer the Romans?'], { g: [[0, ['num', 'nonne'], '', 'nonne']] });
+T(112, 'num omnes mortem timent?', 'Not everyone fears death, do they?', 'S Z d', ['Everyone fears death, don’t they?', 'Does everyone fear death?', 'No one fears death.'], {});
+T(112, 'nonne matrem tuam amas?', 'You love your mother, don’t you?', 'S d', ['You don’t love your mother, do you?', 'Do you love your mother?', 'Your mother loves you, doesn’t she?'], {});
+T(112, 'num femina hoc facere poterit?', 'A woman will not be able to do this, will she?', 'T W b d', ['A woman will be able to do this, won’t she?', 'Will a woman be able to do this?', 'A woman was not able to do this, was she?'], {});
+T(116, 'nonne milites Graeci felicissimi erant?', 'The Greek soldiers were very lucky, weren’t they?', 'S Z a d', ['The Greek soldiers weren’t very lucky, were they?', 'Were the Greek soldiers lucky?', 'The Greek soldiers were luckier, weren’t they?'], {});
+
+// ── e: Reflexive pronoun se (Ch 115) ──
+T(115, 'ille puer se amat.', 'That boy loves himself.', 'W e', ['That boy loves him.', 'This boy loves himself.', 'Those boys love themselves.'], { u: 1, g: [[2, ['se', 'eum', 'sui', 'sibi'], '', 'se']] });
+T(115, 'Troiani se defendere paraverunt.', 'The Trojans prepared to defend themselves.', 'e', ['The Trojans prepared to defend them.', 'The Greeks prepared to defend themselves.', 'The Trojans prepared to attack themselves.'], { u: 1 });
+T(115, 'illa puella se semper spectat.', 'That girl is always looking at herself.', 'W e', ['That girl is always looking at her.', 'This girl is never looking at herself.', 'Those girls are always looking at themselves.'], { u: 1 });
+T(115, 'pueri sapientes se numquam laudant.', 'Wise boys never praise themselves.', 'Z e', ['Wise boys always praise themselves.', 'Wise boys never praise them.', 'A wise boy never praises himself.'], { u: 1 });
+T(115, 'cives Troiani se fortiter defendebant.', 'The Trojan citizens were defending themselves bravely.', 'S e', ['The Trojan citizens were defending them bravely.', 'The Trojan citizens defended themselves badly.', 'The Trojan citizen was defending himself bravely.'], { u: 1 });
+T(115, 'ille miles se gladio suo vulneravit.', 'That soldier wounded himself with his own sword.', 'S W e', ['That soldier wounded him with his own sword.', 'This soldier wounded himself with his own spear.', 'Those soldiers wounded themselves with their swords.'], {});
+T(115, 'multae feminae in flumine se spectabant.', 'Many women were looking at themselves in the river.', 'S e', ['Many women were looking at them in the river.', 'A woman was looking at herself in the river.', 'Many women were swimming in the river.'], {});
+
 
 // ════════════════════════════════════════════════════════════════
 // HELPERS
@@ -923,14 +1361,14 @@ const PN_LABEL = { '1s': '1st person singular', '2s': '2nd person singular', '3s
 const CASE_NAME = { nom: 'nominative', voc: 'vocative', acc: 'accusative', gen: 'genitive', dat: 'dative', abl: 'ablative' };
 const NUM_NAME = { sg: 'singular', pl: 'plural' };
 const caseLabel = c => { const [cs, n] = c.split(' '); return CASE_NAME[cs] + ' ' + NUM_NAME[n]; };
-const TENSE_NAME = { pres: 'present', impf: 'imperfect', perf: 'perfect' };
+const TENSE_NAME = { pres: 'present', impf: 'imperfect', perf: 'perfect', fut: 'future', plupf: 'pluperfect' };
 const GLUE = new Set(['ad', 'a', 'ab', 'e', 'ex', 'in', 'cum', 'contra', 'per', 'prope', 'trans', 'de', 'non']);
 
 // ════════════════════════════════════════════════════════════════
 // QUESTION BUILDING
 // ════════════════════════════════════════════════════════════════
-function tensesAllowed() { const t = ['pres']; if (ticked.has('Q')) t.push('impf'); if (ticked.has('R')) t.push('perf'); return t; }
-function casesAllowed() { return ticked.has('H') ? ['nom', 'voc', 'acc', 'gen', 'dat', 'abl'] : ['nom', 'acc']; }
+function tensesAllowed() { const t = ['pres'], l2 = hasL2(); if (l2 || ticked.has('Q')) t.push('impf'); if (l2 || ticked.has('R')) t.push('perf'); if (ticked.has('T')) t.push('fut'); if (ticked.has('Y')) t.push('plupf'); return t; }
+function casesAllowed() { return ticked.has('H') || hasL2() ? ['nom', 'voc', 'acc', 'gen', 'dat', 'abl'] : ['nom', 'acc']; }
 
 // Which question types this sentence can make with the current ticks
 function itemTypes(it) {
@@ -981,12 +1419,12 @@ function makeQuestion(it, type) {
       const rest = shuffle(all.filter(c => c !== p[2] && !near.includes(c)));
       const wrong = [...near.slice(0, 2), ...rest, ...near.slice(2)].slice(0, 3);
       opts = [p[2], ...wrong].map(c => ({ text: caseLabel(c), ok: c === p[2] }));
-      q.hint = p[3] || (ticked.has('H') ? 'puella' : 'puellaNA');
+      q.hint = p[3] || (ticked.has('H') || hasL2() ? 'puella' : 'puellaNA');
       q.answer = caseLabel(p[2]);
     } else {
       q.prompt = `What tense is ${word}?`;
       opts = tensesAllowed().map(t => ({ text: TENSE_NAME[t], ok: t === p[2] }));
-      q.hint = 'tenses';
+      q.hint = p[2] === 'fut' ? 'fut' : p[2] === 'plupf' ? 'plupf' : 'tenses';
       q.answer = TENSE_NAME[p[2]];
     }
     q.opts = shuffle(opts);
@@ -1005,7 +1443,7 @@ function makeQuestion(it, type) {
   return q;
 }
 // The one grammar point a question tests (used for the revision list at the end)
-const HINT_TAG = { amo: 'A', pres: 'F', sum: 'D', puellaNA: 'B', puella: 'H', servus: 'I', ager: 'I', bellum: 'L', bonus: 'E', miser: 'P', prep: 'J', ego: 'K', imp: 'M', inf: 'O', impf: 'Q', perf: 'R' };
+const HINT_TAG = { decl3: 'S', fut: 'T', eo: 'U', que: 'V', hic: 'W', ille: 'W', is: 'X', pron: 'X', plupf: 'Y', adj3: 'Z', comp: 'a', irrcomp: 'a', possum: 'b', noli: 'c', nonne: 'd', se: 'e', amo: 'A', pres: 'F', sum: 'D', puellaNA: 'B', puella: 'H', servus: 'I', ager: 'I', bellum: 'L', bonus: 'E', miser: 'P', prep: 'J', ego: 'K', imp: 'M', inf: 'O', impf: 'Q', perf: 'R' };
 function topTag(tags) { for (const k of TAG_ORDER) if (tags.includes(k)) return k; return tags[0]; }
 function focusTag(q) {
   const t = q.it.t;
@@ -1014,12 +1452,16 @@ function focusTag(q) {
     f = HINT_TAG[q.hint];
     if (q.type === 'parse' && q.hint === 'puella' && /^(nominative|accusative)/.test(q.answer)) f = 'B';
   } else if (q.type === 'parse') {
-    f = q.answer === 'imperfect' ? 'Q' : q.answer === 'perfect' ? 'R' : (t.includes('F') ? 'F' : 'A');
+    f = q.answer === 'future' ? 'T' : q.answer === 'pluperfect' ? 'Y' : q.answer === 'imperfect' ? 'Q' : q.answer === 'perfect' ? 'R' : (t.includes('F') ? 'F' : 'A');
   }
   return f && t.includes(f) ? f : topTag(t);
 }
 function topTable(tags) { for (const k of TAG_ORDER) if (tags.includes(k)) return TAG_TABLE[k]; return 'amo'; }
 function verbTable(tags) {
+  if (tags.includes('b')) return 'possum';
+  if (tags.includes('Y')) return 'plupf';
+  if (tags.includes('U')) return 'eo';
+  if (tags.includes('T')) return 'fut';
   if (tags.includes('R')) return 'perf';
   if (tags.includes('Q')) return 'impf';
   if (tags.includes('F')) return 'pres';
@@ -1105,6 +1547,9 @@ const LEVELS = [
         '<p>Your master has run away and left you locked in his villa. The boats wait at the sea gate, five places away.</p>',
     },
     won: () => P.x >= 101,
+    checks: () => { if (P.y > G + 17 && P.z < 36) unlockAch('pompeii.vesuvius'); },
+    win: { h: 'LIBERTAS!', did: 'escaped', next: 'Level 2: Sail to Rome ▶',
+      sub: 'You run through the sea gate and jump into a boat. Behind you, Vesuvius roars. You are free.', dog: ' Your dog leaps into the boat after you.' },
   },
   {
     key: 'rome', seed: 1544, loading: 'Building Rome…',
@@ -1128,11 +1573,130 @@ const LEVELS = [
         '<p>An old Greek teacher called Artemidorus grabs your arm. He has written a warning for Julius Caesar: senators plan to kill him today. He pushes the scroll into your hands. Take it to Caesar at the Senate house, five places away!</p>',
     },
     won: () => Math.hypot(P.x - 104.5, P.z - 48.5) < 2.4,
+    checks: () => {
+      if (LV.capY && P.y > LV.capY + 1.5 && P.z < 14 && Math.abs(P.x - 56) < 8) unlockAch('rome.capitol');
+      if (P.x < 4 && getB(Math.floor(P.x), Math.floor(P.y + 0.2), Math.floor(P.z)) === B.WATER) unlockAch('rome.tiber');
+      if (Math.floor(P.x) === 106 && Math.floor(P.z) === 48 && P.y > G + 0.9 && P.onGround) unlockAch('rome.chair');
+    },
+    win: { h: 'PERVENISTI!', did: 'reached Caesar', next: 'Level 3: The Fall of Troy ▶',
+      sub: 'You push past the senators and press the scroll into Caesar’s hand. He tries to read it, but people keep crowding round to talk to him. He walks into the meeting with the scroll still rolled up.',
+      dog: ' Your dog sniffs Caesar’s sandals.',
+      fact: '<b>This really happened.</b> On the morning of 15 March 44 BC, a Greek teacher called Artemidorus handed Caesar a written warning about the plot. Plutarch says Caesar tried to read it but never managed to, and went into the Senate with it still in his hand. A few minutes later, the plotters killed him.' },
+  },
+  {
+    key: 'troy', seed: 1184, loading: 'Building Troy…',
+    rooms: [
+      { name: 'Your House', lat: 'domus', intro: 'The roof is on fire! Open three locks to unbar the door.' },
+      { name: 'The Square of the Horse', lat: 'equus ligneus', intro: 'Greek soldiers are climbing out of the wooden horse. Open three locks.' },
+      { name: 'Priam’s Palace', lat: 'regia', intro: 'The palace of the old king of Troy. Open three locks.' },
+      { name: 'The Temple of Athena', lat: 'templum', intro: 'The goddess stands in her temple. Open three locks.' },
+      { name: 'The Scaean Gate', lat: 'porta', intro: 'The great gate of Troy. Open three locks to get out of the city.' },
+    ],
+    final: { name: 'The Shore', lat: 'litus', intro: 'Aeneas is waiting at the ships!', goal: 'Run to Aeneas at the ships!' },
+    lastOpen: '<span class="gold">The Scaean Gate is open!</span><br>Run to Aeneas at the ships!',
+    lastGoal: 'The gate is open. Run to Aeneas at the ships!',
+    start: { x: 8.5, z: 48.5, yaw: Math.PI / 2 },
+    sky0: [0.08, 0.09, 0.2], sky1: [0.3, 0.13, 0.09],
+    volcano: false,
+    story: {
+      h: 'Troy', when: 'MEDIA NOCTE', btn: 'Effuge! · Escape!',
+      body: '<p>Another storm. Your ship is thrown onto a beach beside a great walled city. You have gone back a thousand years: this is Troy.</p>' +
+        '<p>Today the Trojans found a huge wooden horse outside their walls. They dragged it into the city, ate, drank and went happily to bed. But the horse is full of Greek soldiers, and at midnight they are climbing down.</p>' +
+        '<p>Troy is burning. Prince Aeneas is gathering the survivors at the ships on the shore. Get out of the city and reach Aeneas, five places away!</p>',
+    },
+    won: () => Math.hypot(P.x - 102.5, P.z - 48.5) < 2.4,
+    checks: () => {
+      if (P.x > 27.5 && P.x < 35 && P.z > 46.5 && P.z < 49.8 && P.y > G + 2.9 && P.y < G + 5) unlockAch('troy.horse');
+      if (P.x > 87.5 && P.y > G + 6.9) unlockAch('troy.walls');
+    },
+    win: { h: 'EFFUGISTI!', did: 'escaped Troy', next: 'Level 4: The Cyclops ▶',
+      sub: 'You reach the shore as Troy burns behind you. Aeneas pulls you aboard, and the ships slip out to sea.', dog: ' Your dog curls up under a bench on the ship.',
+      fact: '<b>The story in Bass.</b> In Chapters 108–117 the Greeks build the wooden horse on Ulysses’ plan, hide soldiers inside and pretend to sail away. The Trojans drag it into the city. At midnight the soldiers climb down, and Troy falls. Aeneas gathers his friends and escapes by ship. The Roman poet Virgil says his descendants went on to found Rome.' },
+  },
+  {
+    key: 'cyclops', seed: 2718, loading: 'Building the cave…', cave: true, caveSky: [0.05, 0.045, 0.04],
+    rooms: [
+      { name: 'The Back of the Cave', lat: 'antrum', intro: 'The giant has trapped you in his cave. Open three locks.' },
+      { name: 'The Sheep Pens', lat: 'oves', intro: 'Polyphemus keeps his sheep in here. Open three locks.' },
+      { name: 'The Cheese Store', lat: 'cibus', intro: 'Racks and racks of cheese. Open three locks.' },
+      { name: 'The Giant’s Fire', lat: 'ignis', intro: 'Polyphemus sits by his fire. Get him drinking! Open three locks.' },
+      { name: 'The Cave Mouth', lat: 'saxum', intro: 'A huge rock blocks the way out. Open three locks to move it.' },
+    ],
+    final: { name: 'The Beach', lat: 'navis', intro: 'Ulysses’ ship is waiting. Run!', goal: 'Run down the beach to the ship!' },
+    lastOpen: '<span class="gold">The great rock rolls aside!</span><br>Run to the ship!',
+    lastGoal: 'The rock has moved. Run to the ship!',
+    start: { x: 8.5, z: 48.5, yaw: Math.PI / 2 },
+    sky0: [0.55, 0.74, 0.92], sky1: [0.6, 0.72, 0.86],
+    volcano: false,
+    story: {
+      h: 'The Cyclops', when: 'IN ANTRO POLYPHEMI', btn: 'Festinate! · Hurry!',
+      body: '<p>Aeneas’ ship is blown off course and wrecked. Greek sailors pull you out of the sea: Ulysses and his men, on their long journey home from Troy.</p>' +
+        '<p>You go with twelve of them to look for food, and find a cave full of cheese and sheep. Then the owner comes home: Polyphemus, a giant with one eye in the middle of his head. He rolls a huge rock across the door.</p>' +
+        '<p>Get past the giant, move the rock, and reach the ship, five places away!</p>',
+    },
+    roomDone: r => {
+      if (r !== 3) return;
+      const L = LOCKS.find(l => l.name === 'Polyphemus'); if (!L || !L.npc) return;
+      L.npc.say = [['Zzz…', 'The giant is fast asleep.']]; L.npc.fixedH = true; L.npc.h = -Math.PI / 2 + 0.6;
+      setTimeout(() => toast('<span class="gold">ad terram subito cecidit et obdormivit.</span><br>He suddenly fell to the ground and fell asleep. (Bass, Chapter 140)', 4200), 1800);
+    },
+    won: () => P.x >= 101,
+    win: { h: 'TUTI ESTIS!', did: 'escaped the Cyclops', next: '',
+      sub: 'You slip past the rock and race down the beach. Ulysses and his men push the ship off as Polyphemus roars behind you.',
+      pet: ' The ram trots along beside you. The Greeks escaped by clinging under the bellies of the giant’s sheep.',
+      fact: '<b>The story in Bass.</b> In Chapters 134–141 Ulysses gives Polyphemus cup after cup of sweet wine until the giant falls asleep. The Greeks drive a stake into his one eye. Next morning the blind giant sits at the cave mouth to catch them, but they escape hanging under his sheep.' },
   },
 ];
 let LV = LEVELS[0];
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-const SPLASHES = ['Now with volcano!', 'Cave canem!', 'Festina lente!', 'Ash included!', 'Mind the stepping stones!', 'Salve, discipule!', 'Not to scale!', 'Carpe clavem!', 'Cavete Idus Martias!', 'Et tu, discipule?', 'Listen at the walls!'];
+const SPLASHES = ['Now with wooden horse!', 'Mind the giant!', 'Now with sheep!', 'Now with volcano!', 'Cave canem!', 'Festina lente!', 'Ash included!', 'Mind the stepping stones!', 'Salve, discipule!', 'Not to scale!', 'Carpe clavem!', 'Cavete Idus Martias!', 'Et tu, discipule?', 'Listen at the walls!'];
+
+// ── Secrets and achievements (kept in this browser) ──
+const ACH = [
+  { id: 'pompeii.cellar', lv: 0, name: 'Cave canem', desc: 'Find the hidden cellar in the villa.', hint: 'A wall in the villa is hiding something. Listen.' },
+  { id: 'pompeii.dog', lv: 0, name: 'Best friend', desc: 'Rescue the dog and take it to the boats.', hint: 'Someone is barking for help.' },
+  { id: 'pompeii.vesuvius', lv: 0, name: 'Too close for comfort', desc: 'Climb high up the side of Vesuvius.', hint: 'How high can you climb?' },
+  { id: 'pompeii.reader', lv: 0, name: 'Wall reader', desc: 'Read all three inscriptions in the secret cellar.', hint: 'Romans wrote on walls. And floors.' },
+  { id: 'rome.capitol', lv: 1, name: 'Jupiter’s view', desc: 'Reach the temple on top of the Capitoline Hill.', hint: 'The gods live high up.' },
+  { id: 'rome.tiber', lv: 1, name: 'Father Tiber', desc: 'Take a swim in the river Tiber.', hint: 'Fancy a dip?' },
+  { id: 'rome.stage', lv: 1, name: 'Behind the scenes', desc: 'Find the secret room behind the theatre stage.', hint: 'One panel in the theatre sounds hollow.' },
+  { id: 'rome.chair', lv: 1, name: 'Hail, Caesar!', desc: 'Stand on Caesar’s golden chair.', hint: 'Caesar’s seat looks comfortable.' },
+  { id: 'troy.horse', lv: 2, name: 'Inside job', desc: 'Climb inside the wooden horse.', hint: 'The horse has a way in, if you can reach it.' },
+  { id: 'troy.apple', lv: 2, name: 'The golden apple', desc: 'Find the golden apple that started the war.', hint: 'Ask the goddess.' },
+  { id: 'troy.walls', lv: 2, name: 'On the walls', desc: 'Climb up onto the walls of Troy.', hint: 'Walls have stairs.' },
+  { id: 'cyclops.ram', lv: 3, name: 'Under the ram', desc: 'Make friends with the ram and escape with it.', hint: 'Not every animal in the cave is a sheep.' },
+  { id: 'cyclops.hoard', lv: 3, name: 'The giant’s hoard', desc: 'Find Polyphemus’ secret store.', hint: 'One rock in the cheese store is cracked.' },
+  { id: 'cyclops.cheese', lv: 3, name: 'Big cheese', desc: 'Find the giant’s favourite cheese.', hint: 'Look up.' },
+];
+['pompeii', 'rome', 'troy', 'cyclops'].forEach((k, lv) => ACH.push(
+  { id: k + '.perfect', lv, name: 'Optime!', desc: 'Get all 15 questions right first time.', hint: 'Get all 15 questions right first time.' },
+  { id: k + '.swift', lv, name: 'Festina!', desc: 'Finish the level in under 8 minutes.', hint: 'Finish the level in under 8 minutes.' }));
+const LEVEL_NAMES = ['Level 1: Pompeii', 'Level 2: Rome', 'Level 3: Troy', 'Level 4: The Cyclops'];
+let achGot = null;
+function hasAch(id) { if (!achGot) achGot = new Set(store.get('ach', [])); return achGot.has(id); }
+function unlockAch(id) {
+  if (hasAch(id)) return;
+  const a = ACH.find(x => x.id === id); if (!a) return;
+  achGot.add(id); store.set('ach', [...achGot]);
+  const el = $('achPop');
+  el.innerHTML = `🏆 <b>${esc(a.name)}</b><br><span>${esc(a.desc)}</span>`; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 4200);
+  tone(988, 0.12, 'triangle', 0.06); tone(1318, 0.25, 'triangle', 0.06, 0, 0.12);
+  renderAch();
+}
+function achHtml(a) {
+  const got = hasAch(a.id);
+  return `<div class="ach${got ? ' got' : ''}"><span class="ic">${got ? '★' : '?'}</span><span>${got ? esc(a.name) : '???'}<span class="ds">${esc(got ? a.desc : a.hint)}</span></span></div>`;
+}
+function renderAch() {
+  const box = $('achList'); if (!box) return;
+  const n = ACH.filter(a => hasAch(a.id)).length;
+  $('achHead').textContent = `Secrets and achievements: ${n} of ${ACH.length}`;
+  box.innerHTML = LEVEL_NAMES.map((nm, lv) => `<div class="ach-lv">${esc(nm)}</div>` + ACH.filter(a => a.lv === lv).map(achHtml).join('')).join('');
+}
+function checkReader() {
+  if (LV.key === 'pompeii' && NOTES.size && [...NOTES.values()].every(N => game.notesRead.has(N))) unlockAch('pompeii.reader');
+}
 
 // ── Setup state (the question builder reads ticked / types) ──
 const store = {
@@ -1269,6 +1833,53 @@ paint(39, (x, y) => {                                                      // CA
   if (body || head || legs || tail) return nz([34, 32, 32], 8);
   return (x + y) % 2 ? nz([232, 226, 212], 8) : nz([220, 214, 200], 8);
 });
+// ── Tiles added for Levels 3 and 4 and the new kinds of lock ──
+paint(40, (x, y) => {                                                      // gold-edged floor tile (plate lock)
+  if (x === 0 || y === 0 || x === 15 || y === 15) return nz([150, 110, 30], 10);
+  if (x === 1 || y === 1 || x === 14 || y === 14) return nz([236, 196, 72], 16);
+  const d = Math.abs(x - 7.5) + Math.abs(y - 7.5);
+  if (d < 2.2) return nz([236, 196, 72], 16);
+  if (d > 4.2 && d < 5.8) return nz([40, 38, 36], 8);
+  return (x + y) % 2 ? nz([232, 226, 212], 8) : nz([214, 206, 190], 8);
+});
+paint(41, (x, y) => {                                                      // rolled scroll (hidden lock)
+  if (y >= 6 && y <= 9 && x >= 3 && x <= 12) return (y === 6 || y === 9) ? nz([170, 140, 90], 8) : nz([236, 220, 176], 10);
+  if (y >= 5 && y <= 10 && (x === 2 || x === 13)) return nz([120, 80, 40], 8);
+  if (y === 7 && x >= 6 && x <= 9) return [170, 40, 34];
+  return [0, 0, 0, 0];
+});
+paint(42, (x, y) => {                                                      // the Cyclops: one eye
+  if (y >= 5 && y <= 8 && x >= 6 && x <= 9) return (y >= 6 && y <= 7 && x >= 7 && x <= 8) ? [30, 22, 20] : [255, 255, 255];
+  if (y === 4 && x >= 5 && x <= 10) return [70, 50, 40];
+  if (y >= 11 && y <= 12 && x >= 5 && x <= 10) return [70, 20, 20];
+  return nz([246, 246, 246], 10);
+});
+paint(43, (x, y) => ((x * 7 + y * 11) % 13 === 0 || (x * 3 + y * 5) % 17 === 0) ? nz([196, 150, 40], 10) : nz([240, 206, 92], 16));   // cheese
+paint(44, () => rnd() < 0.08 ? nz([70, 64, 58], 8) : nz([104, 96, 88], 22));            // cave rock
+paint(45, (x, y) => (x + y * 3) % 5 === 0 ? nz([168, 140, 60], 10) : nz([214, 186, 96], 22));   // hay
+paint(46, (x, y) => {                                                      // hatch in the wooden horse
+  if (y % 4 === 3) return nz([108, 82, 48], 8);
+  if (x === 3 || x === 12) return nz([60, 44, 26], 8);
+  return mulc(nz([166, 132, 82], 14), (x + Math.floor(y / 4) * 5) % 16 === 0 ? 0.7 : 1);
+});
+paint(47, (x, y) => {                                                      // golden apple
+  if (x >= 7 && x <= 8 && y >= 1 && y <= 3) return [90, 60, 30];
+  if (y >= 2 && y <= 3 && x >= 9 && x <= 11) return [70, 150, 50];
+  const d = ((x - 7.5) / 4.6) ** 2 + ((y - 9) / 4.6) ** 2;
+  if (d < 1) return d < 0.25 && x < 7 ? [255, 246, 190] : nz([232, 186, 50], 26);
+  return [0, 0, 0, 0];
+});
+paint(48, (x, y) => {                                                      // cracked rock
+  const cx = 8 + Math.round(Math.sin(y * 0.8) * 2.5);
+  if (x === cx || (y > 9 && x === cx + Math.floor((y - 9) / 2) + 1)) return nz([34, 30, 28], 6);
+  return rnd() < 0.08 ? nz([70, 64, 58], 8) : nz([104, 96, 88], 22);
+});
+paint(49, (x, y) => {                                                      // hollow marble panel
+  if (x === 0 || x === 15 || y === 0 || y === 15) return nz([170, 166, 160], 8);
+  if (x === 1 || x === 14 || y === 1 || y === 14) return nz([250, 248, 242], 6);
+  const v = Math.sin(x * 0.6 + y * 0.35 + Math.sin(y * 0.9) * 1.6); return Math.abs(v) < 0.13 ? nz([180, 180, 188], 10) : nz([236, 233, 226], 8);
+});
+paint(50, (x, y) => (y >= 1 && y <= 3) || (x >= 7 && x <= 8 && y <= 12) ? nz([200, 40, 30], 12) : [0, 0, 0, 0]);   // helmet crest
 actx.putImageData(atlasImg, 0, 0);
 
 // Hotbar key icon
@@ -1285,7 +1896,7 @@ const KEY_ICON = (() => {
 // ════════════════════════════════════════════════════════════════
 const B = { AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, COBBLE: 4, MARBLE: 5, TRAV: 6, RED: 7, YELLOW: 8, ROOF: 9, PLANKS: 10, LOG: 11, LEAVES: 12, SAND: 13, WATER: 14, MOSAIC: 15,
   BRICK: 16, GATE: 17, COLUMN: 18, GOLD: 19, LAVA: 20, BASALT: 21, TABLET: 22, CHEST: 23, SHRINE: 24, AMPHORA: 25, PLAQUE: 26, CRATE: 27, BARS: 28, FIRE: 29, ASH: 30, CLOTH: 31,
-  CRACK: 32, GRAFFITO: 33, CANEM: 34 };
+  CRACK: 32, GRAFFITO: 33, CANEM: 34, PLATE: 35, SCROLL: 36, CHEESE: 37, ROCK: 38, HAY: 39, HATCH: 40, STAKE: 41, APPLE: 42, RCRACK: 43, MCRACK: 44 };
 const BL = [];
 function defB(id, tex, o) { const t = Array.isArray(tex) ? tex : [tex, tex, tex]; BL[id] = Object.assign({ top: t[0], side: t[1], bottom: t[2], solid: true, opaque: true }, o || {}); }
 defB(B.AIR, 0, { solid: false, opaque: false });
@@ -1297,6 +1908,9 @@ defB(B.TABLET, [10, 23, 10], { lock: 'wax tablet' }); defB(B.CHEST, [25, 24, 25]
 defB(B.AMPHORA, 27, { lock: 'amphora' }); defB(B.PLAQUE, 28, { lock: 'bronze plaque' }); defB(B.CRATE, 29); defB(B.BARS, 30, { opaque: false, alpha: true });
 defB(B.FIRE, 31, { opaque: false, alpha: true, emissive: true }); defB(B.ASH, 32); defB(B.CLOTH, 33);
 defB(B.CRACK, 37, { secret: true }); defB(B.GRAFFITO, [5, 38, 5], { note: true }); defB(B.CANEM, [39, 3, 3], { note: true });
+defB(B.PLATE, [40, 3, 3], { plate: true }); defB(B.SCROLL, 41, { solid: false, opaque: false, alpha: true, hidden: true });
+defB(B.CHEESE, 43); defB(B.ROCK, 44); defB(B.HAY, 45); defB(B.HATCH, 46, { secret: true }); defB(B.STAKE, [12, 11, 12], { lock: 'giant’s stake' });
+defB(B.APPLE, 47, { solid: false, opaque: false, alpha: true }); defB(B.RCRACK, 48, { secret: true }); defB(B.MCRACK, [5, 49, 5], { secret: true });
 
 // ════════════════════════════════════════════════════════════════
 // WORLD
@@ -1306,7 +1920,7 @@ const NCX = W / CS, NCY = H / CS, NCZ = D / CS;
 const world = new Uint8Array(W * H * D);
 const ROOM_X = [4, 22, 40, 56, 76, 92];   // wall x of each room
 let LOCKS = [], lockMap = new Map(), GATES = [[], [], [], [], []], gateMap = new Map();
-let NOTES = new Map(), SECRET = null;   // readable blocks; the secret wall (Level 1)
+let NOTES = new Map(), SECRETS = [], ITEMS = new Map(), NPC_LOCKS = [];   // readable blocks; secret walls; collectibles; people who set questions
 const key3 = (x, y, z) => x + ',' + y + ',' + z;
 
 function getB(x, y, z) {
@@ -1321,10 +1935,22 @@ function fill(x0, y0, z0, x1, y1, z1, b) {
     for (let z = Math.min(z0, z1); z <= Math.max(z0, z1); z++)
       for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) setRaw(x, y, z, b);
 }
-function addLock(room, k, x, y, z, b) { setRaw(x, y, z, b); const L = { room, k, x, y, z, b, done: false }; LOCKS.push(L); lockMap.set(key3(x, y, z), L); }
-function addGate(room, x0, y0, z0, x1, y1, z1) {
+function addLock(room, k, x, y, z, b, kind) { setRaw(x, y, z, b); const L = { room, k, x, y, z, b, done: false, kind: kind || 'block' }; LOCKS.push(L); lockMap.set(key3(x, y, z), L); return L; }
+// A gold-edged floor tile: stand on it to get the question
+function addPlate(room, k, x, y, z) { return addLock(room, k, x, y, z, B.PLATE, 'plate'); }
+// A scroll with no sparkles, tucked away somewhere
+function addHidden(room, k, x, y, z) { return addLock(room, k, x, y, z, B.SCROLL, 'hidden'); }
+// A person who sets the question when you talk to them
+function addNpcLock(room, k, spec) {
+  const L = { room, k, x: Math.floor(spec.x), y: G, z: Math.floor(spec.z), b: 0, done: false, kind: 'npc', name: spec.name, spec };
+  LOCKS.push(L); NPC_LOCKS.push(L); return L;
+}
+function lockName(L) { return L.kind === 'npc' ? L.name : L.kind === 'plate' ? 'floor tile' : L.kind === 'hidden' ? 'hidden scroll' : BL[L.b].lock; }
+// Something to pick up for an achievement
+function addItem(x, y, z, b, item) { setRaw(x, y, z, b); ITEMS.set(key3(x, y, z), item); }
+function addGate(room, x0, y0, z0, x1, y1, z1, gb) {
   for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
-    setRaw(x, y, z, B.GATE); GATES[room].push([x, y, z]); gateMap.set(key3(x, y, z), room);
+    setRaw(x, y, z, gb || B.GATE); GATES[room].push([x, y, z, gb || B.GATE]); gateMap.set(key3(x, y, z), room);
   }
 }
 function walls(x0, x1, h, b) {
@@ -1371,16 +1997,16 @@ function road(x0, x1) {
 function generateWorld() {
   seed = LV.seed;
   world.fill(0);
-  LOCKS = []; lockMap = new Map(); GATES = [[], [], [], [], []]; gateMap = new Map(); NOTES = new Map(); SECRET = null;
+  LOCKS = []; lockMap = new Map(); GATES = [[], [], [], [], []]; gateMap = new Map(); NOTES = new Map(); SECRETS = []; ITEMS = new Map(); NPC_LOCKS = [];
 
   // Ground
   fill(0, 0, 0, W - 1, 1, D - 1, B.STONE);
   fill(0, 2, 0, W - 1, G - 2, D - 1, B.DIRT);
   fill(0, G - 1, 0, W - 1, G - 1, D - 1, B.GRASS);
 
-  if (LV.key === 'rome') buildRome(); else buildPompeii();
+  ({ pompeii: buildPompeii, rome: buildRome, troy: buildTroy, cyclops: buildCyclops })[LV.key]();
   // Later rooms' walls can overwrite earlier doors: put every door back
-  GATES.forEach(list => list.forEach(([x, y, z]) => setRaw(x, y, z, B.GATE)));
+  GATES.forEach(list => list.forEach(([x, y, z, gb]) => setRaw(x, y, z, gb)));
 }
 
 function buildPompeii() {
@@ -1424,7 +2050,10 @@ function buildPompeii() {
   fill(4, G, 57, 4, G + 3, 66, B.BRICK); fill(14, G, 57, 14, G + 3, 66, B.BRICK); fill(4, G, 66, 14, G + 3, 66, B.BRICK);
   fill(4, G + 4, 57, 14, G + 4, 66, B.ROOF);
   setRaw(9, G, 56, B.CRACK); setRaw(9, G + 1, 56, B.CRACK);
-  SECRET = { door: [[9, G, 56], [9, G + 1, 56]], x0: 5, x1: 13, z0: 57, z1: 65, open: false };
+  SECRETS.push({ door: [[9, G, 56], [9, G + 1, 56]], x0: 5, x1: 13, z0: 57, z1: 65, open: false, found: false, room: 0,
+    bark: [9.5, 55.5], dust: [9.1, G + 1.9, 55.96, 0, -0.06], ach: 'pompeii.cellar',
+    hint: 'This plaster is cracked, and something is barking behind it.', burst: [[.62, .17, .14], [.5, .45, .4], [.78, .72, .66]],
+    splash: ['LOCUS SECRETUS', 'The Hidden Cellar', 'cave canem', 'Someone hid their gold down here. And their dog.'] });
   addNote(9, G - 1, 57, B.CANEM, { title: 'Floor mosaic', lat: 'cave canem', en: 'Beware of the dog!',
     about: 'A mosaic like this guards the front door of the House of the Tragic Poet in Pompeii. You can still see it there today.' });
   addNote(14, G + 1, 60, B.GRAFFITO, { title: 'Words scratched on the wall', lat: 'admiror, o paries, te non cecidisse ruinis, qui tot scriptorum taedia sustineas.',
@@ -1441,7 +2070,7 @@ function buildPompeii() {
   setRaw(13, G, 41, B.MARBLE);
   addLock(0, 0, 6, G + 1, 48, B.TABLET);
   addLock(0, 1, 13, G + 1, 40, B.SHRINE);
-  addLock(0, 2, 20, G, 54, B.CHEST);
+  setRaw(20, G, 54, B.CHEST); addPlate(0, 2, 18, G - 1, 48);
   addGate(0, 22, G, 47, 22, G + 2, 49);
 
   // ── Room II: the street ──
@@ -1461,7 +2090,8 @@ function buildPompeii() {
   setRaw(38, G + 1, 55, B.MARBLE); setRaw(36, G + 1, 55, B.STONE); setRaw(36, G + 2, 55, B.FIRE);
   addLock(1, 0, 27, G + 2, 40, B.TABLET);
   addLock(1, 1, 33, G + 1, 45, B.AMPHORA);
-  addLock(1, 2, 38, G + 2, 56, B.SHRINE);
+  setRaw(38, G + 2, 56, B.SHRINE);
+  addNpcLock(1, 2, { x: 36.5, z: 51.5, name: 'a shopkeeper', tunic: [0.42, 0.5, 0.72], say: [['Cinis de caelo cadit!', 'Ash is falling from the sky!'], ['Terra tremit!', 'The earth is shaking!']] });
   addGate(1, 40, G, 47, 40, G + 2, 49);
 
   // ── Room III: the bakery ──
@@ -1478,7 +2108,7 @@ function buildPompeii() {
   setRaw(41, G, 55, B.CRATE); setRaw(41, G, 54, B.CRATE); setRaw(41, G + 1, 55, B.CRATE);
   addLock(2, 0, 47, G, 43, B.AMPHORA);
   addLock(2, 1, 50, G, 55, B.CHEST);
-  addLock(2, 2, 45, G + 3, 41, B.AMPHORA);
+  setRaw(45, G + 3, 41, B.AMPHORA); addHidden(2, 2, 45, G + 3, 52);   // on top of the millstone
   addGate(2, 56, G, 47, 56, G + 2, 49);
 
   // ── Room IV: the forum and the temple of Jupiter ──
@@ -1495,7 +2125,8 @@ function buildPompeii() {
   fill(62, G + 8, 43, 73, G + 8, 53, B.ROOF); fill(62, G + 9, 45, 73, G + 9, 51, B.ROOF); fill(62, G + 10, 47, 73, G + 10, 49, B.ROOF);
   fill(70, G + 4, 48, 70, G + 5, 48, B.MARBLE); setRaw(70, G + 6, 48, B.GOLD);   // Jupiter
   setRaw(58, G + 1, 45, B.FIRE);
-  addLock(3, 0, 58, G, 45, B.SHRINE);
+  setRaw(58, G, 45, B.SHRINE);
+  addNpcLock(3, 0, { x: 59.5, z: 47.5, name: 'the priest of Jupiter', tunic: [1, 1, 1], tile: 33, hair: [0.55, 0.52, 0.5], say: [['O di immortales!', 'O immortal gods!']] });
   addLock(3, 1, 70, G + 3, 48, B.PLAQUE);
   addLock(3, 2, 74, G + 1, 56, B.TABLET);
   addGate(3, 76, G, 47, 76, G + 2, 49);
@@ -1513,7 +2144,7 @@ function buildPompeii() {
   setRaw(79, G, 42, B.PLANKS); setRaw(80, G, 42, B.PLANKS);
   setRaw(78, G, 41, B.STONE); setRaw(78, G + 1, 41, B.FIRE);
   fill(84, G, 41, 85, G, 42, B.CRATE); setRaw(84, G + 1, 41, B.CRATE);
-  addLock(4, 0, 79, G + 1, 42, B.TABLET);
+  setRaw(79, G + 1, 42, B.TABLET); addPlate(4, 0, 84, G - 1, 48);
   addLock(4, 1, 92, G + 1, 45, B.PLAQUE);
   addLock(4, 2, 91, G + 7, 42, B.CHEST);
   addGate(4, 92, G, 47, 92, G + 3, 49);
@@ -1542,7 +2173,7 @@ function buildRome() {
     const top = r < 7 ? flat : G - 1 + Math.floor(VH * Math.pow(1 - r / VR, 1.1) + (rnd() - 0.5) * 1.2);
     for (let y = G; y <= top; y++) setRaw(x, y, z, y === top ? B.GRASS : y > top - 3 ? B.DIRT : B.STONE);
   }
-  const T = flat;
+  const T = flat; LV.capY = T;
   fill(50, T + 1, 3, 62, T + 1, 13, B.TRAV);
   fill(52, T + 2, 3, 60, T + 6, 9, B.MARBLE);
   for (let x = 50; x <= 62; x += 2) fill(x, T + 2, 12, x, T + 6, 12, B.COLUMN);
@@ -1576,7 +2207,8 @@ function buildRome() {
   fill(14, G, 54, 16, G, 55, B.CRATE); fill(14, G + 1, 55, 15, G + 1, 55, B.CRATE);
   fill(18, G, 54, 19, G, 55, B.AMPHORA); setRaw(20, G, 55, B.AMPHORA); setRaw(20, G, 54, B.CRATE);
   fill(16, G, 41, 17, G, 41, B.CRATE); setRaw(17, G + 1, 41, B.CRATE);
-  addLock(0, 0, 14, G, 41, B.CHEST);
+  setRaw(14, G, 41, B.CHEST);
+  addNpcLock(0, 0, { x: 13.5, z: 44.5, name: 'the fishmonger', tunic: [0.42, 0.5, 0.7], say: [['Pisces! Pisces recentes!', 'Fish! Fresh fish!'], ['Salve, peregrine!', 'Hello, stranger!']] });
   addLock(0, 1, 20, G + 1, 54, B.AMPHORA);
   addLock(0, 2, 17, G + 2, 56, B.TABLET);
   addGate(0, 22, G, 47, 22, G + 2, 49);
@@ -1596,7 +2228,7 @@ function buildRome() {
   setRaw(24, G + 1, 42, B.AMPHORA); setRaw(38, G + 1, 54, B.CRATE); setRaw(25, G + 1, 55, B.MARBLE);
   addLock(1, 0, 25, G + 2, 56, B.SHRINE);                    // a street-corner shrine
   addLock(1, 1, 31, G + 2, 40, B.PLAQUE);                    // a painted notice
-  addLock(1, 2, 36, G + 1, 42, B.AMPHORA);
+  setRaw(36, G + 1, 42, B.AMPHORA); addHidden(1, 2, 37, G + 2, 52);   // on the fountain
   addGate(1, 40, G, 47, 40, G + 2, 49);
 
   // ── Room III: the Forum ──
@@ -1609,7 +2241,9 @@ function buildRome() {
   setRaw(50, G, 54, B.TRAV);
   setRaw(53, G, 42, B.MARBLE); setRaw(53, G + 1, 42, B.FIRE); setRaw(54, G, 42, B.MARBLE);   // Vesta's fire
   fill(51, G, 40, 51, G + 1, 40, B.PLANKS); fill(51, G, 56, 51, G + 1, 56, B.PLANKS);
-  addLock(2, 0, 46, G, 52, B.PLAQUE);
+  setRaw(46, G, 52, B.PLAQUE);
+  addNpcLock(2, 0, { x: 47.5, z: 46.5, name: 'Spurinna the soothsayer', tunic: [0.32, 0.28, 0.4], hair: [0.6, 0.58, 0.56],
+    say: [['Cavete Idus Martias!', 'Beware the Ides of March!'], ['Idus Martiae venerunt, sed non praeterierunt.', 'The Ides of March have come, but they have not gone.']] });
   addLock(2, 1, 54, G + 1, 42, B.SHRINE);
   addLock(2, 2, 47, G + 2, 40, B.TABLET);
   addGate(2, 56, G, 47, 56, G + 2, 49);
@@ -1623,7 +2257,7 @@ function buildRome() {
   fill(57, G + 6, 54, 75, G + 6, 55, B.ROOF);
   setRaw(61, G + 1, 54, B.AMPHORA); setRaw(72, G + 1, 53, B.CRATE);
   addLock(3, 0, 66, G + 5, 41, B.SHRINE);                    // Venus' shrine at the top of the seats
-  addLock(3, 1, 66, G, 52, B.PLAQUE);
+  setRaw(66, G, 52, B.PLAQUE); addPlate(3, 1, 66, G, 53);   // a tile in the stage
   addLock(3, 2, 60, G + 1, 53, B.AMPHORA);
   addGate(3, 76, G, 47, 76, G + 2, 49);
 
@@ -1641,7 +2275,7 @@ function buildRome() {
   });
   fill(83, G, 50, 85, G, 52, B.STONE); setRaw(84, G, 51, B.WATER);
   addLock(4, 0, 80, G + 2, 56, B.TABLET);
-  addLock(4, 1, 85, G, 44, B.AMPHORA);
+  setRaw(85, G, 44, B.AMPHORA); addHidden(4, 1, 83, G + 1, 52);   // by the fountain
   addLock(4, 2, 90, G, 52, B.CHEST);
   fill(92, G, 40, 94, G + 9, 56, B.MARBLE);                  // front of the Senate house
   fill(92, G + 10, 44, 94, G + 10, 52, B.ROOF); fill(92, G + 11, 46, 94, G + 11, 50, B.ROOF);
@@ -1659,8 +2293,250 @@ function buildRome() {
   setRaw(106, G, 48, B.GOLD);                                // Caesar's golden chair
   setRaw(97, G, 45, B.STONE); setRaw(97, G + 1, 45, B.FIRE); setRaw(97, G, 51, B.STONE); setRaw(97, G + 1, 51, B.FIRE);
 
+  // ── Secret: a hollow panel behind the stage hides the actors' room ──
+  fill(61, G, 57, 70, H - 1, 63, B.AIR);
+  fill(62, G, 57, 69, G, 62, B.PLANKS);
+  fill(61, G, 57, 61, G + 5, 63, B.MARBLE); fill(70, G, 57, 70, G + 5, 63, B.MARBLE); fill(61, G, 63, 70, G + 5, 63, B.MARBLE);
+  fill(61, G + 6, 56, 70, G + 6, 63, B.ROOF);
+  setRaw(65, G + 1, 56, B.MCRACK); setRaw(65, G + 2, 56, B.MCRACK);
+  SECRETS.push({ door: [[65, G + 1, 56], [65, G + 2, 56]], x0: 62, x1: 68, z0: 57, z1: 62, y0: G + 1, open: false, found: false, room: 3, ach: 'rome.stage',
+    hint: 'This marble panel sounds hollow when you tap it.', opened: '<span class="gold">The panel swings open!</span><br>There is a room behind the stage.',
+    splash: ['LOCUS SECRETUS', 'Behind the Scenes', 'theatrum', 'The actors keep their costumes, and their savings, back here.'] });
+  fill(67, G + 1, 61, 68, G + 1, 62, B.GOLD); setRaw(68, G + 2, 62, B.GOLD);
+  fill(62, G + 1, 62, 63, G + 1, 62, B.CLOTH); setRaw(62, G + 1, 58, B.AMPHORA); setRaw(63, G + 1, 57, B.CRATE);
+  addNote(64, G + 2, 63, B.GRAFFITO, { title: 'Words scratched on the wall', lat: 'Iulius Caesar erat dux optimus.', en: 'Julius Caesar was a very good general.',
+    about: 'Someone who liked Caesar scratched this backstage. The sentence comes from Bass, Chapter 106.' });
   road(4, 100);
   fill(0, G - 1, 69, 3, G - 1, 71, B.PLANKS);                // bridge
+}
+
+// ── Level 3: Troy, the night the city fell ──
+function buildTroy() {
+  // Mount Ida in the distance
+  const VX = 56, VZ = 6, VR = 30, VH = 14;
+  for (let z = 0; z < 34; z++) for (let x = VX - VR; x <= VX + VR; x++) {
+    const r = Math.hypot(x - VX, z - VZ);
+    if (r >= VR) continue;
+    const top = G - 1 + Math.floor(VH * Math.pow(1 - r / VR, 1.2) + (rnd() - 0.5) * 1.2);
+    for (let y = G; y <= top; y++) setRaw(x, y, z, y === top ? B.GRASS : y > top - 3 ? B.DIRT : B.STONE);
+  }
+  trees(60, (x, z) => (z > 33 && z < 63 && x < 100) || x > 96);
+  fill(4, G, 37, 94, H - 1, 59, B.AIR);
+  // The great walls of Troy, with towers
+  for (const zw of [37, 59]) {
+    fill(4, G, zw, 94, G + 9, zw, B.TRAV);
+    for (let x = 4; x <= 94; x += 2) setRaw(x, G + 10, zw, B.TRAV);
+    for (let x = 12; x <= 84; x += 24) fill(x - 1, G, zw - 1, x + 1, G + 12, zw + 1, B.TRAV);
+  }
+  const smoke = [];
+  const burn = (x, y, z) => { setRaw(x, y, z, B.FIRE); smoke.push([x + .5, y + 1, z + .5]); };
+
+  // ── Room I: your house ──
+  fill(5, G - 1, 41, 21, G - 1, 55, B.MOSAIC);
+  walls(4, 22, 6, B.BRICK);
+  fill(4, G + 6, 40, 22, G + 6, 56, B.ROOF);
+  fill(11, G + 6, 46, 15, G + 6, 50, B.AIR);
+  fill(5, G, 52, 21, G + 5, 52, B.BRICK); fill(7, G, 52, 8, G + 1, 52, B.AIR); fill(18, G, 52, 19, G + 1, 52, B.AIR); fill(13, G, 53, 13, G + 5, 55, B.BRICK);
+  setRaw(13, G, 44, B.STONE); setRaw(13, G + 1, 44, B.FIRE);                 // hearth
+  setRaw(7, G, 48, B.PLANKS); setRaw(7, G, 47, B.PLANKS);                    // table
+  fill(15, G, 55, 16, G, 55, B.CLOTH); fill(6, G, 55, 7, G, 55, B.CLOTH);
+  setRaw(20, G, 42, B.AMPHORA); setRaw(19, G, 42, B.AMPHORA); setRaw(20, G + 1, 42, B.AMPHORA); setRaw(5, G, 41, B.CRATE);
+  [[6, 42], [19, 44], [9, 54], [20, 53]].forEach(([x, z]) => burn(x, G + 7, z));   // the roof is on fire
+  addLock(0, 0, 7, G + 1, 48, B.TABLET);
+  addPlate(0, 1, 13, G - 1, 47);
+  addNpcLock(0, 2, { x: 17.5, z: 49.5, name: 'your grandfather', tunic: [0.6, 0.5, 0.42], hair: [0.86, 0.86, 0.83], beard: true,
+    say: [['in maximo periculo sumus.', 'We are in very great danger.'], ['effugere debemus.', 'We must escape.']] });
+  addGate(0, 22, G, 47, 22, G + 2, 49);
+
+  // ── Room II: the square of the wooden horse ──
+  fill(23, G - 1, 41, 39, G - 1, 55, B.COBBLE);
+  fill(23, G, 40, 39, G + 6, 40, B.YELLOW); fill(23, G, 56, 39, G + 6, 56, B.YELLOW);
+  fill(40, G, 40, 40, G + 6, 56, B.BRICK);
+  fill(23, G + 7, 40, 39, G + 7, 40, B.ROOF); fill(23, G + 7, 56, 39, G + 7, 56, B.ROOF);
+  [[25, 40], [37, 40], [27, 56], [33, 56]].forEach(([x, z]) => burn(x, G + 8, z));
+  fill(25, G + 1, 56, 26, G + 3, 56, B.PLANKS); fill(33, G + 1, 40, 34, G + 3, 40, B.PLANKS);
+  fill(23, G, 53, 25, G, 54, B.STONE); setRaw(24, G, 53, B.WATER); fill(24, G, 55, 24, G + 2, 55, B.MARBLE);   // fountain
+  // The wooden horse: hollow, with a hatch in its side
+  fill(27, G + 2, 46, 35, G + 6, 50, B.PLANKS);
+  fill(28, G + 3, 47, 34, G + 5, 49, B.AIR);
+  [[28, 46], [34, 46], [28, 50], [34, 50]].forEach(([x, z]) => fill(x, G, z, x, G + 1, z, B.LOG));
+  fill(35, G + 6, 47, 36, G + 9, 49, B.PLANKS);                              // neck
+  fill(36, G + 9, 47, 38, G + 10, 49, B.PLANKS);                             // head
+  setRaw(36, G + 11, 47, B.PLANKS); setRaw(36, G + 11, 49, B.PLANKS);         // ears
+  setRaw(38, G + 10, 47, B.BASALT); setRaw(38, G + 10, 49, B.BASALT);         // eyes
+  fill(26, G + 3, 48, 26, G + 5, 48, B.LOG);                                  // tail
+  setRaw(30, G, 45, B.CRATE); fill(31, G, 45, 31, G + 1, 45, B.CRATE); fill(32, G, 45, 32, G + 2, 45, B.CRATE);   // crates to climb
+  setRaw(32, G + 3, 46, B.HATCH); setRaw(32, G + 4, 46, B.HATCH);
+  SECRETS.push({ door: [[32, G + 3, 46], [32, G + 4, 46]], x0: 28, x1: 33, z0: 46, z1: 48, y0: G + 3, open: false, found: false, room: 1, ach: 'troy.horse',
+    hint: 'A square of planks in the horse’s side is loose.', opened: '<span class="gold">The hatch swings open!</span><br>You can climb inside the horse.',
+    splash: ['LOCUS SECRETUS', 'Inside the Horse', 'equus ligneus', 'The Greek soldiers hid in here all day.'] });
+  addNote(27, G + 4, 48, B.TABLET, { title: 'A wax tablet left by a Greek soldier', lat: 'Graeci maximum equum ligneum fecerant.', en: 'The Greeks had made a very big wooden horse.',
+    about: 'From Bass, Chapter 110. The Greeks hid their soldiers inside, left the horse on the shore and pretended to sail home.' });
+  addNote(35, G + 4, 48, B.TABLET, { title: 'Another wax tablet', lat: 'consilium habeo. consilium optimum habeo.', en: 'I have a plan. I have a very good plan.',
+    about: 'Ulysses said this to the Greeks when they wanted to give up and go home (Bass, Chapter 108). The horse was his plan.' });
+  setRaw(34, G + 3, 49, B.GOLD); setRaw(29, G + 3, 49, B.CRATE);
+  addLock(1, 0, 23, G, 55, B.AMPHORA);
+  addNpcLock(1, 1, { x: 37.5, z: 52.5, name: 'a worried Trojan', tunic: [0.55, 0.45, 0.62],
+    say: [['num hic equus donum est?', 'This horse isn’t a present, is it?'], ['Graeci dona numquam dant.', 'The Greeks never give presents.'], ['nolite equum in urbem trahere, cives!', 'Don’t drag the horse into the city, citizens!']] });
+  addHidden(1, 2, 31, G, 48);                                                  // under the horse's belly
+  addGate(1, 40, G, 47, 40, G + 2, 49);
+
+  // ── Room III: Priam's palace ──
+  fill(41, G - 1, 41, 55, G - 1, 55, B.MOSAIC);
+  walls(40, 56, 7, B.MARBLE);
+  for (let x = 42; x <= 54; x += 3) { fill(x, G, 42, x, G + 5, 42, B.COLUMN); fill(x, G, 54, x, G + 5, 54, B.COLUMN); }
+  fill(41, G + 6, 41, 55, G + 6, 43, B.ROOF); fill(41, G + 6, 53, 55, G + 6, 55, B.ROOF);
+  fill(47, G, 47, 49, G, 49, B.MARBLE); setRaw(48, G + 1, 48, B.FIRE);         // altar
+  fill(50, G, 52, 52, G, 53, B.MARBLE); setRaw(51, G + 1, 53, B.GOLD); setRaw(51, G + 2, 53, B.GOLD);   // Priam's throne
+  [[43, 41], [52, 55], [47, 41]].forEach(([x, z]) => burn(x, G + 7, z));
+  addLock(2, 0, 48, G, 46, B.SHRINE);
+  addPlate(2, 1, 51, G - 1, 51);
+  addNpcLock(2, 2, { x: 43.5, z: 51.5, name: 'a wounded Trojan soldier', sit: true, tunic: [0.5, 0.32, 0.22], helmet: true,
+    say: [['quis nos servare poterit?', 'Who will be able to save us?'], ['nolite me relinquere, comites!', 'Don’t leave me behind, companions!']] });
+  addGate(2, 56, G, 47, 56, G + 2, 49);
+
+  // ── Room IV: the temple of Athena ──
+  fill(57, G - 1, 41, 75, G - 1, 55, B.TRAV);
+  walls(56, 76, 7, B.MARBLE);
+  for (let x = 58; x <= 74; x += 3) { fill(x, G, 42, x, G + 4, 42, B.COLUMN); fill(x, G, 54, x, G + 4, 54, B.COLUMN); }
+  fill(57, G + 5, 41, 75, G + 5, 42, B.ROOF); fill(57, G + 5, 54, 75, G + 5, 55, B.ROOF);
+  fill(63, G, 44, 72, G + 2, 52, B.TRAV);
+  fill(60, G, 45, 62, G, 51, B.TRAV); fill(61, G + 1, 45, 62, G + 1, 51, B.TRAV); fill(62, G + 2, 45, 62, G + 2, 51, B.TRAV);
+  [44, 46, 50, 52].forEach(z => fill(63, G + 3, z, 63, G + 7, z, B.COLUMN));
+  [65, 67].forEach(x => { fill(x, G + 3, 44, x, G + 7, 44, B.COLUMN); fill(x, G + 3, 52, x, G + 7, 52, B.COLUMN); });
+  fill(68, G + 3, 45, 72, G + 7, 51, B.MARBLE); fill(69, G + 3, 46, 71, G + 7, 50, B.AIR);
+  fill(68, G + 3, 47, 68, G + 5, 49, B.AIR);
+  fill(62, G + 8, 43, 73, G + 8, 53, B.ROOF); fill(62, G + 9, 45, 73, G + 9, 51, B.ROOF); fill(62, G + 10, 47, 73, G + 10, 49, B.ROOF);
+  fill(70, G + 4, 48, 70, G + 5, 48, B.MARBLE);                                // Athena
+  addItem(70, G + 6, 48, B.APPLE, { ach: 'troy.apple', toast: '<span class="gold">hoc pomum aureum feminae pulcherrimae est.</span><br>“This golden apple is for the most beautiful woman.” You found the apple that started the Trojan War (Bass, Chapter 76).' });
+  addLock(3, 0, 70, G + 3, 48, B.PLAQUE);
+  addHidden(3, 1, 74, G, 53);                                                  // behind the temple
+  addNpcLock(3, 2, { x: 59.5, z: 50.5, name: 'a Trojan soldier', tunic: [0.5, 0.32, 0.22], helmet: true,
+    say: [['Graeci fortiores quam nos non sunt.', 'The Greeks are not braver than us.'], ['bene pugnate, cives!', 'Fight well, citizens!']] });
+  addGate(3, 76, G, 47, 76, G + 2, 49);
+
+  // ── Room V: the Scaean Gate ──
+  fill(77, G - 1, 41, 91, G - 1, 55, B.COBBLE);
+  fill(76, G, 40, 92, G + 5, 40, B.TRAV); fill(76, G, 56, 92, G + 5, 56, B.TRAV);
+  fill(92, G, 37, 94, G + 9, 59, B.TRAV);
+  for (let z = 37; z <= 59; z += 2) fill(92, G + 10, z, 94, G + 10, z, B.TRAV);
+  fill(92, G, 47, 94, G + 3, 49, B.AIR);
+  fill(88, G + 6, 41, 91, G + 6, 55, B.TRAV);
+  fill(88, G, 45, 88, G + 5, 45, B.COLUMN); fill(88, G, 51, 88, G + 5, 51, B.COLUMN);
+  for (let i = 0; i <= 6; i++) fill(81 + i, G, 54, 81 + i, G + i, 55, B.TRAV);
+  fill(84, G, 41, 85, G, 42, B.CRATE); setRaw(84, G + 1, 41, B.CRATE);
+  setRaw(78, G, 41, B.STONE); setRaw(78, G + 1, 41, B.FIRE);
+  addLock(4, 0, 91, G + 7, 42, B.CHEST);
+  addPlate(4, 1, 84, G - 1, 48);
+  addNpcLock(4, 2, { x: 80.5, z: 51.5, name: 'the gatekeeper', tunic: [0.5, 0.32, 0.22], helmet: true,
+    say: [['vos tuti estis, nos in magno periculo sumus.', 'You are safe; we are in great danger.']] });
+  addGate(4, 92, G, 47, 92, G + 3, 49);
+
+  // ── Outside: the shore and Aeneas' ships ──
+  fill(95, G, 30, W - 1, H - 1, D - 1, B.AIR);
+  fill(95, G - 1, 46, 100, G - 1, 50, B.COBBLE);
+  fill(101, G - 1, 20, 104, G - 1, D - 1, B.SAND);
+  fill(105, G - 3, 20, W - 1, G - 3, D - 1, B.SAND);
+  fill(105, G - 2, 20, W - 1, G - 1, D - 1, B.WATER);
+  boat(105, 46); boat(105, 61); boat(106, 31);
+  road(0, 100);
+  LV.smoke = smoke;
+}
+
+// ── Level 4: the cave of Polyphemus ──
+function buildCyclops() {
+  // The mountain that holds the cave
+  for (let z = 26; z <= 70; z++) for (let x = 0; x <= 97; x++) {
+    const edge = Math.min(z - 26, 70 - z, 97 - x, x + 8);
+    const top = G + Math.min(17, 6 + Math.floor(edge * 0.9)) + Math.floor((rnd() - 0.5) * 2);
+    for (let y = G; y <= top; y++) setRaw(x, y, z, y === top ? B.GRASS : y > top - 2 ? B.DIRT : B.ROCK);
+  }
+  trees(50, (x, z) => (z > 24 && z < 72 && x < 99) || x > 99);
+  // Hollow out the five parts of the cave
+  const CEIL = [7, 7, 8, 10, 8];
+  for (let r = 0; r < 5; r++) {
+    const x0 = ROOM_X[r] + 1, x1 = ROOM_X[r + 1] - 1;
+    for (let z = 41; z <= 55; z++) for (let x = x0; x <= x1; x++) {
+      const edgeDrop = (z === 41 || z === 55 || x === x0 || x === x1) ? 2 : (z === 42 || z === 54) ? 1 : 0;
+      fill(x, G, z, x, G + CEIL[r] - edgeDrop - Math.floor(rnd() * 1.7), z, B.AIR);
+    }
+  }
+  fill(5, G - 1, 41, 91, G - 1, 55, B.STONE);
+  // Torches in the rock walls
+  [[10, 40], [17, 56], [30, 40], [35, 56], [46, 40], [52, 56], [62, 40], [70, 56], [82, 40], [88, 56]].forEach(([x, z]) => setRaw(x, G + 3, z, B.FIRE));
+
+  // ── Room I: the back of the cave ──
+  fill(6, G, 42, 6, G, 44, B.AMPHORA); setRaw(6, G + 1, 43, B.AMPHORA);
+  addLock(0, 0, 8, G, 42, B.AMPHORA);
+  addNpcLock(0, 1, { x: 15.5, z: 51.5, name: 'Ulysses', tunic: [0.55, 0.4, 0.25], hair: [0.3, 0.2, 0.12], beard: true,
+    say: [['milites Graeci sumus.', 'We are Greek soldiers.'], ['cibum aquamque petimus.', 'We are looking for food and water.']] });
+  fill(5, G, 54, 6, G, 55, B.ROCK); addHidden(0, 2, 5, G + 1, 55);
+  addGate(0, 22, G, 47, 22, G + 2, 49);
+
+  // ── Room II: the sheep pens ──
+  fill(23, G - 1, 41, 39, G - 1, 55, B.HAY);
+  fill(27, G, 41, 27, G, 45, B.PLANKS); fill(27, G, 51, 27, G, 55, B.PLANKS);
+  fill(34, G, 41, 34, G, 45, B.PLANKS); fill(34, G, 51, 34, G, 55, B.PLANKS);
+  fill(24, G, 41, 25, G + 1, 42, B.HAY); setRaw(24, G, 43, B.HAY);
+  addHidden(1, 2, 24, G + 2, 41);                                              // on the hay bales
+  addPlate(1, 0, 30, G - 1, 48);
+  addLock(1, 1, 38, G, 54, B.CHEST);
+  addGate(1, 40, G, 47, 40, G + 2, 49);
+
+  // ── Room III: the cheese store ──
+  fill(42, G + 2, 41, 54, G + 2, 41, B.PLANKS); fill(42, G + 2, 55, 54, G + 2, 55, B.PLANKS);
+  for (let x = 42; x <= 54; x += 2) { setRaw(x, G + 3, 41, B.CHEESE); setRaw(x, G + 3, 55, B.CHEESE); }
+  fill(44, G + 4, 41, 50, G + 4, 41, B.PLANKS);
+  fill(42, G, 41, 42, G + 1, 41, B.LOG); fill(54, G, 41, 54, G + 1, 41, B.LOG); fill(42, G, 55, 42, G + 1, 55, B.LOG); fill(54, G, 55, 54, G + 1, 55, B.LOG);
+  addItem(47, G + 5, 41, B.CHEESE, { ach: 'cyclops.cheese', toast: '<span class="gold">The giant’s best cheese!</span><br>You take a bite. Polyphemus will never miss it.' });
+  setRaw(44, G, 54, B.AMPHORA); setRaw(45, G, 54, B.AMPHORA);
+  addLock(2, 0, 43, G, 54, B.AMPHORA);
+  addNpcLock(2, 1, { x: 51.5, z: 45.5, name: 'a hungry Greek sailor', tunic: [0.4, 0.45, 0.6],
+    say: [['quis nos servare poterit?', 'Who will be able to save us?']] });
+  addHidden(2, 2, 53, G + 3, 55);                                              // among the cheeses
+  // Secret: a cracked rock leads to the giant's hoard
+  fill(47, G, 57, 49, G + 2, 60, B.AIR);
+  fill(44, G, 61, 52, G + 4, 66, B.AIR);
+  fill(44, G - 1, 57, 52, G - 1, 66, B.STONE);
+  setRaw(48, G, 56, B.RCRACK); setRaw(48, G + 1, 56, B.RCRACK); setRaw(48, G + 2, 56, B.ROCK);
+  SECRETS.push({ door: [[48, G, 56], [48, G + 1, 56]], x0: 44, x1: 51, z0: 60, z1: 65, open: false, found: false, room: 2, ach: 'cyclops.hoard',
+    dust: [47.6, G + 1.6, 55.96, 0, -0.08], hint: 'This rock is cracked, and cold air blows through it.', opened: '<span class="gold">The rock crumbles!</span><br>A tunnel leads into the dark.',
+    splash: ['LOCUS SECRETUS', 'The Giant’s Hoard', 'antrum', 'Polyphemus keeps the best things for himself.'] });
+  fill(50, G, 64, 52, G, 66, B.GOLD); fill(51, G + 1, 65, 52, G + 1, 66, B.GOLD); setRaw(52, G + 2, 66, B.GOLD);
+  setRaw(44, G, 66, B.CHEST); setRaw(45, G, 66, B.AMPHORA); setRaw(44, G, 61, B.FIRE);
+  addNote(48, G + 1, 67, B.GRAFFITO, { title: 'Words scratched on the rock', lat: 'nomen huius gigantis Polyphemus erat.', en: 'The name of this giant was Polyphemus.',
+    about: 'From Bass, Chapter 136. Someone scratched the giant’s name here, deep in his secret store.' });
+  addNote(52, G + 1, 61, B.GRAFFITO, { title: 'More words on the rock', lat: 'altissimus et ferocissimus et superbissimus erat.', en: 'He was very tall, very fierce and very arrogant.',
+    about: 'Also from Bass, Chapter 136. Was this written by someone who escaped?' });
+  addGate(2, 56, G, 47, 56, G + 2, 49);
+
+  // ── Room IV: the giant's fire ──
+  fill(64, G, 46, 68, G, 50, B.STONE); fill(65, G, 47, 67, G, 49, B.FIRE);
+  fill(58, G, 43, 61, G, 43, B.LOG);
+  addLock(3, 1, 62, G, 43, B.STAKE);                                           // the sharpened end of the stake
+  addPlate(3, 2, 62, G - 1, 52);
+  addNpcLock(3, 0, { x: 72.5, z: 48.5, h: -Math.PI / 2, name: 'Polyphemus', scale: 3, sit: true, face: 42,
+    tunic: [0.45, 0.36, 0.28], skin: [0.86, 0.7, 0.56], hair: [0.2, 0.16, 0.12], beard: true,
+    ask: 'Ulysses gives you a goblet of sweet wine for the giant. Answer correctly to keep him drinking.',
+    say: [['hoc antrum meum, non vestrum, est.', 'This cave is mine, not yours.'], ['cur hic adestis?', 'Why are you here?'], ['hoc vinum optimum est. da mihi plus vini!', 'This wine is very good. Give me more wine!']],
+    after: [['hoc vinum optimum est. da mihi plus vini!', 'This wine is very good. Give me more wine!']] });
+  addGate(3, 76, G, 47, 76, G + 2, 49);
+
+  // ── Room V: the cave mouth and the great rock ──
+  setRaw(80, G, 54, B.HAY); setRaw(81, G, 54, B.HAY);
+  addLock(4, 0, 80, G, 53, B.CHEST);
+  addNpcLock(4, 1, { x: 84.5, z: 44.5, name: 'a Greek sailor', tunic: [0.6, 0.3, 0.25],
+    say: [['multi perierunt, pauci effugerunt.', 'Many perished, few escaped.']] });
+  fill(90, G, 41, 91, G + 1, 42, B.ROCK); addHidden(4, 2, 90, G + 2, 41);
+  fill(92, G, 46, 98, G + 3, 50, B.AIR); fill(92, G - 1, 46, 98, G - 1, 50, B.STONE);
+  addGate(4, 92, G, 47, 92, G + 3, 49, B.BASALT);
+
+  // ── Outside: the beach and Ulysses' ship ──
+  fill(99, G, 20, W - 1, H - 1, D - 1, B.AIR);
+  fill(99, G - 1, 20, 104, G - 1, D - 1, B.SAND);
+  fill(105, G - 3, 20, W - 1, G - 3, D - 1, B.SAND);
+  fill(105, G - 2, 20, W - 1, G - 1, D - 1, B.WATER);
+  boat(105, 46);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1694,10 +2570,10 @@ if (gl) {
     void main(){ gl_Position = uMVP * vec4(aPos,1.0); vUV = aUV; vCol = aCol;
       vFog = clamp((distance(aPos,uEye) - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0); }`, `
     precision mediump float;
-    uniform sampler2D uTex; uniform vec3 uFogCol; uniform float uAlpha;
+    uniform sampler2D uTex; uniform vec3 uFogCol; uniform float uAlpha; uniform float uLight;
     varying vec2 vUV; varying vec3 vCol; varying float vFog;
     void main(){ vec4 t = texture2D(uTex, vUV); if (t.a < 0.5) discard;
-      gl_FragColor = vec4(mix(t.rgb * vCol, uFogCol, vFog), uAlpha); }`);
+      gl_FragColor = vec4(mix(t.rgb * vCol * uLight, uFogCol, vFog), uAlpha); }`);
   pointProg = compile(`
     attribute vec3 aPos; attribute vec4 aCol; attribute float aSize;
     uniform mat4 uMVP; uniform float uScale; uniform vec3 uEye; uniform vec2 uFog;
@@ -1765,7 +2641,7 @@ function buildChunk(ci) {
     const b = world[(y * D + z) * W + x]; if (!b) continue;
     const def = BL[b];
     let tint = NO_TINT;
-    if (def.lock) { const L = lockMap.get(key3(x, y, z)); if (L && L.done) tint = DONE_TINT; }
+    if (def.lock || def.plate) { const L = lockMap.get(key3(x, y, z)); if (L && L.done) tint = DONE_TINT; }
     for (const f of FACES) {
       const n = getB(x + f.n[0], y + f.n[1], z + f.n[2]);
       if (b === B.WATER) { if (n !== B.WATER && !BL[n].opaque) pushFace(w, x, y, z, f, def, NO_TINT); continue; }
@@ -1861,14 +2737,10 @@ function spawnNpcs() {
         wait: Math.random() * 24, gap: [0.5, 4], armsUp: Math.random() < 0.35, say: FLEE });
     }
     dogNpc = add({ kind: 'dog', fur: [0.55, 0.38, 0.22], x: 10.5, z: 62.5, h: 0, say: WOOF });     // waiting in the secret cellar
-  } else {
-    add({ mode: 'loop', path: [[13.6, 42.6], [13.6, 46.4]], speed: 1.4, tunic: [0.42, 0.5, 0.7],
-      say: [['Pisces! Pisces recentes!', 'Fish! Fresh fish!'], ['Salve, peregrine!', 'Hello, stranger!']] });
+  } else if (LV.key === 'rome') {
     const walk = () => ({ speed: rr(3.2, 4.2), armsUp: false, say: HURRY });
     runners([[33.5, 38.7], [33.5, 42.6], [30.5, 43.6], [28.5, 48.5], [27.5, 53.2], [27.5, 57.3]], 3, walk);
     runners([[51.5, 38.7], [51.5, 57.3]], 2, walk);
-    add({ x: 47.5, z: 46.5, tunic: [0.32, 0.28, 0.4], hair: [0.6, 0.58, 0.56],                        // Spurinna the soothsayer
-      say: [['Cavete Idus Martias!', 'Beware the Ides of March!'], ['Idus Martiae venerunt, sed non praeterierunt.', 'The Ides of March have come, but they have not gone.']] });
     [[59.5, 43.5, 3], [62.5, 42.5, 4], [64.5, 43.5, 3], [69.5, 42.5, 4], [71.5, 43.5, 3], [73.5, 42.5, 4]].forEach(([x, z, dy]) =>
       add({ x, z, y: G + dy, h: Math.PI, fixedH: true, sit: true, armsUp: Math.random() < 0.6, say: [['Euge!', 'Hooray!'], ['Optime!', 'Excellent!'], ['Pugnate!', 'Fight!']] }));
     add({ mode: 'loop', path: [[79.5, 47.6], [90.4, 47.6]], speed: 1.3, tunic: [1, 1, 1], tile: 33, say: [['Ad curiam eo.', 'I am going to the Senate house.']] });
@@ -1882,7 +2754,48 @@ function spawnNpcs() {
       add({ mode: 'once', path: [[5 + Math.random() * 3, z], [100, z]], speed: rr(1.8, 3.2), wait: Math.random() * 30, gap: [1, 6], say: HURRY });
     }
     if (game && dogRescued) { dogNpc = add({ kind: 'dog', fur: [0.55, 0.38, 0.22], x: 7.4, z: 46.4, mode: 'follow', say: WOOF }); game.dog = true; }
+  } else if (LV.key === 'troy') spawnTroy(add, runners);
+  else if (LV.key === 'cyclops') spawnCyclops(add);
+  NPC_LOCKS.forEach(L => { const n = add(Object.assign({}, L.spec, { mode: 'idle' })); n.lock = L; L.npc = n; if (L.done) n.say = L.spec.after || n.say; });
+}
+
+function spawnTroy(add, runners) {
+  const FLEE_T = [['effugere debemus.', 'We must escape.'], ['in maximo periculo sumus.', 'We are in very great danger.'],
+    ['quis nos servare poterit?', 'Who will be able to save us?'], ['nolite me relinquere, comites!', 'Don’t leave me behind, companions!']];
+  const GREEK = [['arma parate!', 'Prepare your weapons!'], ['Troianos puniemus!', 'We shall punish the Trojans!']];
+  const greek = () => ({ say: GREEK, tunic: [0.62, 0.16, 0.12], helmet: true, armsUp: true, speed: rr(4.2, 5.2) });
+  const flee = () => ({ say: FLEE_T, armsUp: Math.random() < 0.5 });
+  runners([[26.5, 57.3], [26.5, 52.6], [30.5, 52.5], [36.5, 51.5], [38.5, 47.5], [39.6, 47.5]], 3, flee);
+  for (let i = 0; i < 3; i++) add(Object.assign({ mode: 'once', path: [[31.5, 48.5], [29.5, 44.2], [24.5, 44.2], [23.2, 47.5]], wait: 1 + i * 3, gap: [3, 8] }, greek()));
+  add(Object.assign({ mode: 'loop', path: [[45.5, 45.5], [51.5, 45.5], [51.5, 50.5], [45.5, 50.5]] }, greek(), { speed: 2.6 }));
+  runners([[74.5, 37.8], [74.5, 58.2]], 2, flee);
+  runners([[78.5, 44.5], [86.5, 48.5], [91.6, 48.5]], 3, flee);
+  add({ x: 25.5, z: 44.5, sit: true, h: 1, fixedH: true });                     // Trojans asleep after the party
+  add({ x: 37.5, z: 43.5, sit: true, h: -2, fixedH: true });
+  for (let i = 0; i < 14; i++) {
+    const z = 69.3 + Math.random() * 1.4;
+    add({ mode: 'once', path: [[Math.random() * 4, z], [98, z], [103.5, 64 + Math.random() * 3], [105.9, 63.5]], speed: rr(3.6, 5.6),
+      wait: Math.random() * 24, gap: [0.5, 4], armsUp: Math.random() < 0.35, say: FLEE_T });
   }
+  add({ x: 102.5, z: 48.5, h: -Math.PI / 2, tunic: [0.3, 0.36, 0.62], helmet: true, hair: [0.32, 0.2, 0.12],
+    say: [['amici, urbs nostra a Graecis capitur.', 'Friends, our city is being captured by the Greeks.'], ['arma capite! domos relinquite! naves parate!', 'Take up your weapons! Leave your homes! Prepare the ships!'], ['effugere debemus.', 'We must escape.']] });
+  [[102.5, 45.5], [102.5, 52.5], [100.5, 44.5]].forEach(([x, z]) => add({ x, z, tunic: pick(TUNICS), say: [['effugere debemus.', 'We must escape.']] }));
+  if (game && dogRescued) { dogNpc = add({ kind: 'dog', fur: [0.55, 0.38, 0.22], x: 7.4, z: 46.4, mode: 'follow', say: WOOF }); game.dog = true; }
+}
+function spawnCyclops(add) {
+  const COMP = [['quis nos servare poterit?', 'Who will be able to save us?'], ['nolite me relinquere, comites!', 'Don’t leave me behind, companions!']];
+  add({ x: 9.5, z: 52.5, sit: true, say: COMP, tunic: [0.4, 0.45, 0.6] });
+  add({ x: 11.5, z: 44.5, sit: true, say: COMP, tunic: [0.6, 0.3, 0.25] });
+  add({ x: 18.5, z: 43.5, say: COMP, tunic: [0.52, 0.6, 0.34] });
+  [[[28.5, 46.5], [32.5, 46.5], [32.5, 50.5], [28.5, 50.5]], [[29.5, 52.5], [32.5, 53.5]], [[36.5, 47.5], [38.5, 50.5], [36.5, 52.5]],
+   [[25.5, 47.5], [25.5, 51.5]], [[30.5, 43.5], [32.5, 42.5]], [[79.5, 47.5], [83.5, 50.5]], [[86.5, 52.5], [88.5, 49.5]]].forEach(path =>
+    add({ kind: 'sheep', mode: 'loop', path, speed: rr(0.5, 1.0), fur: [0.9 + Math.random() * 0.06, 0.88, 0.82] }));
+  add({ kind: 'sheep', ram: true, x: 37.5, z: 43.5, petName: 'ram', fur: [0.8, 0.77, 0.7] });
+}
+function befriendPet(n) {
+  n.mode = 'follow'; dogNpc = n; game.trail = []; game.pet = n.petName || 'pet';
+  sfx.right();
+  toast('<span class="gold">The ram trusts you.</span><br>It will follow you out of the cave.', 3600);
 }
 
 function turnTo(n, h, dt, rate) { let d = h - n.h; d = Math.atan2(Math.sin(d), Math.cos(d)); n.h += d * Math.min(1, dt * rate); }
@@ -1947,7 +2860,8 @@ function rescueDog() {
 const BOX_F = [[[4, 5, 7, 6], 0.92], [[1, 0, 2, 3], 0.86], [[5, 1, 3, 7], 0.74], [[0, 4, 6, 2], 0.74], [[6, 7, 3, 2], 1.0], [[0, 1, 5, 4], 0.55]];
 const nv = [];
 function nbox(n, cx, cy, cz, sx, sy, sz, col, tile, front, piv, rx, ry) {
-  const sh = Math.sin(n.h), ch = Math.cos(n.h), pts = [];
+  const sh = Math.sin(n.h), ch = Math.cos(n.h), pts = [], k = n.scale || 1;
+  if (k !== 1) { cx *= k; cy *= k; cz *= k; sx *= k; sy *= k; sz *= k; if (piv) piv = [piv[0] * k, piv[1] * k]; }
   for (let i = 0; i < 8; i++) {
     let lx = cx + (i & 1 ? sx : -sx) / 2, ly = cy + (i & 2 ? sy : -sy) / 2, lz = cz + (i & 4 ? sz : -sz) / 2;
     if (rx) { const dy = ly - piv[0], dz = lz - piv[1], c = Math.cos(rx), s = Math.sin(rx); ly = piv[0] + c * dy - s * dz; lz = piv[1] + s * dy + c * dz; }
@@ -1975,10 +2889,12 @@ function drawHuman(n) {
   nbox(n, 0, 1.0 + b, 0, 0.52, 0.72, 0.3, n.tunic, n.tile);
   nbox(n, -0.35, 1.03 + b, 0, 0.17, 0.6, 0.17, n.skin, 34, null, [1.3 + b, 0], armL);
   nbox(n, 0.35, 1.03 + b, 0, 0.17, 0.6, 0.17, n.skin, 34, null, [1.3 + b, 0], armR);
-  nbox(n, 0, 1.58 + b, 0, 0.44, 0.44, 0.44, n.skin, 34, 35);
+  nbox(n, 0, 1.58 + b, 0, 0.44, 0.44, 0.44, n.skin, 34, n.face || 35);
   nbox(n, 0, 1.83 + b, -0.02, 0.47, 0.08, 0.48, n.hair, 34);
   nbox(n, 0, 1.62 + b, -0.215, 0.47, 0.38, 0.06, n.hair, 34);
   if (n.laurel) nbox(n, 0, 1.77 + b, 0, 0.5, 0.06, 0.5, [0.3, 0.62, 0.22], 34);
+  if (n.helmet) { nbox(n, 0, 1.86 + b, 0, 0.5, 0.14, 0.5, [0.72, 0.56, 0.26], 34); nbox(n, 0, 2.02 + b, 0, 0.08, 0.2, 0.5, [0.75, 0.12, 0.1], 34); }
+  if (n.beard) nbox(n, 0, 1.4 + b, 0.2, 0.4, 0.14, 0.08, n.hair, 34);
 }
 function drawDog(n) {
   const run = n.moving ? Math.sin(n.phase * 0.7) : 0, fur = n.fur, dark = mulc(fur, 0.55);
@@ -1991,11 +2907,19 @@ function drawDog(n) {
     nbox(n, x, 0.18, z, 0.09, 0.36, 0.09, fur, 34, null, [0.36, z], run * 0.8 * s));
   nbox(n, 0, 0.66, -0.46, 0.07, 0.07, 0.28, fur, 34, null, [0.62, -0.33], 0.7, Math.sin(n.phase) * 0.7);
 }
+function drawSheep(n) {
+  const run = n.moving ? Math.sin(n.phase * 0.7) : 0, wool = n.fur || [0.93, 0.91, 0.86], dark = [0.24, 0.2, 0.18];
+  nbox(n, 0, 0.62, 0, 0.6, 0.5, 0.86, wool, 34);
+  nbox(n, 0, 0.78, 0.5, 0.3, 0.3, 0.3, dark, 34, 35);
+  if (n.ram) { nbox(n, -0.2, 0.92, 0.46, 0.12, 0.2, 0.2, [0.7, 0.62, 0.46], 34); nbox(n, 0.2, 0.92, 0.46, 0.12, 0.2, 0.2, [0.7, 0.62, 0.46], 34); }
+  [[-0.18, 0.28, 1], [0.18, 0.28, -1], [-0.18, -0.28, -1], [0.18, -0.28, 1]].forEach(([x, z, s]) =>
+    nbox(n, x, 0.2, z, 0.12, 0.4, 0.12, dark, 34, null, [0.4, z], run * 0.7 * s));
+}
 function drawNpcs(eye) {
   nv.length = 0;
   for (const n of npcs) {
     if (n.hidden || Math.abs(n.x - eye[0]) + Math.abs(n.z - eye[2]) > 140) continue;
-    if (n.kind === 'dog') drawDog(n); else drawHuman(n);
+    if (n.kind === 'dog') drawDog(n); else if (n.kind === 'sheep') drawSheep(n); else drawHuman(n);
   }
   return nv.length / 8;
 }
@@ -2006,11 +2930,11 @@ function updateSay(mvp, eye, dt) {
   const el = $('say'), m = mvp;
   if (mode !== 'play') { el.style.display = 'none'; sayN = null; return; }
   // The nearest person you can actually see gets the bubble
-  const near = npcs.filter(n => !n.hidden && n.say && Math.hypot(n.x - P.x, n.y - P.y, n.z - P.z) < 7)
+  const near = npcs.filter(n => !n.hidden && n.say && Math.hypot(n.x - P.x, n.y - P.y, n.z - P.z) < 7 * (n.scale || 1))
     .sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
   let best = null, sx = 0, sy = 0;
   for (const n of near) {
-    const hx = n.x, hy = n.y + (n.kind === 'dog' ? 1.15 : n.sit ? 1.75 : 2.2), hz = n.z;
+    const hx = n.x, hy = n.y + (n.kind === 'dog' || n.kind === 'sheep' ? 1.2 : (n.sit ? 1.75 : 2.2) * (n.scale || 1)), hz = n.z;
     const cw = m[3] * hx + m[7] * hy + m[11] * hz + m[15];
     if (cw < 0.2) continue;
     const cx = (m[0] * hx + m[4] * hy + m[8] * hz + m[12]) / cw, cy = (m[1] * hx + m[5] * hy + m[9] * hz + m[13]) / cw;
@@ -2032,18 +2956,30 @@ function updateSay(mvp, eye, dt) {
 
 // ── The secret wall and the notes on the walls ──
 let barkT = 2;
-function openSecret() {
-  if (!SECRET || SECRET.open) return;
-  SECRET.open = true;
-  SECRET.door.forEach(([x, y, z], i) => setTimeout(() => {
+function secretAt(x, y, z) { return SECRETS.find(S => S.door.some(d => d[0] === x && d[1] === y && d[2] === z)); }
+function openSecret(S) {
+  if (!S || S.open) return;
+  S.open = true;
+  S.door.forEach(([x, y, z], i) => setTimeout(() => {
     setB(x, y, z, B.AIR);
-    burst(x + .5, y + .5, z + .5, 26, [[.62, .17, .14], [.5, .45, .4], [.78, .72, .66]], 3, 0.12);
+    burst(x + .5, y + .5, z + .5, 26, S.burst || [[.5, .45, .4], [.78, .72, .66], [.4, .38, .36]], 3, 0.12);
     sfx.gate();
   }, i * 220));
   shake = Math.max(shake, 0.2);
-  toast('<span class="gold">The wall gives way!</span><br>There is a secret room behind it.', 2200);
+  toast(S.opened || '<span class="gold">The wall gives way!</span><br>There is a secret room behind it.', 2200);
+}
+function pickItem(k) {
+  const it = ITEMS.get(k); if (!it) return;
+  ITEMS.delete(k);
+  const [x, y, z] = k.split(',').map(Number);
+  setB(x, y, z, B.AIR);
+  burst(x + .5, y + .5, z + .5, 40, [[1, .85, .25], [1, 1, .7]], 4, 0.1);
+  sfx.right();
+  toast(it.toast, 3800);
+  if (it.ach) unlockAch(it.ach);
 }
 function openNote(N) {
+  if (game) { game.notesRead.add(N); if (N.ach) unlockAch(N.ach); checkReader(); }
   mode = 'note';
   if (document.pointerLockElement) document.exitPointerLock();
   keys.KeyW = keys.KeyA = keys.KeyS = keys.KeyD = false;
@@ -2102,7 +3038,7 @@ let game = null, cur = null;
 const P = { x: 8.5, y: G, z: 48.5, vx: 0, vy: 0, vz: 0, yaw: Math.PI / 2, pitch: 0, onGround: false };
 const keys = {};
 const touch = { on: false, jx: 0, jy: 0, jid: null, lid: null, lx: 0, ly: 0, jump: false };
-let shake = 0, quakeT = 25, stepT = 0, sparkT = 0, smokeT = 0, ashT = 0, toastT = null, splashT = null;
+let fireT = 0, shake = 0, quakeT = 25, stepT = 0, sparkT = 0, smokeT = 0, ashT = 0, toastT = null, splashT = null;
 let target = null;
 // Touch controls appear on phones/tablets, or as soon as anyone touches the screen
 let isTouch = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -2119,7 +3055,7 @@ function newGame(idx) {
   setTimeout(() => {
     generateWorld(); buildAll();
     game = { qs: buildGame(), results: new Array(15).fill(null), keys: [0, 0, 0, 0, 0], score: 0, visited: new Set(), t0: 0,
-      trail: [], dog: false, secretFound: false };
+      trail: [], dog: false, secretFound: false, notesRead: new Set(), pet: null };
     const st = LV.start;
     Object.assign(P, { x: st.x, y: G, z: st.z, vx: 0, vy: 0, vz: 0, yaw: st.yaw, pitch: -0.05 });
     parts.length = 0; quakeT = 25; barkT = 2;
@@ -2163,6 +3099,10 @@ function updateHud() {
   $('roomName').textContent = here === 5 ? `${LV.final.name} (${LV.final.lat})` : `${ROMAN[r]} · ${LV.rooms[r].name} (${LV.rooms[r].lat})`;
   const n = game.keys[r];
   $('roomGoal').textContent = here === 5 ? LV.final.goal : n < 3 ? `Locks opened here: ${n} of 3` : r === 4 ? LV.lastGoal : 'This door is open. Go on →';
+  const left = here === 5 ? [] : LOCKS.filter(L => L.room === r && !L.done);
+  const KIND_HINT = { block: '✦ golden sparkles', npc: '🗣 someone to talk to', plate: '▣ a gold-edged floor tile', hidden: '📜 a hidden scroll' };
+  const hint = left.length ? 'Look for: ' + [...new Set(left.map(L => L.kind))].map(k => KIND_HINT[k]).join(' · ') : '';
+  if ($('roomHint').textContent !== hint) $('roomHint').textContent = hint;
   $('scoreN').textContent = game.score;
   for (let i = 0; i < 5; i++) {
     const s = $('hs' + i);
@@ -2258,37 +3198,74 @@ function raycast(ox, oy, oz, dx, dy, dz, maxD) {
 }
 function lookDir() { const cp = Math.cos(P.pitch); return [Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp]; }
 
+// The person in front of you, if they are closer than the block you are looking at
+function npcTarget(d, blockDist) {
+  let best = null, bd = 99;
+  for (const n of npcs) {
+    if (n.hidden || n.kind === 'dog') continue;
+    const k = n.scale || 1, hx = n.x - P.x, hy = n.y + 1.1 * k - (P.y + EYE), hz = n.z - P.z, dist = Math.hypot(hx, hy, hz);
+    if (dist > 3.2 + k || dist > blockDist + 0.6) continue;
+    const dot = (hx * d[0] + hy * d[1] + hz * d[2]) / dist;
+    if (dot < Math.cos(Math.atan2(0.55 * k, dist))) continue;
+    if (dist < bd) { bd = dist; best = n; }
+  }
+  return best;
+}
 function updateTarget() {
   const d = lookDir();
   target = raycast(P.x, P.y + EYE, P.z, d[0], d[1], d[2], 5);
+  const td = target ? Math.hypot(target.x + .5 - P.x, target.y + .5 - P.y - EYE, target.z + .5 - P.z) : 99;
+  const tn = npcTarget(d, td);
   let msg = '';
+  const verb = isTouch ? 'Tap USE' : 'Press E';
+  if (tn) {
+    target = { npc: tn };
+    if (tn.lock) msg = tn.lock.done ? `You have already answered ${tn.lock.name}.` : `${verb} to talk to ${tn.lock.name}`;
+    else if (tn.kind === 'sheep' && tn.ram && tn.mode !== 'follow') msg = `${verb} to stroke the ram`;
+    else if (tn.say) msg = `${verb} to listen`;
+    $('actionbar').textContent = msg;
+    return;
+  }
   if (target) {
     const k = key3(target.x, target.y, target.z);
     const L = lockMap.get(k);
-    const verb = isTouch ? 'Tap USE' : 'Press E';
-    if (L) msg = L.done ? `You have opened this ${BL[L.b].lock}.` : `${verb} to try the lock on this ${BL[L.b].lock}`;
+    if (L && L.kind === 'plate') msg = L.done ? 'You have opened this floor tile.' : 'A gold-edged floor tile. Stand on it.';
+    else if (L) msg = L.done ? `You have opened this ${lockName(L)}.` : L.kind === 'hidden' ? `You found a hidden scroll! ${verb} to read it.` : `${verb} to try the lock on this ${lockName(L)}`;
     else if (gateMap.has(k)) { const r = gateMap.get(k); msg = `Locked. Open the 3 locks in ${LV.rooms[r].name} first (${game.keys[r]} of 3 done).`; }
     else if (NOTES.has(k)) msg = `${verb} to read this`;
-    else if (target.b === B.CRACK) msg = `This plaster is cracked, and something is barking behind it. ${verb} to push.`;
+    else if (ITEMS.has(k)) msg = `${verb} to pick this up`;
+    else if (BL[target.b].secret && secretAt(target.x, target.y, target.z)) msg = `${secretAt(target.x, target.y, target.z).hint} ${verb} to push.`;
     else if (BL[target.b].lock) msg = 'No lock here. Look for the golden sparkles.';
   }
   $('actionbar').textContent = msg;
 }
 function interact() {
   if (mode !== 'play' || !target) return;
+  if (target.npc) {
+    const n = target.npc;
+    if (n.lock && !n.lock.done) return openQuestion(n.lock);
+    if (n.kind === 'sheep' && n.ram && n.mode !== 'follow') return befriendPet(n);
+    if (n.say) { const [l, e] = n.say[n.line]; sfx.click(); toast(`<span class="gold">${esc(l)}</span><br>${esc(e)}`, 3000); }
+    return;
+  }
   const k = key3(target.x, target.y, target.z);
   const L = lockMap.get(k);
-  if (L && !L.done) openQuestion(L);
+  if (L && !L.done && L.kind !== 'plate') openQuestion(L);
   else if (NOTES.has(k)) openNote(NOTES.get(k));
-  else if (target.b === B.CRACK) openSecret();
+  else if (ITEMS.has(k)) pickItem(k);
+  else if (BL[target.b].secret) openSecret(secretAt(target.x, target.y, target.z));
   else if (gateMap.has(k)) { sfx.wrong(); }
 }
 
 // ── Locks and gates ──
 function unlock(L) {
-  L.done = true; markDirty(L.x, L.y, L.z);
+  L.done = true;
   sfx.unlock();
-  burst(L.x + .5, L.y + .5, L.z + .5, 50, [[1, .85, .25], [.5, 1, .45], [1, 1, .7]], 5, 0.1);
+  let bx = L.x + .5, by = L.y + .5, bz = L.z + .5;
+  if (L.kind === 'npc' && L.npc) { bx = L.npc.x; by = L.npc.y + 1.6 * (L.npc.scale || 1); bz = L.npc.z; if (L.spec.after) { L.npc.say = L.spec.after; L.npc.line = 0; } }
+  else if (L.kind === 'hidden') setB(L.x, L.y, L.z, B.AIR);
+  else { markDirty(L.x, L.y, L.z); if (L.kind === 'plate') by += 0.6; }
+  burst(bx, by, bz, 50, [[1, .85, .25], [.5, 1, .45], [1, 1, .7]], 5, 0.1);
   game.keys[L.room]++;
   const n = game.keys[L.room];
   updateHud();
@@ -2296,6 +3273,7 @@ function unlock(L) {
   else {
     toast(L.room < 4 ? `<span class="gold">All three locks are open!</span><br>The door to ${LV.rooms[L.room + 1].name} is opening.` : LV.lastOpen, 3500);
     setTimeout(() => openGate(L.room), 700);
+    if (LV.roomDone) LV.roomDone(L.room);
   }
 }
 function openGate(r) {
@@ -2346,8 +3324,9 @@ function openQuestion(L) {
 }
 function renderQuestion() {
   const { q, L } = cur;
-  const lockName = BL[L.b].lock;
-  let h = `<div class="q-head"><span>${ROMAN[L.room]} · ${esc(LV.rooms[L.room].name)} · question ${cur.qi + 1} of 15</span><span class="nm">\u{1F512} The ${esc(lockName)}</span></div>`;
+  const ln = lockName(L), icon = L.kind === 'npc' ? '\u{1F5E3}' : L.kind === 'hidden' ? '\u{1F4DC}' : '\u{1F512}';
+  let h = `<div class="q-head"><span>${ROMAN[L.room]} · ${esc(LV.rooms[L.room].name)} · question ${cur.qi + 1} of 15</span><span class="nm">${icon} ${L.kind === 'npc' ? esc(ln[0].toUpperCase() + ln.slice(1)) : 'The ' + esc(ln)}</span></div>`;
+  if (L.kind === 'npc' && L.spec.ask) h += `<div class="q-en" style="margin:-4px 0 10px;font-style:italic">${esc(L.spec.ask)}</div>`;
   h += `<div class="q-task">${esc(q.prompt)}</div>`;
   if (q.type === 'un') h += `<div class="q-en big">${esc(q.it.en)}</div>`;
   else {
@@ -2440,21 +3419,25 @@ function winGame() {
   mode = 'win';
   if (document.pointerLockElement) document.exitPointerLock();
   sfx.win();
-  const secs = Math.round((performance.now() - game.t0) / 1000);
-  const L1 = LV.key === 'pompeii';
-  $('winH').textContent = L1 ? 'LIBERTAS!' : 'PERVENISTI!';
-  let sub = L1 ? 'You run through the sea gate and jump into a boat. Behind you, Vesuvius roars. You are free.'
-    : 'You push past the senators and press the scroll into Caesar’s hand. He tries to read it, but people keep crowding round to talk to him. He walks into the meeting with the scroll still rolled up.';
-  if (game.dog) sub += L1 ? ' Your dog leaps into the boat after you.' : ' Your dog sniffs Caesar’s sandals.';
+  const secs = Math.round((performance.now() - game.t0) / 1000), Wn = LV.win, lvIdx = LEVELS.indexOf(LV);
+  if (game.score === 15) unlockAch(LV.key + '.perfect');
+  if (secs < 480) unlockAch(LV.key + '.swift');
+  if (game.dog && LV.key === 'pompeii') unlockAch('pompeii.dog');
+  if (game.pet === 'ram') unlockAch('cyclops.ram');
+  $('winH').textContent = Wn.h;
+  let sub = Wn.sub;
+  if (game.dog && Wn.dog) sub += Wn.dog;
+  if (game.pet && Wn.pet) sub += Wn.pet;
   $('winSub').textContent = sub;
-  $('winScore').innerHTML = `${game.score} / 15<small>right first time · ${L1 ? 'escaped' : 'reached Caesar'} in ${Math.floor(secs / 60)}m ${secs % 60}s</small>`;
-  $('nextRow').style.display = L1 ? 'flex' : 'none';
+  $('winScore').innerHTML = `${game.score} / 15<small>right first time · ${Wn.did} in ${Math.floor(secs / 60)}m ${secs % 60}s</small>`;
+  $('nextRow').style.display = lvIdx < LEVELS.length - 1 ? 'flex' : 'none';
+  $('nextBtn').textContent = Wn.next;
   const missed = {};
   game.results.forEach(r => { if (r && !r.first) missed[r.q.focus] = (missed[r.q.focus] || 0) + 1; });
   let h = '';
-  if (!L1) h += '<div class="fact"><b>This really happened.</b> On the morning of 15 March 44 BC, a Greek teacher called Artemidorus handed Caesar a written warning about the plot. Plutarch says Caesar tried to read it but never managed to, and went into the Senate with it still in his hand. A few minutes later, the plotters killed him.</div>';
-  if (game.secretFound) h += `<div class="fact"><b>Secret found!</b> You discovered the hidden cellar behind the cracked wall${game.dog ? ' and rescued its dog' : ''}.</div>`;
-  else if (L1) h += '<div class="fact"><b>Did you miss something?</b> A wall in the villa hides a secret. Listen carefully next time.</div>';
+  if (Wn.fact) h += `<div class="fact">${Wn.fact}</div>`;
+  const mine = ACH.filter(a => a.lv === lvIdx), gotN = mine.filter(a => hasAch(a.id)).length;
+  h += `<h3>Secrets and achievements: ${gotN} of ${mine.length}</h3><div class="ach-list">${mine.map(achHtml).join('')}</div><div style="height:18px"></div>`;
   const ks = GRAMMAR.filter(g => missed[g.k]);
   if (ks.length) h += `<h3>Grammar to revise</h3><ul>` + ks.map(g => `<li>${esc(g.name)} <span class="ch">· ${esc(g.ch)} · ${missed[g.k]} ${missed[g.k] === 1 ? 'question' : 'questions'}</span></li>`).join('') + `</ul><div style="height:18px"></div>`;
   h += `<h3>All 15 answers</h3><table class="rev">`;
@@ -2476,7 +3459,7 @@ function winGame() {
 // ════════════════════════════════════════════════════════════════
 function buildSetup() {
   $('presets').innerHTML = PRESETS.map((p, i) => `<button class="mc-btn small" data-preset="${i}">${esc(p.label)}</button>`).join('') + `<button class="mc-btn small" data-preset="clear">Clear all</button>`;
-  $('ticks').innerHTML = GRAMMAR.map(g => `<label class="tick"><input type="checkbox" data-g="${g.k}"><span class="box"></span><span>${esc(g.name)}<span class="ch">${esc(g.ch)}</span></span></label>`).join('');
+  $('ticks').innerHTML = GRAMMAR.map(g => (g.k === 'S' ? '<div class="lvhead">CE Level 2 <span>· Bass Ch 74–116 · these assume all of Level 1</span></div>' : g.k === 'A' ? '<div class="lvhead">CE Level 1 <span>· Bass Ch 1–73</span></div>' : '') + `<label class="tick"><input type="checkbox" data-g="${g.k}"><span class="box"></span><span>${esc(g.name)}<span class="ch">${esc(g.ch)}</span></span></label>`).join('');
   $('qtypes').innerHTML = QTYPES.map(q => `<label class="tick"><input type="checkbox" data-t="${q.k}"><span class="box"></span><span>${esc(q.name)}</span></label>`).join('');
   $('presets').addEventListener('click', e => {
     const b = e.target.closest('[data-preset]'); if (!b) return;
@@ -2485,6 +3468,7 @@ function buildSetup() {
   $('ticks').addEventListener('change', e => { const k = e.target.dataset.g; if (!k) return; e.target.checked ? ticked.add(k) : ticked.delete(k); syncSetup(); });
   $('qtypes').addEventListener('change', e => { const k = e.target.dataset.t; if (!k) return; e.target.checked ? types.add(k) : types.delete(k); syncSetup(); });
   $('splashTxt').textContent = pick(SPLASHES);
+  renderAch();
   syncSetup();
 }
 function syncSetup() {
@@ -2586,7 +3570,7 @@ document.addEventListener('click', e => {
   if (t.closest('#resumeBtn')) { sfx.click(); enterPlay(); return; }
   if (t.closest('#quitBtn') || t.closest('#changeBtn')) { sfx.click(); mode = 'title'; game = null; generateWorld(); buildAll(); spawnNpcs(); $('splashTxt').textContent = pick(SPLASHES); show('sTitle'); return; }
   if (t.closest('#againBtn')) { sfx.click(); newGame(); return; }
-  if (t.closest('#nextBtn')) { sfx.click(); newGame(1); return; }
+  if (t.closest('#nextBtn')) { sfx.click(); newGame(LEVELS.indexOf(LV) + 1); return; }
   if (mode === 'note' && t.closest('#noteClose')) { closeNote(); return; }
   if (mode !== 'question' || !cur) return;
   if (t.closest('#qHelp')) { $('qTable').classList.toggle('show'); sfx.click(); return; }
@@ -2622,8 +3606,19 @@ function updateWorldFx(dt, room) {
   }
   if (mode === 'title') return;
   // Plaster dust drifts from the secret wall
-  if (game && SECRET && !SECRET.open && room === 0 && Math.random() < dt * 2)
-    spawn(9.1 + Math.random() * 0.8, G + 1.9, 55.96, 0, -0.4, -0.06, 1.4, [0.72, 0.66, 0.6, 1], 0.05, 1.5);
+  // Dust drifts from secret walls
+  if (game) SECRETS.forEach(S => { if (!S.open && S.dust && S.room === room && Math.random() < dt * 2)
+    spawn(S.dust[0] + Math.random() * 0.8, S.dust[1], S.dust[2], S.dust[3], -0.4, S.dust[4], 1.4, [0.72, 0.66, 0.6, 1], 0.05, 1.5); });
+  // Smoke and sparks from burning roofs
+  if (LV.smoke && LV.smoke.length) {
+    fireT -= dt;
+    while (fireT < 0) {
+      fireT += 0.07;
+      const f = pick(LV.smoke), g = 0.1 + Math.random() * 0.14;
+      spawn(f[0] + (Math.random() - .5), f[1], f[2] + (Math.random() - .5), (Math.random() - .5) * 0.6, 1.6 + Math.random() * 1.6, (Math.random() - .5) * 0.6, 7, [g, g * 0.9, g * 0.85, 1], 1.2 + Math.random() * 1.8, -0.05);
+      if (Math.random() < 0.35) spawn(f[0], f[1], f[2], (Math.random() - .5) * 2, 3 + Math.random() * 3, (Math.random() - .5) * 2, 2, [1, 0.5 + Math.random() * 0.3, 0.1, 1], 0.12, 2);
+    }
+  }
   // Ash falls harder the further you go
   const rate = LV.volcano ? [6, 30, 55, 85, 120, 140][room] : 0;
   ashT -= dt * rate;
@@ -2637,7 +3632,19 @@ function updateWorldFx(dt, room) {
   if (sparkT < 0 && game) {
     sparkT = 0.12;
     LOCKS.forEach(L => {
-      if (L.done || L.room !== room || Math.random() < 0.5) return;
+      if (L.done || L.room !== room) return;
+      if (L.kind === 'npc') {          // sparkles over the head of someone with a question
+        const n = L.npc; if (!n || n.hidden || Math.random() < 0.4) return;
+        const k = n.scale || 1;
+        spawn(n.x + (Math.random() - .5) * 0.6 * k, n.y + (n.sit ? 1.9 : 2.3) * k + Math.random() * 0.3, n.z + (Math.random() - .5) * 0.6 * k, 0, 0.4, 0, 0.9, [1, 0.85 + Math.random() * 0.15, 0.3, 1], 0.07, 0);
+        return;
+      }
+      if (L.kind === 'plate' || L.kind === 'hidden') {   // no sparkles: just a rare glint when you are close
+        if (Math.random() < 0.05 && Math.hypot(L.x + .5 - P.x, L.z + .5 - P.z) < 6)
+          spawn(L.x + Math.random(), L.y + (L.kind === 'plate' ? 1.03 : 0.3 + Math.random() * 0.4), L.z + Math.random(), 0, 0.25, 0, 0.6, [1, 1, 1, 1], 0.05, 0);
+        return;
+      }
+      if (Math.random() < 0.5) return;
       const s = Math.floor(Math.random() * 3), o = [Math.random(), Math.random(), Math.random()]; o[s] = Math.random() < 0.5 ? -0.05 : 1.05;
       spawn(L.x + o[0], L.y + o[1], L.z + o[2], 0, 0.5, 0, 0.9, [1, 0.85 + Math.random() * 0.15, 0.3, 1], 0.07, 0);
     });
@@ -2666,17 +3673,27 @@ function frame(now) {
       const tr = game.trail, l = tr[tr.length - 1];
       if (!l || Math.hypot(P.x - l.x, P.z - l.z) > 0.45) { tr.push({ x: P.x, y: P.y, z: P.z }); if (tr.length > 300) tr.shift(); }
     }
-    if (SECRET) {
-      if (!SECRET.open) {     // a dog barks behind the cracked wall
-        const d = Math.hypot(P.x - 9.5, P.z - 55.5);
-        if (d < 8 && (barkT -= dt) < 0) { barkT = rr(3.5, 7); sfx.bark(Math.max(0.3, 1 - d / 8)); }
-      } else if (!game.secretFound && P.z > 58.5 && P.x < 14) {
-        game.secretFound = true; sfx.right();
-        showSplash('LOCUS SECRETUS', 'The Hidden Cellar', 'cave canem', 'Someone hid their gold down here. And their dog.');
+    for (const S of SECRETS) {
+      if (!S.open) {
+        if (S.bark) {     // a dog barks behind the cracked wall
+          const d = Math.hypot(P.x - S.bark[0], P.z - S.bark[1]);
+          if (d < 8 && (barkT -= dt) < 0) { barkT = rr(3.5, 7); sfx.bark(Math.max(0.3, 1 - d / 8)); }
+        }
+      } else if (!S.found && P.x > S.x0 - 0.3 && P.x < S.x1 + 1.3 && P.z > S.z0 + 0.5 && P.z < S.z1 + 1.3 && (S.y0 === undefined || P.y > S.y0 - 0.2)) {
+        S.found = true; game.secretFound = true; sfx.right();
+        showSplash(...S.splash);
+        if (S.ach) unlockAch(S.ach);
       }
-      if (dogNpc && dogNpc.mode === 'idle' && SECRET.open && Math.hypot(P.x - dogNpc.x, P.z - dogNpc.z) < 2.4) rescueDog();
     }
-    if (LV.won()) winGame();
+    if (dogNpc && dogNpc.kind === 'dog' && dogNpc.mode === 'idle' && SECRETS[0] && SECRETS[0].open && Math.hypot(P.x - dogNpc.x, P.z - dogNpc.z) < 2.4) rescueDog();
+    if (dogNpc && dogNpc.kind === 'sheep' && dogNpc.mode !== 'follow') dogNpc = null;
+    // Standing on a gold-edged floor tile asks its question
+    if (P.onGround) {
+      const FL = lockMap.get(key3(Math.floor(P.x), Math.floor(P.y - 0.05), Math.floor(P.z)));
+      if (FL && FL.kind === 'plate' && !FL.done) openQuestion(FL);
+    }
+    if (LV.checks) LV.checks(dt);
+    if (mode === 'play' && LV.won()) winGame();
   }
   if (mode !== 'pause' && mode !== 'win') for (const n of npcs) npcStep(n, dt);
   updateWorldFx(dt, Math.min(room, 5));
@@ -2697,8 +3714,9 @@ function frame(now) {
     ctr = [eye[0] + d[0], eye[1] + d[1], eye[2] + d[2]];
   }
   const sk = Math.min(1, (game ? Math.min(room, 4) : 1) / 4 + (game && room === 5 ? 0.15 : 0));
-  const sky = LV.sky0.map((c, i) => c + (LV.sky1[i] - c) * sk);
-  const fog = [30 - sk * 6, 140 - sk * 50];
+  let sky = LV.sky0.map((c, i) => c + (LV.sky1[i] - c) * sk);
+  let fog = [30 - sk * 6, 140 - sk * 50];
+  if (LV.cave && game && room < 5) { sky = LV.caveSky; fog = [7, 38]; }
   const fov = 1.25, aspect = canvas.width / canvas.height;
   const mvp = mmul(persp(fov, aspect, 0.05, 400), lookAt(eye, ctr));
 
@@ -2712,6 +3730,7 @@ function frame(now) {
   gl.useProgram(bp.p);
   gl.uniformMatrix4fv(bp.u.uMVP, false, mvp);
   gl.uniform3fv(bp.u.uEye, eye); gl.uniform2fv(bp.u.uFog, fog); gl.uniform3fv(bp.u.uFogCol, sky);
+  gl.uniform1f(bp.u.uLight, LV.cave && game && room < 5 ? 0.6 : LV.key === 'troy' && game ? 0.78 : 1);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, atlasTex); gl.uniform1i(bp.u.uTex, 0);
   gl.enableVertexAttribArray(bp.a.aPos); gl.enableVertexAttribArray(bp.a.aUV); gl.enableVertexAttribArray(bp.a.aCol);
   const bindBlock = buf => {
