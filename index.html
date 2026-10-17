@@ -2139,6 +2139,7 @@ function buildPompeii() {
   for (let z = 40; z <= 56; z += 2) fill(92, G + 10, z, 94, G + 10, z, B.STONE);
   fill(92, G, 47, 94, G + 3, 49, B.AIR);
   fill(88, G + 6, 41, 91, G + 6, 55, B.TRAV);                 // wall walk
+  fill(77, G + 6, 40, 91, G + 9, 40, B.TRAV); fill(77, G + 6, 56, 91, G + 9, 56, B.TRAV);   // high side walls, so nobody can climb off the stairs or wall walk and round the gate
   fill(88, G, 45, 88, G + 5, 45, B.COLUMN); fill(88, G, 51, 88, G + 5, 51, B.COLUMN);
   for (let i = 0; i <= 6; i++) fill(81 + i, G, 54, 81 + i, G + i, 55, B.TRAV);   // stairs
   setRaw(79, G, 42, B.PLANKS); setRaw(80, G, 42, B.PLANKS);
@@ -2422,6 +2423,7 @@ function buildTroy() {
   for (let z = 37; z <= 59; z += 2) fill(92, G + 10, z, 94, G + 10, z, B.TRAV);
   fill(92, G, 47, 94, G + 3, 49, B.AIR);
   fill(88, G + 6, 41, 91, G + 6, 55, B.TRAV);
+  fill(77, G + 6, 40, 91, G + 9, 40, B.TRAV); fill(77, G + 6, 56, 91, G + 9, 56, B.TRAV);   // high side walls, so nobody can climb off the stairs or wall walk and round the gate
   fill(88, G, 45, 88, G + 5, 45, B.COLUMN); fill(88, G, 51, 88, G + 5, 51, B.COLUMN);
   for (let i = 0; i <= 6; i++) fill(81 + i, G, 54, 81 + i, G + i, 55, B.TRAV);
   fill(84, G, 41, 85, G, 42, B.CRATE); setRaw(84, G + 1, 41, B.CRATE);
@@ -2529,7 +2531,7 @@ function buildCyclops() {
     say: [['multi perierunt, pauci effugerunt.', 'Many perished, few escaped.']] });
   fill(90, G, 41, 91, G + 1, 42, B.ROCK); addHidden(4, 2, 90, G + 2, 41);
   fill(92, G, 46, 98, G + 3, 50, B.AIR); fill(92, G - 1, 46, 98, G - 1, 50, B.STONE);
-  addGate(4, 92, G, 47, 92, G + 3, 49, B.BASALT);
+  addGate(4, 92, G, 46, 92, G + 3, 50, B.BASALT);                             // fills the whole tunnel, so there is no way round
 
   // ── Outside: the beach and Ulysses' ship ──
   fill(99, G, 20, W - 1, H - 1, D - 1, B.AIR);
