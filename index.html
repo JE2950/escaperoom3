@@ -251,7 +251,7 @@ body.touch #touch.on { display: block; }
     <button class="mc-btn big" id="startBtn" data-level="0">Level 1: Escape from Pompeii</button>
     <button class="mc-btn big" id="startBtn2" data-level="1">Level 2: The Ides of March</button>
     <button class="mc-btn big" id="startBtn3" data-level="2">Level 3: The Fall of Troy</button>
-    <button class="mc-btn big" id="startBtn4" data-level="3">Level 4: The Cyclops</button>
+    <button class="mc-btn big" id="startBtn4" data-level="3">Level 4: The Cyclops</button><button class="mc-btn big" id="wbBtn">⚡ Quick practice: Word Blaster</button>
   </div>
   <div class="panel">
     <h3 id="achHead">Secrets and achievements</h3>
@@ -3803,5 +3803,454 @@ if (gl) {
   requestAnimationFrame(frame);
 }
 </script>
+
+
+
+<!-- WORD BLASTER -->
+<script>
+// ════════════════════════════════════════════════════════════════
+// WORD BLASTER — quick typing practice
+// Creatures float down carrying a sign. Type the answer on the sign
+// and press Enter to zap them before they reach the wall.
+// WordBlaster.open(cfg) — cfg is set by each game (see the bottom of the page).
+// ════════════════════════════════════════════════════════════════
+const WordBlaster = (() => {
+  const CSS = `
+#wb{position:fixed;inset:0;z-index:60;display:none;background:#000;font-family:inherit;color:#fff;user-select:none;-webkit-user-select:none}
+#wb.on{display:block}
+#wbCv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+#wbTop{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;pointer-events:none}
+#wbTop .box{background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.25);padding:6px 12px;font-size:1.05rem;line-height:1.35}
+#wbTop b{color:#ffd84a}
+#wbHearts{font-size:1.4rem;letter-spacing:2px;color:#ff5a5a;text-shadow:2px 2px 0 #000}
+#wbPauseBtn{pointer-events:auto}
+#wbBar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(640px,94vw);display:flex;flex-direction:column;gap:6px}
+#wbRow{display:flex;gap:8px}
+#wbIn{flex:1;min-width:0;font-family:inherit;font-size:1.35rem;padding:9px 12px;background:#fff;color:#111;border:3px solid #000;box-shadow:inset 0 0 0 2px #8b8b8b;outline:none;-webkit-user-select:text;user-select:text}
+#wbIn.bad{animation:wbShake .3s;background:#ffd6d6}
+#wbIn.good{background:#d8ffd0}
+@keyframes wbShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#wbAcc{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+#wbAcc button{min-width:38px;padding:4px 8px;font-size:1.05rem}
+#wbMsg{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);max-width:min(620px,92vw);text-align:center;background:rgba(0,0,0,.72);border:2px solid #ffd84a;padding:7px 14px;font-size:1.1rem;opacity:0;transition:opacity .3s;pointer-events:none}
+#wbMsg.show{opacity:1}
+#wbMsg .a{color:#9dff8a;font-weight:700}
+#wbWave{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);font-size:clamp(2rem,7vw,3.6rem);font-weight:700;color:#ffd84a;text-shadow:4px 4px 0 #000;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
+#wbWave.show{opacity:1}
+.wbScreen{position:absolute;inset:0;display:none;align-items:flex-start;justify-content:center;overflow:auto;background:rgba(0,0,0,.62);padding:24px 14px}
+.wbScreen.on{display:flex}
+.wbCard{width:min(680px,100%);background:rgba(20,20,20,.92);border:3px solid #000;box-shadow:inset 0 0 0 2px #555;padding:18px 20px;margin:auto 0}
+.wbCard h2{margin:0 0 6px;font-size:clamp(1.6rem,5vw,2.4rem);color:#ffd84a;text-shadow:3px 3px 0 #000;text-align:center}
+.wbCard .sub{text-align:center;color:#ddd;margin-bottom:12px}
+.wbCard p,.wbCard li{line-height:1.5}
+.wbCard ol{padding-left:22px;margin:8px 0}
+.wbCard .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.wbCard .big{font-size:clamp(2rem,6vw,3rem);text-align:center;color:#9dff8a;text-shadow:3px 3px 0 #000;margin:4px 0}
+.wbCard .stats{text-align:center;color:#ddd}
+.wbCard .rev{margin-top:12px;max-height:40vh;overflow:auto;background:rgba(0,0,0,.35);padding:8px 12px}
+.wbCard .rev h4{margin:4px 0;color:#ffd84a}
+.wbCard .rev li{margin:3px 0}
+.wbCard .rev .p{color:#ddd}.wbCard .rev .a{color:#9dff8a;font-weight:700}
+.wbCard .speed{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 2px}
+.wbCard .speed button.sel{outline:3px solid #ffd84a}
+`;
+  // While the blaster is open, hold back the 3D game's frames so the computer only draws one thing.
+  const RAF = window.requestAnimationFrame.bind(window); let held = [], isOpen = false;
+  window.requestAnimationFrame = cb => { if (isOpen && cb !== loop) { held.push(cb); return 0; } return RAF(cb); };
+  let fps = 60, cfg = null, root, cv, cx, W = 0, H = 0, S = 4, raf = 0, last = 0, run = null, ac = null, msgT = 0, waveT = 0, fontFam = 'monospace';
+  const $w = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+  // ── Checking answers ──
+  const marks = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
+  function norm(s) {
+    s = String(s).normalize('NFC').toLowerCase().replace(/[’‘`´ʼ]/g, "'").replace(/[«»“”"]/g, '')
+      .replace(/[.,!?;:…]+/g, ' ').replace(/\s*'\s*/g, "'").replace(/\s*-\s*/g, '-').replace(/\s+/g, ' ').trim();
+    if (cfg && cfg.stripMarks) s = marks(s);
+    return s;
+  }
+  const sortTok = s => s.split(' ').sort().join(' ');
+  // 'ok' | 'near' (only accents wrong) | null
+  function judge(item, typed) {
+    const t = norm(typed); if (!t) return null;
+    for (const a of item.answers) {
+      const n = norm(a);
+      if (t === n || (item.anyOrder && sortTok(t) === sortTok(n))) return 'ok';
+    }
+    for (const a of item.answers) {
+      const n = marks(norm(a)), m = marks(t);
+      if (m === n || (item.anyOrder && sortTok(m) === sortTok(n))) return 'near';
+    }
+    return null;
+  }
+
+  // ── Pixel sprites ──
+  const SPR = {
+    ghost: ['....XXXX....', '..XXXXXXXX..', '.XXXXXXXXXX.', '.XXeeXXeeXX.', 'XXXeeXXeeXXX', 'XXXXXXXXXXXX', 'XXXXXmmXXXXX', 'XXXXXmmXXXXX', 'XXXXXXXXXXXX', 'XXXXXXXXXXXX', 'XX.XXX.XXX.X', 'X...X...X...'],
+    snail: ['............', '......SSSS..', '....SSssSSS.', '...SSsSSsSS.', '.e.SsSssSsS.', '.B.SsSSSSsS.', '.BeSSsssSS..', '.BBBSSSSS...', 'BBBBBBBBBBBB', 'BBBBBBBBBBB.', '.BBBBBBBBB..'],
+    pigeon: ['....GGG.....', '...GGkGG....', '...GGGGGo...', '...GGGG.....', '..GPPPGGG...', '.GGPPPPGGG..', 'GGGGGGGGGGG.', '.GGGGGGGGGGG', '...GGGGGG...', '....o..o....', '...oo.oo....'],
+    hero: ['...HHHH...', '..HHHHHH..', '..FFFFFF..', '..FeFFeF..', '..FFFFFF..', '...FFFF...', '.TTTTTTTT.', 'TTTTTTTTTT', 'FTTTTTTTTF', 'FTTTTTTTTF', '..TTTTTT..', '..LL..LL..', '..LL..LL..', '..BB..BB..'],
+    chef: ['..HHHHHH..', '..HHHHHH..', '..HHHHHH..', '..FFFFFF..', '..FeFFeF..', '..FFFFFF..', '...FFFF...', '.TTTTTTTT.', 'TTTTTTTTTT', 'FTTTTTTTTF', 'FTTTTTTTTF', '..TTTTTT..', '..LL..LL..', '..BB..BB..'],
+  };
+  function sprite(name, x, y, pal, s, flip) {
+    const rows = SPR[name], w = rows[0].length;
+    for (let r = 0; r < rows.length; r++) for (let c = 0; c < w; c++) {
+      const ch = rows[r][flip ? w - 1 - c : c], col = pal[ch]; if (!col || ch === '.') continue;
+      cx.fillStyle = col; cx.fillRect(Math.round(x + c * s), Math.round(y + r * s), Math.ceil(s), Math.ceil(s));
+    }
+  }
+
+  // ── Backgrounds ──
+  function drawBg(t) {
+    const th = cfg.theme, g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]);
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    const b = S * 2, groundY = H - wallH();
+    if (th.bg === 'vesuvius') {
+      // a blocky volcano with smoke
+      cx.fillStyle = '#4a3a3a';
+      const mx = W * 0.72, base = groundY;
+      for (let i = 0; i < 20; i++) { const hw = (20 - i) * b * 2.2, yy = base - i * b * 1.6; cx.fillRect(mx - hw, yy - b * 1.6, hw * 2, b * 1.6 + 1); }
+      cx.fillStyle = '#c8461e'; cx.fillRect(mx - b * 4, base - 20 * b * 1.6, b * 8, b * 1.2);
+      for (let i = 0; i < 9; i++) { const k = (t * 0.05 + i / 9) % 1; cx.fillStyle = `rgba(70,64,64,${0.55 * (1 - k)})`; const sz = b * (3 + k * 7); cx.fillRect(mx - sz / 2 + Math.sin(i * 2 + t * .4) * b * 3 + k * b * 14, base - 20 * b * 1.6 - k * H * 0.45 - sz, sz, sz); }
+      cx.fillStyle = '#2d4a2a'; for (let x = 0; x < W; x += b * 3) { const h = (Math.sin(x * 0.013) * 0.5 + 0.5) * b * 6 + b * 3; cx.fillRect(x, groundY - h, b * 3 + 1, h); }
+    } else if (th.bg === 'kitchen') {
+      const ts = S * 12;
+      for (let y = 0; y < groundY; y += ts) for (let x = 0; x < W; x += ts) { cx.fillStyle = ((x / ts + y / ts) % 2) ? '#e8e2d4' : '#d6cdb9'; cx.fillRect(x, y, ts, ts); }
+      cx.fillStyle = 'rgba(0,0,0,.08)'; for (let y = 0; y < groundY; y += ts) cx.fillRect(0, y, W, 2);
+      // shelves with pans and jars
+      for (const sy of [0.22, 0.48]) {
+        const y = H * sy; cx.fillStyle = '#7a5332'; cx.fillRect(0, y, W, S * 3); cx.fillStyle = '#5a3a22'; cx.fillRect(0, y + S * 3, W, S);
+        for (let x = S * 10; x < W; x += S * 34) { cx.fillStyle = ['#b03a2e', '#e0b03a', '#3a7ab0', '#6aa84f'][Math.floor(x / 34) % 4]; cx.fillRect(x, y - S * 9, S * 8, S * 9); cx.fillStyle = '#ddd'; cx.fillRect(x, y - S * 10, S * 8, S * 2); }
+      }
+    } else if (th.bg === 'paris') {
+      cx.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 40; i++) { const x = (i * 97.3) % W, y = (i * 53.7) % (H * 0.5); cx.fillRect(x, y, S * .8, S * .8); }
+      // a blocky Eiffel Tower
+      const ex = W * 0.78, base = groundY; cx.fillStyle = '#5b4632';
+      const lv = [[16, 0], [12, 8], [8, 16], [5, 26], [3, 38], [2, 50], [1, 60]];
+      for (let i = 0; i < lv.length - 1; i++) { const [w0, h0] = lv[i], [, h1] = lv[i + 1]; cx.fillRect(ex - w0 * b / 2, base - h1 * b, b * 1.4, (h1 - h0) * b); cx.fillRect(ex + w0 * b / 2 - b * 1.4, base - h1 * b, b * 1.4, (h1 - h0) * b); cx.fillRect(ex - w0 * b / 2, base - h1 * b, w0 * b, b); }
+      cx.fillRect(ex - b / 2, base - 66 * b, b, b * 7);
+      cx.fillStyle = '#ffd84a'; if (Math.floor(t * 2) % 2) cx.fillRect(ex - b / 2, base - 67 * b, b, b);
+      cx.fillStyle = '#2b3550'; for (let x = 0; x < W; x += b * 7) { const h = b * (6 + (x * 7) % 9); cx.fillRect(x, groundY - h, b * 7 + 1, h); cx.fillStyle = '#ffd98a'; if ((x / b) % 3 < 1.5) cx.fillRect(x + b * 2, groundY - h + b * 2, b, b * 1.4); cx.fillStyle = '#2b3550'; }
+    }
+    // the wall the player defends
+    const wy = groundY;
+    for (let y = wy; y < H; y += S * 6) for (let x = ((y - wy) / (S * 6)) % 2 ? -S * 6 : 0; x < W; x += S * 12) {
+      cx.fillStyle = th.wall[0]; cx.fillRect(x, y, S * 12, S * 6); cx.fillStyle = th.wall[1]; cx.fillRect(x, y, S * 12, S); cx.fillRect(x, y, S, S * 6);
+    }
+    if (run && run.hurt > 0) { cx.fillStyle = `rgba(255,40,40,${run.hurt * 0.5})`; cx.fillRect(0, wy, W, H - wy); }
+    cx.fillStyle = 'rgba(0,0,0,.35)'; cx.fillRect(0, wy - S, W, S);
+  }
+  const wallH = () => Math.max(150, H * 0.22);
+
+  // ── Signs ──
+  function wrap(text, maxW, font) {
+    cx.font = font; const words = String(text).split(' '), lines = []; let line = '';
+    for (const w of words) { const t = line ? line + ' ' + w : w; if (cx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line); return lines;
+  }
+  function layoutMob(m) {
+    const big = Math.max(15, Math.min(21, W / 44)), small = Math.round(big * 0.78);
+    m.f1 = `600 ${big}px ${fontFam}`; m.f2 = `${small}px ${fontFam}`;
+    const maxW = Math.min(330, W * 0.42);
+    m.l1 = wrap(m.item.prompt, maxW, m.f1); m.l2 = m.item.sub ? wrap(m.item.sub, maxW, m.f2) : [];
+    cx.font = m.f1; let w = 0; m.l1.forEach(l => w = Math.max(w, cx.measureText(l).width)); cx.font = m.f2; m.l2.forEach(l => w = Math.max(w, cx.measureText(l).width));
+    m.sw = w + 24; m.sh = m.l1.length * big * 1.25 + m.l2.length * small * 1.25 + 16; m.big = big; m.small = small;
+  }
+  function drawSign(m, x, y, answer) {
+    const th = cfg.theme;
+    cx.fillStyle = 'rgba(0,0,0,.35)'; cx.fillRect(x - m.sw / 2 + 4, y + 4, m.sw, m.sh);
+    cx.fillStyle = answer ? '#2f6b2a' : th.sign[0]; cx.fillRect(x - m.sw / 2, y, m.sw, m.sh);
+    cx.fillStyle = answer ? '#1d4a1a' : th.sign[1]; cx.fillRect(x - m.sw / 2, y + m.sh - 4, m.sw, 4); cx.fillRect(x - m.sw / 2, y, 4, m.sh);
+    if (m === run.focus && !answer) { cx.strokeStyle = '#ffd84a'; cx.lineWidth = 3; cx.strokeRect(x - m.sw / 2 - 2, y - 2, m.sw + 4, m.sh + 4); }
+    cx.textAlign = 'center'; cx.textBaseline = 'top';
+    let yy = y + 8;
+    if (answer) { cx.font = m.f1; cx.fillStyle = '#fff'; wrap(answer, m.sw - 16, m.f1).slice(0, 3).forEach(l => { cx.fillText(l, x, yy); yy += m.big * 1.25; }); return; }
+    cx.font = m.f1; cx.fillStyle = th.ink; m.l1.forEach(l => { cx.fillText(l, x, yy); yy += m.big * 1.25; });
+    cx.font = m.f2; cx.fillStyle = th.ink2; m.l2.forEach(l => { cx.fillText(l, x, yy); yy += m.small * 1.25; });
+  }
+
+  // ── Sound ──
+  function tone(f, d, type, v, slide) {
+    if (!ac) return; try {
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.type = type || 'square'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+      g.gain.setValueAtTime(v || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const sfx = { shoot: () => tone(900, 0.12, 'square', 0.04, 300), zap: () => { tone(520, 0.08); setTimeout(() => tone(780, 0.12), 70); }, near: () => tone(440, 0.18, 'triangle', 0.08), miss: () => tone(150, 0.2, 'sawtooth', 0.05), hurt: () => tone(110, 0.4, 'sawtooth', 0.08, 50), wave: () => [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 0.15, 'triangle', 0.08), i * 110)) };
+
+  // ── Game ──
+  const SPEEDS = { gentle: 0.7, normal: 1, fast: 1.35 };
+  function newRun() {
+    const pool = cfg.items();
+    run = { pool, queue: shuf(pool), back: [], mobs: [], parts: [], shots: [], pops: [], hearts: 3, score: 0, combo: 0, zapped: 0, shotsN: 0, wrongN: 0, wave: 1, kills: 0, spawnT: 1.2, t: 0, hurt: 0, focus: null,
+      missed: new Map(), nearly: new Map(), over: false, paused: false, speed: SPEEDS[store.get(cfg.storeKey + '.speed', 'normal')] || 1 };
+  }
+  function nextItem() {
+    if (run.back.length && run.back[0].due <= run.zapped + run.mobs.length) return run.back.shift().item;
+    if (!run.queue.length) run.queue = shuf(run.pool);
+    // avoid two of the same on screen
+    for (let i = 0; i < run.queue.length; i++) if (!run.mobs.some(m => m.item === run.queue[i])) return run.queue.splice(i, 1)[0];
+    return run.queue.shift();
+  }
+  function spawn() {
+    const item = nextItem(), m = { item, y: 0, born: run.t, bob: Math.random() * 6 };
+    layoutMob(m);
+    const len = Math.max(...item.answers.map(a => a.length)) || 6;
+    m.dur = (9 + Math.min(len, 40) * 0.42) / (run.speed * (1 + (run.wave - 1) * 0.1));
+    // choose an x that does not overlap a sign still near the top
+    const half = m.sw / 2 + 8, lo = half, hi = Math.max(lo + 1, W - half);
+    let best = (lo + hi) / 2, bestD = -1;
+    for (let k = 0; k < 14; k++) {
+      const x = lo + Math.random() * (hi - lo);
+      let d = 1e9; run.mobs.forEach(o => { if (o.y < H * 0.45) d = Math.min(d, Math.abs(o.x - x) - (o.sw / 2 + m.sw / 2)); });
+      if (d > bestD) { bestD = d; best = x; }
+    }
+    m.x = best; m.y0 = -m.sh - 20; m.y = m.y0;
+    run.mobs.push(m);
+  }
+  function maxAlive() { return Math.min(1 + Math.floor(run.wave / 2), W < 620 ? 2 : 3); }
+  function burst(x, y, cols, n) { for (let i = 0; i < n; i++) run.parts.push({ x, y, vx: (Math.random() - .5) * 420, vy: -Math.random() * 380 - 60, life: 0.7 + Math.random() * 0.5, c: cols[i % cols.length], s: S * (1 + Math.random() * 1.5) }); }
+  function heroPos() { return [W / 2, H - wallH() - SPR.hero.length * S * 1.4 + S * 4]; }
+  function fire() {
+    const inp = $w('wbIn'), val = inp.value; if (!val.trim() || run.over || run.paused) return;
+    run.shotsN++;
+    let hit = null, how = null;
+    const order = run.mobs.filter(m => !m.dead).sort((a, b) => b.y - a.y);
+    for (const m of order) { const j = judge(m.item, val); if (j === 'ok') { hit = m; how = 'ok'; break; } }
+    if (!hit) for (const m of order) { const j = judge(m.item, val); if (j === 'near') { hit = m; how = 'near'; break; } }
+    if (!hit) {
+      run.wrongN++; run.combo = 0; sfx.miss();
+      inp.classList.remove('bad'); void inp.offsetWidth; inp.classList.add('bad');
+      return;
+    }
+    sfx.shoot();
+    const [hx, hy] = heroPos();
+    run.shots.push({ x0: hx, y0: hy, m: hit, t: 0, how });
+    hit.dead = true; hit.how = how;
+    inp.value = ''; inp.classList.remove('bad'); inp.classList.add('good'); setTimeout(() => inp.classList.remove('good'), 200);
+  }
+  function landShot(sh) {
+    const m = sh.m, mid = m.y + m.sh + S * 6;
+    burst(m.x, mid, cfg.theme.burst, 26);
+    run.mobs = run.mobs.filter(o => o !== m);
+    run.zapped++; run.kills++;
+    if (sh.how === 'ok') {
+      run.combo++; const pts = 10 + Math.min(run.combo - 1, 10) * 2; run.score += pts;
+      run.pops.push({ x: m.x, y: mid, t: 0, txt: '+' + pts + (run.combo > 2 ? ` ×${run.combo}` : ''), c: '#ffd84a' });
+      sfx.zap();
+    } else {
+      run.score += 5; run.combo = 0; run.nearly.set(m.item, (run.nearly.get(m.item) || 0) + 1);
+      run.pops.push({ x: m.x, y: mid, t: 0, txt: '+5', c: '#9dd8ff' });
+      say(`Zapped! Watch the accents: <span class="a">${esc(m.item.answers[0])}</span>`, 2600); sfx.near();
+    }
+    if (run.kills >= 6 + run.wave) { run.kills = 0; run.wave++; showWave(); }
+    updateTop();
+  }
+  function reachWall(m) {
+    m.dead = true; m.landed = run.t;
+    run.hearts--; run.combo = 0; run.hurt = 1;
+    run.missed.set(m.item, (run.missed.get(m.item) || 0) + 1);
+    run.back.push({ item: m.item, due: run.zapped + 3 });
+    say(`<b>${esc(m.item.prompt)}</b> → <span class="a">${esc(m.item.answers[0])}</span>`, 3200);
+    sfx.hurt(); updateTop();
+    if (run.hearts <= 0) setTimeout(gameOver, 900);
+  }
+  function say(html, ms) { const e = $w('wbMsg'); e.innerHTML = html; e.classList.add('show'); clearTimeout(msgT); msgT = setTimeout(() => e.classList.remove('show'), ms || 2500); }
+  function showWave() { const e = $w('wbWave'); e.textContent = (cfg.waveWord || 'Wave') + ' ' + run.wave; e.classList.add('show'); clearTimeout(waveT); waveT = setTimeout(() => e.classList.remove('show'), 1500); sfx.wave(); }
+  function updateTop() {
+    $w('wbScore').innerHTML = `Score <b>${run.score}</b> · ${esc(cfg.waveWord || 'Wave')} <b>${run.wave}</b>${run.combo > 1 ? ` · Combo <b>×${run.combo}</b>` : ''}`;
+    $w('wbHearts').textContent = '♥'.repeat(Math.max(0, run.hearts)) + '♡'.repeat(Math.max(0, 3 - run.hearts));
+  }
+
+  function step(dt) {
+    run.t += dt; run.hurt = Math.max(0, run.hurt - dt * 1.6);
+    const wallY = H - wallH();
+    // spawning
+    run.spawnT -= dt;
+    const alive = run.mobs.filter(m => !m.dead).length;
+    if (!run.over && run.hearts > 0 && alive < maxAlive() && run.spawnT <= 0) { spawn(); run.spawnT = Math.max(1.2, 3.2 - run.wave * 0.25) / run.speed; }
+    if (alive === 0 && run.spawnT > 0.6) run.spawnT = 0.6;
+    for (const m of run.mobs) {
+      if (m.landed) continue;
+      if (m.dead) continue;
+      const k = Math.min(1, (run.t - m.born) / m.dur);
+      m.y = m.y0 + (wallY - m.sh - S * 13 - m.y0) * k;
+      if (k >= 1) reachWall(m);
+    }
+    // landed mobs show the answer, then vanish
+    run.mobs = run.mobs.filter(m => { if (m.landed && run.t - m.landed > 2.2) { burst(m.x, m.y + m.sh, ['#888', '#bbb'], 14); return false; } return true; });
+    // focus = lowest live mob
+    run.focus = run.mobs.filter(m => !m.dead).sort((a, b) => b.y - a.y)[0] || null;
+    for (const sh of run.shots) { sh.t += dt / 0.16; if (sh.t >= 1 && !sh.done) { sh.done = true; landShot(sh); } }
+    run.shots = run.shots.filter(s => !s.done);
+    for (const p of run.parts) { p.life -= dt; p.vy += 900 * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    run.parts = run.parts.filter(p => p.life > 0);
+    for (const p of run.pops) p.t += dt; run.pops = run.pops.filter(p => p.t < 1);
+  }
+  function draw() {
+    cx.imageSmoothingEnabled = false;
+    drawBg(run ? run.t : 0);
+    if (!run) return;
+    const th = cfg.theme;
+    for (const m of run.mobs) {
+      const bob = Math.sin((run.t + m.bob) * 3) * S, sp = SPR[th.mob], ms = S * 1.3, sw = sp[0].length * ms;
+      const y = m.y + (m.landed ? 0 : bob);
+      // string from sign to creature
+      cx.fillStyle = th.sign[1]; cx.fillRect(m.x - 1, y + m.sh, 3, S * 2);
+      drawSign(m, m.x, y, m.landed ? m.item.answers[0] : null);
+      if (!(m.dead && !m.landed)) sprite(th.mob, m.x - sw / 2, y + m.sh + S * 2, th.mobPal, ms, Math.sin(run.t + m.bob) > 0);
+    }
+    // shots in flight
+    for (const sh of run.shots) {
+      const m = sh.m, tx = m.x, ty = m.y + m.sh + S * 8, x = sh.x0 + (tx - sh.x0) * sh.t, y = sh.y0 + (ty - sh.y0) * sh.t;
+      const ang = Math.atan2(ty - sh.y0, tx - sh.x0);
+      cx.save(); cx.translate(x, y); cx.rotate(ang);
+      cx.fillStyle = th.shot[0]; cx.fillRect(-S * 5, -S * .6, S * 8, S * 1.2); cx.fillStyle = th.shot[1]; cx.fillRect(S * 3, -S, S * 2, S * 2);
+      cx.restore();
+    }
+    for (const p of run.parts) { cx.fillStyle = p.c; cx.globalAlpha = Math.min(1, p.life * 2); cx.fillRect(p.x, p.y, p.s, p.s); }
+    cx.globalAlpha = 1;
+    for (const p of run.pops) { cx.globalAlpha = 1 - p.t; cx.font = `700 ${Math.round(S * 6)}px ${fontFam}`; cx.textAlign = 'center'; cx.fillStyle = '#000'; cx.fillText(p.txt, p.x + 2, p.y - p.t * 50 + 2); cx.fillStyle = p.c; cx.fillText(p.txt, p.x, p.y - p.t * 50); }
+    cx.globalAlpha = 1;
+    // the hero on the wall
+    const [hx, hy] = heroPos(), hs = S * 1.4, hn = th.hero || 'hero';
+    sprite(hn, hx - SPR[hn][0].length * hs / 2, hy - S * 4, th.heroPal, hs);
+  }
+  function loop(now) {
+    raf = RAF(loop);
+    const dt = Math.min(0.1, (now - last) / 1000 || 0); last = now; fps = fps * 0.95 + (dt ? 1 / dt : 60) * 0.05;
+    if (run && !run.paused && !run.over) step(dt);
+    else if (run && run.over) { for (const p of run.parts) { p.life -= dt; p.vy += 900 * dt; p.x += p.vx * dt; p.y += p.vy * dt; } }
+    draw();
+  }
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = Math.max(3, Math.min(5, Math.round(Math.min(W, H) / 150)));
+    if (run) run.mobs.forEach(layoutMob);
+  }
+
+  // ── Screens ──
+  function screen(id) { ['wbIntro', 'wbPause', 'wbOver'].forEach(s => { $w(s).classList.toggle('on', s === id); if (s !== id) $w(s).innerHTML = ''; }); $w('wbBar').style.display = id ? 'none' : 'flex'; $w('wbTop').style.visibility = id === 'wbIntro' ? 'hidden' : 'visible'; }
+  function intro() {
+    const sp = store.get(cfg.storeKey + '.speed', 'normal'), best = store.get(cfg.storeKey + '.best', 0), n = cfg.items().length;
+    $w('wbIntro').innerHTML = `<div class="wbCard"><h2>${esc(cfg.title)}</h2><div class="sub">${esc(cfg.subtitle)}</div>
+      <ol>${cfg.howto.map(h => `<li>${h}</li>`).join('')}<li>Miss one and you lose a heart. You have three. A missed one comes back soon so you can try again.</li></ol>
+      <div class="stats">${n} ${n === 1 ? 'item' : 'items'} from your ticked choices on the title screen${best ? ` · best score here: <b>${best}</b>` : ''}</div>
+      <div class="speed">${Object.keys(SPEEDS).map(k => `<button class="mc-btn small${k === sp ? ' sel' : ''}" data-wbspeed="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>
+      <div class="btns"><button class="mc-btn big" id="wbGo">Start ▶</button><button class="mc-btn" id="wbBack">Back to the title screen</button></div></div>`;
+    screen('wbIntro');
+    setTimeout(() => { const b = $w('wbGo'); if (b) b.focus(); }, 50);
+  }
+  function start() {
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; }
+    newRun(); if (!run.pool.length) return;
+    screen(null); updateTop(); showWave();
+    const inp = $w('wbIn'); inp.value = ''; inp.disabled = false; setTimeout(() => inp.focus(), 30);
+  }
+  function pause() { if (!run || run.over || run.paused) return; run.paused = true; $w('wbPause').innerHTML = `<div class="wbCard"><h2>Paused</h2><div class="btns"><button class="mc-btn big" id="wbResume">Resume</button><button class="mc-btn" id="wbQuit">Back to the title screen</button></div></div>`; screen('wbPause'); setTimeout(() => $w('wbResume').focus(), 30); }
+  function resume() { if (!run) return; run.paused = false; screen(null); last = performance.now(); setTimeout(() => $w('wbIn').focus(), 30); }
+  function gameOver() {
+    if (run.over) return; run.over = true; $w('wbIn').disabled = true; $w('wbIn').blur();
+    const best = store.get(cfg.storeKey + '.best', 0), isBest = run.score > best; if (isBest) store.set(cfg.storeKey + '.best', run.score);
+    const acc = run.shotsN ? Math.round(100 * (run.shotsN - run.wrongN) / run.shotsN) : 0;
+    const li = (m, cls) => [...m.keys()].map(it => `<li><span class="p">${esc(it.prompt)}${it.sub ? ` <i>(${esc(it.sub)})</i>` : ''}</span> → <span class="a">${esc(it.answers[0])}</span></li>`).join('');
+    let rev = '';
+    if (run.missed.size) rev += `<h4>Practise these</h4><ul>${li(run.missed)}</ul>`;
+    if (run.nearly.size) rev += `<h4>Check the accents</h4><ul>${li(run.nearly)}</ul>`;
+    $w('wbOver').innerHTML = `<div class="wbCard"><h2>${esc(cfg.overTitle || 'Game over')}</h2><div class="big">${run.score}</div>
+      <div class="stats">${isBest ? '<b style="color:#ffd84a">New best score!</b> · ' : best ? `Best: ${best} · ` : ''}${run.zapped} zapped · reached ${esc(cfg.waveWord || 'wave').toLowerCase()} ${run.wave} · ${acc}% of your shots hit</div>
+      ${rev ? `<div class="rev">${rev}</div>` : '<p style="text-align:center">No misses at all. Superb!</p>'}
+      <div class="btns"><button class="mc-btn big" id="wbAgain">Play again ▶</button><button class="mc-btn" id="wbBack">Back to the title screen</button></div></div>`;
+    screen('wbOver'); setTimeout(() => $w('wbAgain').focus(), 50);
+  }
+  function close() {
+    cancelAnimationFrame(raf); raf = 0; run = null; isOpen = false; const h = held; held = []; h.forEach(cb => RAF(cb));
+    root.classList.remove('on'); clearTimeout(msgT); $w('wbMsg').classList.remove('show');
+    if (cfg.onClose) cfg.onClose();
+  }
+  function insertAccent(ch) {
+    const inp = $w('wbIn'), s = inp.selectionStart ?? inp.value.length, e = inp.selectionEnd ?? s;
+    inp.value = inp.value.slice(0, s) + ch + inp.value.slice(e); inp.focus(); inp.setSelectionRange(s + ch.length, s + ch.length);
+  }
+
+  function build() {
+    if (root) return;
+    const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
+    root = document.createElement('div'); root.id = 'wb';
+    root.innerHTML = `<canvas id="wbCv"></canvas>
+      <div id="wbTop"><div class="box" id="wbScore"></div><div style="display:flex;gap:8px;align-items:center"><div id="wbHearts"></div><button class="mc-btn small" id="wbPauseBtn">❚❚</button></div></div>
+      <div id="wbWave"></div><div id="wbMsg"></div>
+      <div id="wbBar"><div id="wbRow"><input id="wbIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type an answer and press Enter"><button class="mc-btn" id="wbFire">Zap ⚡</button></div><div id="wbAcc"></div></div>
+      <div class="wbScreen" id="wbIntro"></div><div class="wbScreen" id="wbPause"></div><div class="wbScreen" id="wbOver"></div>`;
+    document.body.appendChild(root);
+    cv = $w('wbCv'); cx = cv.getContext('2d');
+    window.addEventListener('resize', () => { if (root.classList.contains('on')) resize(); });
+    // keep the 3D game from seeing any key pressed here
+    ['keydown', 'keyup', 'keypress'].forEach(ev => root.addEventListener(ev, e => {
+      if (ev === 'keydown' && e.key === 'Escape') { if (run && run.paused) resume(); else if (run && !run.over && !$w('wbIntro').classList.contains('on')) pause(); e.preventDefault(); }
+      else if (ev === 'keydown' && e.key === 'Enter' && e.target.id === 'wbIn') { fire(); e.preventDefault(); }
+      e.stopPropagation();
+    }));
+    root.addEventListener('click', e => {
+      const t = e.target.closest('button'); if (!t) { if (run && !run.over && !run.paused) $w('wbIn').focus(); return; }
+      if (t.id === 'wbGo' || t.id === 'wbAgain') start();
+      else if (t.id === 'wbBack' || t.id === 'wbQuit') close();
+      else if (t.id === 'wbResume') resume();
+      else if (t.id === 'wbPauseBtn') pause();
+      else if (t.id === 'wbFire') fire();
+      else if (t.dataset.wbacc) insertAccent(t.dataset.wbacc);
+      else if (t.dataset.wbspeed) { store.set(cfg.storeKey + '.speed', t.dataset.wbspeed); root.querySelectorAll('[data-wbspeed]').forEach(b => b.classList.toggle('sel', b === t)); }
+      e.stopPropagation();
+    });
+    root.addEventListener('mousedown', e => { if (e.target.closest('[data-wbacc]')) e.preventDefault(); e.stopPropagation(); });
+    window.addEventListener('blur', () => { if (run && root.classList.contains('on')) pause(); });
+  }
+  function open(c) {
+    cfg = c; build();
+    fontFam = getComputedStyle(document.body).fontFamily || 'monospace';
+    if (document.pointerLockElement) document.exitPointerLock();
+    $w('wbAcc').innerHTML = (cfg.accents || []).map(a => `<button class="mc-btn small" data-wbacc="${a}">${a}</button>`).join('');
+    const n = cfg.items().length;
+    root.classList.add('on'); resize(); run = null;
+    if (!n) { $w('wbIntro').innerHTML = `<div class="wbCard"><h2>${esc(cfg.title)}</h2><p>Nothing to practise with the current ticks. Tick some more on the title screen and try again.</p><div class="btns"><button class="mc-btn" id="wbBack">Back to the title screen</button></div></div>`; screen('wbIntro'); }
+    else intro();
+    isOpen = true; last = performance.now(); if (!raf) raf = RAF(loop);
+  }
+  return { open, close, judge: (it, s) => judge(it, s), get run() { return run; }, get fps() { return fps; }, _fire: fire, _gameOver: () => gameOver() };
+})();
+
+// ── Word Blaster for Fuga Romana: English on the sign, type the Latin ──
+function wbItems() {
+  const words = s => s.replace(/[.,!?;:]/g, ' ').trim().split(/\s+/);
+  const ok = it => it.t.every(t => ticked.has(t));
+  let pool = BANK.filter(it => ok(it) && words(it.lat).length <= 3);
+  if (pool.length < 10) pool = BANK.filter(it => ok(it) && words(it.lat).length <= 5);
+  const byEn = new Map();
+  pool.forEach(it => {
+    const lat = words(it.lat).join(' ');
+    const e = byEn.get(it.en); if (e) { if (!e.answers.includes(lat)) e.answers.push(lat); return; }
+    byEn.set(it.en, { prompt: it.en, answers: [lat], anyOrder: true });
+  });
+  return [...byEn.values()];
+}
+$('wbBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  WordBlaster.open({
+    title: 'Word Blaster: Lemures!', subtitle: 'Roman ghosts are drifting down on Pompeii. Banish them with Latin.',
+    howto: ['Each ghost carries an English sentence.', 'Type it in Latin and press <b>Enter</b> to fire. Any sensible word order counts.', 'The faster you go, the bigger your combo. Each wave is a little quicker.'],
+    items: wbItems, stripMarks: true, storeKey: 'fugaRomanaMC.wb', waveWord: 'Wave',
+    theme: { bg: 'vesuvius', sky: ['#f2a65a', '#6b3b5a'], wall: ['#b9b2a4', '#8f887b'], sign: ['#c9a36a', '#7a5a32'], ink: '#2a1a08', ink2: '#5a3d1a',
+      mob: 'ghost', mobPal: { X: 'rgba(225,235,245,.92)', e: '#1d2a3a', m: '#1d2a3a' }, burst: ['#e6eef6', '#b8c8d8', '#ffffff'],
+      hero: 'hero', heroPal: { H: '#c0392b', F: '#e8b88a', e: '#222', T: '#a33a2a', L: '#7a4a2a', B: '#3a2a1a' }, shot: ['#7a5a32', '#ccc'] },
+  });
+});
+</script>
+<!-- /WORD BLASTER -->
 </body>
 </html>
