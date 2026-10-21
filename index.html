@@ -88,6 +88,7 @@ kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid
 #roomName { font-size: 1.05rem; color: #ffe08a; text-shadow: 2px 2px 0 #000; }
 #roomGoal { font-size: .85rem; color: #ddd; margin-top: 3px; }
 #roomHint { font-size: .8rem; color: #ffe9a8; margin-top: 3px; }
+body.assessment-mode #roomName::after { content: ' · Assessment'; color: #ffe9a8; font-size: .8em; }
 .ach-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
 .ach { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; color: #e8e8e8; }
 .ach .ic { flex: 0 0 22px; height: 22px; display: grid; place-items: center; background: #3a3a3a; border: 2px solid #000; font-size: .8rem; }
@@ -246,6 +247,10 @@ body.touch #touch.on { display: block; }
     <h3>Question types</h3>
     <div class="ticks" id="qtypes"></div>
     <div class="status" id="setupStatus"></div>
+  </div>
+  <div class="panel">
+    <h3>Help</h3>
+    <div class="ticks"><label class="tick"><input type="checkbox" id="helpToggle"><span class="box"></span><span>Grammar table button (untick for assessment mode)</span></label></div>
   </div>
   <div class="start-row">
     <button class="mc-btn big" id="startBtn" data-level="0">Level 1: Escape from Pompeii</button>
@@ -1705,6 +1710,7 @@ const store = {
 };
 let ticked = new Set(store.get('grammar', 'ABCDEFGHIJKLMNOPQR'.split('')));
 let types = new Set(store.get('types', QTYPES.map(q => q.k)));
+let helpEnabled = store.get('help', true);
 
 // ════════════════════════════════════════════════════════════════
 // TEXTURES — 16×16 pixel tiles painted into one atlas
@@ -3338,7 +3344,7 @@ function renderQuestion() {
   h += `<div class="q-meta"><div class="dots">Tries:`;
   for (let a = 0; a < maxAttempts(q); a++) h += `<div class="dot" id="qd${a}"></div>`;
   h += `</div>`;
-  const t = TABLES[q.hint];
+  const t = helpEnabled ? TABLES[q.hint] : null;
   if (t) h += `<button class="mc-btn small" id="qHelp">\u{1F4D6} Grammar table</button>`;
   h += `</div>`;
   if (t) {
@@ -3468,6 +3474,9 @@ function buildSetup() {
     const p = b.dataset.preset; ticked = new Set(p === 'clear' ? [] : PRESETS[+p].keys.split('')); syncSetup();
   });
   $('ticks').addEventListener('change', e => { const k = e.target.dataset.g; if (!k) return; e.target.checked ? ticked.add(k) : ticked.delete(k); syncSetup(); });
+  $('helpToggle').checked = helpEnabled;
+  $('helpToggle').addEventListener('change', e => { helpEnabled = e.target.checked; store.set('help', helpEnabled); document.body.classList.toggle('assessment-mode', !helpEnabled); });
+  document.body.classList.toggle('assessment-mode', !helpEnabled);
   $('qtypes').addEventListener('change', e => { const k = e.target.dataset.t; if (!k) return; e.target.checked ? types.add(k) : types.delete(k); syncSetup(); });
   $('splashTxt').textContent = pick(SPLASHES);
   renderAch();
