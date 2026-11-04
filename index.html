@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Fuga Romana</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --gui: #c6c6c6; --gui-ink: #3f3f3f; --gui-lt: #ffffff; --gui-dk: #555555;
@@ -13,7 +13,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1b1b; color: #fff;
-  font-family: 'Pixelify Sans', 'Courier New', monospace; -webkit-user-select: none; user-select: none; touch-action: none; }
+  font-family: 'Lexend', 'Trebuchet MS', 'Segoe UI', Arial, sans-serif; -webkit-user-select: none; user-select: none; touch-action: none; }
 canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 button { font-family: inherit; }
 
@@ -207,6 +207,8 @@ body.touch #touch.on { display: block; }
   .gui { padding: 14px; }
   .mc-btn.big { min-width: 0; width: 100%; }
 }
+/* Legibility: one readable font (Lexend) everywhere, titles included. The pixel font made c look like o and Z look like 2. */
+.logo { font-family: 'Lexend', 'Trebuchet MS', 'Segoe UI', Arial, sans-serif; font-weight: 700; letter-spacing: .02em; }
 </style>
 </head>
 <body>
@@ -4413,7 +4415,7 @@ const WordBlaster = (() => {
   // While the blaster is open, hold back the 3D game's frames so the computer only draws one thing.
   const RAF = window.requestAnimationFrame.bind(window); let held = [], isOpen = false;
   window.requestAnimationFrame = cb => { if (isOpen && cb !== loop) { held.push(cb); return 0; } return RAF(cb); };
-  let fps = 60, cfg = null, root, cv, cx, W = 0, H = 0, S = 4, raf = 0, last = 0, run = null, ac = null, msgT = 0, waveT = 0, fontFam = 'monospace';
+  let fps = 60, cfg = null, root, cv, cx, W = 0, H = 0, S = 4, raf = 0, last = 0, run = null, ac = null, msgT = 0, waveT = 0, fontFam = 'Lexend, Arial, sans-serif';
   const $w = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -4769,7 +4771,7 @@ const WordBlaster = (() => {
   }
   function open(c) {
     cfg = c; build();
-    fontFam = getComputedStyle(document.body).fontFamily || 'monospace';
+    fontFam = getComputedStyle(document.body).fontFamily || 'Lexend, Arial, sans-serif';
     if (document.pointerLockElement) document.exitPointerLock();
     $w('wbAcc').innerHTML = (cfg.accents || []).map(a => `<button class="mc-btn small" data-wbacc="${a}">${a}</button>`).join('');
     const n = cfg.items().length;
